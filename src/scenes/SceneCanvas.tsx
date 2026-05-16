@@ -1,0 +1,46 @@
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, Environment, ContactShadows } from '@react-three/drei';
+import { useStore } from '../lib/store.js';
+import { SingleScene } from './SingleScene.js';
+import { CubeScene } from './CubeScene.js';
+import { ReptileScene } from './ReptileScene.js';
+import { GrowthScene, type GrowthMetrics } from './GrowthScene.js';
+
+export function SceneCanvas({
+  onMetrics,
+}: {
+  onMetrics?: (m: GrowthMetrics) => void;
+}) {
+  const scene = useStore((s) => s.scene);
+  return (
+    <Canvas
+      shadows
+      camera={{ position: [3, 2.4, 3.6], fov: 40 }}
+      gl={{ preserveDrawingBuffer: true, antialias: true }}
+    >
+      <color attach="background" args={['#1a1d21']} />
+      <ambientLight intensity={0.45} />
+      <directionalLight
+        position={[5, 7, 4]}
+        intensity={1.0}
+        castShadow
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
+      />
+      <directionalLight position={[-4, 2, -3]} intensity={0.35} />
+      <Environment preset="city" />
+      <ContactShadows
+        position={[0, -1.2, 0]}
+        opacity={0.4}
+        blur={2.4}
+        far={6}
+        scale={10}
+      />
+      {scene === 'single' && <SingleScene />}
+      {scene === 'cube' && <CubeScene />}
+      {scene === 'reptile' && <ReptileScene />}
+      {scene === 'growth' && <GrowthScene onMetrics={onMetrics} />}
+      <OrbitControls makeDefault enableDamping dampingFactor={0.08} />
+    </Canvas>
+  );
+}

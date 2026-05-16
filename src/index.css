@@ -1,0 +1,7 @@
+/* base reset — see App.css for app-specific styles */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #15181c;
+}
