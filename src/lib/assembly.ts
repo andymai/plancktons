@@ -1,6 +1,7 @@
 import type { Rng } from './rng.js';
 import type { Vec3 } from './vec.js';
 import { centroid, cross, dot, norm, sub, unit } from './vec.js';
+import { MAX_ATTEMPTS_PER_STEP, SPATIAL_HASH_CELL_FACTOR } from './constants.js';
 import type { Chirality, Planckton } from './planckton.js';
 import {
   edgeSig,
@@ -56,15 +57,11 @@ export interface Assembly {
 
 export function makeAssembly(opts: AssemblyOptions): Assembly {
   const seed = unitPlanckton(opts.L, opts.rng.next() < opts.chiralityBias ? 'R' : 'L');
-  // Cell side = 2L. Hill T₁ bounding-sphere radius is √3·L/2 ≈ 0.87L, so
-  // any pair of centroids more than 2L apart cannot overlap. A 3×3×3
-  // neighborhood query covers everything within √3·2L ≈ 3.46L, comfortably
-  // larger than the 2·0.87L cutoff.
   const a: Assembly = {
     tets: [seed],
     freeFaces: [],
     opts,
-    spatialHash: createSpatialHash(2 * opts.L),
+    spatialHash: createSpatialHash(SPATIAL_HASH_CELL_FACTOR * opts.L),
   };
   insertTet(a.spatialHash, 0, tetCentroid(seed.verts));
   faceTriangles(seed).forEach((tri, fi) => {
@@ -86,7 +83,7 @@ export function growOne(a: Assembly): GrowResult {
   if (a.freeFaces.length === 0) return 'closed';
 
   // Phase 1: random sampling. Fast when most candidates work.
-  const maxAttempts = opts.maxAttemptsPerStep ?? 80;
+  const maxAttempts = opts.maxAttemptsPerStep ?? MAX_ATTEMPTS_PER_STEP;
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const ffIdx = pickFreeFace(a);
     if (tryPlace(a, ffIdx, opts.rng.next() < opts.chiralityBias ? 'R' : 'L', opts.rng)) {
@@ -286,7 +283,7 @@ export function rebuildFromTets(tets: ReadonlyArray<Planckton>, opts: AssemblyOp
     tets: tets.map((t) => ({ ...t })),
     freeFaces: [],
     opts,
-    spatialHash: createSpatialHash(2 * opts.L),
+    spatialHash: createSpatialHash(SPATIAL_HASH_CELL_FACTOR * opts.L),
   };
   const inv = vertexHashInv(opts.L);
   const counts = new Map<string, number>();

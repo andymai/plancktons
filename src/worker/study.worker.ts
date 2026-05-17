@@ -24,6 +24,7 @@ import { growTrajectory, type KineticsResult } from '../lib/kinetics.js';
 import { autocorrelationS2, type AutocorrResult } from '../lib/autocorr.js';
 import { Rng } from '../lib/rng.js';
 import { growOne, makeAssembly, type GrowthStrategy } from '../lib/assembly.js';
+import { SEED_STRIDE } from '../lib/constants.js';
 import { computeHull } from '../lib/hull.js';
 import { centroid } from '../lib/vec.js';
 
@@ -286,7 +287,7 @@ function computePairCorrelationEnsemble(
   let countParSum: number[] = [];
   let countPerpSum: number[] = [];
   for (let t = 0; t < job.nTrials; t++) {
-    const seed = job.seed + t * 9973;
+    const seed = job.seed + t * SEED_STRIDE;
     const a = makeAssembly({
       L: 1,
       rng: new Rng(seed),

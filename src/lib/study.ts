@@ -8,6 +8,7 @@ import {
   freeSurfaceArea,
   vertexCoordination,
 } from './assembly.js';
+import { SEED_STRIDE } from './constants.js';
 import { computeHull } from './hull.js';
 import { gyrationDescriptors } from './shape.js';
 import type { GrowthStrategy } from './assembly.js';
@@ -53,7 +54,7 @@ export interface StudyHooks {
 export function runStudy(p: StudyParams, hooks?: StudyHooks): TrialResult[] {
   const out: TrialResult[] = [];
   for (let t = 0; t < p.trials; t++) {
-    const seed = p.startSeed + t * 9973;
+    const seed = p.startSeed + t * SEED_STRIDE;
     const t0 = performance.now();
     const a = makeAssembly({
       L: 1,

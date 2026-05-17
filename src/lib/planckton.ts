@@ -12,6 +12,7 @@
 
 import type { Vec3 } from './vec.js';
 import { add, centroid, cross, dot, norm, sub, unit } from './vec.js';
+import { EDGE_LENGTH_EPS, SAT_MARGIN_FRAC } from './constants.js';
 
 export type Chirality = 'R' | 'L';
 
@@ -74,9 +75,12 @@ export function edgeSig(tri: readonly [Vec3, Vec3, Vec3]): [number, number, numb
   ) as [number, number, number];
 }
 
-const EPS = 1e-6;
 export function sigEq(a: [number, number, number], b: [number, number, number]): boolean {
-  return Math.abs(a[0] - b[0]) < EPS && Math.abs(a[1] - b[1]) < EPS && Math.abs(a[2] - b[2]) < EPS;
+  return (
+    Math.abs(a[0] - b[0]) < EDGE_LENGTH_EPS &&
+    Math.abs(a[1] - b[1]) < EDGE_LENGTH_EPS &&
+    Math.abs(a[2] - b[2]) < EDGE_LENGTH_EPS
+  );
 }
 
 /**
@@ -102,7 +106,11 @@ export function matchPerms(
     const e0 = be[s % 3] as number;
     const e1 = be[(s + 1) % 3] as number;
     const e2 = be[(s + 2) % 3] as number;
-    if (Math.abs(e0 - ae[0]) < EPS && Math.abs(e1 - ae[1]) < EPS && Math.abs(e2 - ae[2]) < EPS) {
+    if (
+      Math.abs(e0 - ae[0]) < EDGE_LENGTH_EPS &&
+      Math.abs(e1 - ae[1]) < EDGE_LENGTH_EPS &&
+      Math.abs(e2 - ae[2]) < EDGE_LENGTH_EPS
+    ) {
       out.push([s, (s + 1) % 3, (s + 2) % 3]);
     }
   }
@@ -239,7 +247,7 @@ export function tetsOverlap(
   B: readonly [Vec3, Vec3, Vec3, Vec3],
   edgeLen: number
 ): boolean {
-  const margin = edgeLen * 1e-4;
+  const margin = edgeLen * SAT_MARGIN_FRAC;
 
   // Face normals (4 per tet).
   for (const t of [A, B]) {
