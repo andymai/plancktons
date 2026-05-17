@@ -176,10 +176,55 @@ function commitIfClear(
   a.freeFaces.splice(ffIdx, 1);
   const newIdx = a.tets.length - 1;
   insertTet(a.spatialHash, newIdx, newCent);
-  faceTriangles(newTet).forEach((tri, fi) => {
-    if (fi !== tfIdx) a.freeFaces.push({ tri, tetIdx: newIdx, faceIdx: fi });
-  });
+  // The matePlanckton fix (#8) gives true vertex-coincident face sharing,
+  // so a fresh tet's NON-mated faces can accidentally coincide with already-
+  // existing free faces in dense regions. We splice both sides out instead
+  // of adding them as new free faces — leaving them tracked as free would
+  // miscount coordination and free-face fraction (and would let growOne
+  // attempt a re-mate on an already-occluded face).
+  const newFaces = faceTriangles(newTet);
+  for (let fi = 0; fi < 4; fi++) {
+    if (fi === tfIdx) continue;
+    const tri = newFaces[fi] as [Vec3, Vec3, Vec3];
+    const matchIdx = findFreeFaceMatch(a, tri);
+    if (matchIdx >= 0) {
+      a.freeFaces.splice(matchIdx, 1);
+    } else {
+      a.freeFaces.push({ tri, tetIdx: newIdx, faceIdx: fi });
+    }
+  }
   return true;
+}
+
+/** Return the index in a.freeFaces of a face whose triangle is vertex-
+ * coincident with `tri` (any vertex permutation), or -1 if none. */
+function findFreeFaceMatch(a: Assembly, tri: readonly [Vec3, Vec3, Vec3]): number {
+  const eps = 1e-6 * a.opts.L;
+  const inv = 1 / eps;
+  const qx0 = Math.round(tri[0][0] * inv);
+  const qy0 = Math.round(tri[0][1] * inv);
+  const qz0 = Math.round(tri[0][2] * inv);
+  const qx1 = Math.round(tri[1][0] * inv);
+  const qy1 = Math.round(tri[1][1] * inv);
+  const qz1 = Math.round(tri[1][2] * inv);
+  const qx2 = Math.round(tri[2][0] * inv);
+  const qy2 = Math.round(tri[2][1] * inv);
+  const qz2 = Math.round(tri[2][2] * inv);
+  const key = [`${qx0},${qy0},${qz0}`, `${qx1},${qy1},${qz1}`, `${qx2},${qy2},${qz2}`]
+    .sort()
+    .join('|');
+  for (let i = 0; i < a.freeFaces.length; i++) {
+    const t = a.freeFaces[i]!.tri;
+    const k = [
+      `${Math.round(t[0][0] * inv)},${Math.round(t[0][1] * inv)},${Math.round(t[0][2] * inv)}`,
+      `${Math.round(t[1][0] * inv)},${Math.round(t[1][1] * inv)},${Math.round(t[1][2] * inv)}`,
+      `${Math.round(t[2][0] * inv)},${Math.round(t[2][1] * inv)},${Math.round(t[2][2] * inv)}`,
+    ]
+      .sort()
+      .join('|');
+    if (k === key) return i;
+  }
+  return -1;
 }
 
 function pickFreeFace(a: Assembly): number {

@@ -31,17 +31,13 @@ describe('tetNeighbors', () => {
     expect(n[1]).toContain(0);
   });
 
-  it('neighbor list size ≥ assembly bookkeeping (catches accidental adjacencies)', () => {
-    // growOne only removes the explicitly-mated face from freeFaces, so in
-    // dense regions a new tet's OTHER faces can land on already-existing
-    // tets' free faces by accident. tetNeighbors detects those via vertex-
-    // hash collision; assembly.freeFaces does not splice them. So:
-    //   sum |n[i]|  ≥  4N - F_free
-    // with equality for sparse / branchy assemblies.
+  it('neighbor list size equals 4N - F_free (bookkeeping consistent after #13)', () => {
+    // After issue #13's fix, commitIfClear splices out accidental adjacencies
+    // so a.freeFaces accurately reflects the geometric free-face graph.
     const a = grow(11, 20);
     const n = tetNeighbors(a);
     const totalEntries = n.reduce((s, l) => s + l.length, 0);
-    expect(totalEntries).toBeGreaterThanOrEqual(4 * a.tets.length - a.freeFaces.length);
+    expect(totalEntries).toBe(4 * a.tets.length - a.freeFaces.length);
     // Every entry should be reciprocal: i in n[j] ⇔ j in n[i].
     for (let i = 0; i < n.length; i++) {
       for (const j of n[i]!) {
