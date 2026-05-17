@@ -200,51 +200,39 @@ Pre-commit hook (husky) runs `validate` automatically.
 
 ```
 src/
-  lib/                  Pure math (no React, no THREE)
-    vec.ts              Vec3 helpers
-    rng.ts              Seeded LCG (reproducible)
-    planckton.ts        Hill T₁ construction, face mating, SAT overlap test
-    assembly.ts         Free-face tracking, growth strategies, ⟨z⟩
-    hull.ts             quickhull3d wrapper + volume + bbox
-    shape.ts            Gyration tensor, Jacobi eigensolve, κ², S
-    paircorr.ts         g(r) pair correlation function
-    scaling.ts          Three fit models + R² + AIC + α ± Δα
-    references.ts       Published packing densities + citations
-    canonicalScenes.ts  6-cube + 8-reptile constructions
-    mesh.ts             Planckton → THREE.BufferGeometry
-    exports.ts          STL / JSON / PNG / URL-share
-    provenance.ts       Build-stamp injected by Vite
-    study.ts            Multi-trial batch runner + CSV with provenance
-    studyClient.ts      Per-call short-lived Web Worker dispatcher
-    workerPool.ts       Trial / Ns fan-out across hardwareConcurrency-1 workers
-    store.ts            Zustand UI state
-    validate.ts         Pairwise overlap auditor (used in tests)
-  scenes/
-    SceneCanvas.tsx
-    SingleScene.tsx
-    CubeScene.tsx
-    ReptileScene.tsx
-    GrowthScene.tsx     ref-cached incremental growth
-    PlancktonMesh.tsx   tet inset for z-fight avoidance
-    HullMesh.tsx
-    GyrationEllipsoid.tsx
-    CameraFit.tsx
-  ui/
-    Controls.tsx
-    HUD.tsx
-    Actions.tsx         Share / PNG / STL / JSON / GitHub link
-    Research.tsx        histograms, sweep curves, g(r), CSV download
-    DraftSlider.tsx     commit-on-release sliders + live draft callback
-    useDraftValue.ts    draft-value sync hook
-    ResizableSidebar.tsx
-    useKeyboard.ts
-    ErrorBoundary.tsx
+  lib/                  Pure math (no React, no THREE imports allowed)
+    Geometry kernel:    planckton, assembly, hull, mesh, canonicalScenes,
+                        spatialHash, vertexHash, kdtree, validate
+    Strategies & RNG:   rng, vec, constants
+    Statistics:         study, studyClient, workerPool, scaling, shape,
+                        paircorr, autocorr, kinetics, steinhardt,
+                        embeddedCubes, mcRefine, morphology, voronoi
+    I/O:                exports, svgExport, provenance, references, store
+  scenes/               R3F components (read lib, never imported by lib)
+    SceneCanvas, SingleScene, CubeScene, ReptileScene, GrowthScene,
+    PlancktonMesh, HullMesh, GyrationEllipsoid, DihedralLabels, CameraFit
+  ui/                   React UI (reads lib + scenes, never imported by lib)
+    Chrome:             Controls, HUD, Actions, ModeSwitch, MetricsPanel,
+                        ProgressBar, Transport, HelpOverlay, Term, glossary,
+                        FirstVisitToast, icons, SvgPlot
+    Layout:             ResizableSidebar, ResizablePane, ErrorBoundary
+    State & hooks:      uiStore, useDraftValue, useKeyboard, useRadioGroup,
+                        useWorkerRun, DraftSlider
+    controls/           Per-scene control panels (Single, Cube, Reptile,
+                        Growth, Display, Analyses)
+    research/           Research-mode panels (Histogram, Curve, Kinetics,
+                        Autocorr, PairCorrelation, Steinhardt, References)
+  worker/
+    study.worker.ts     Browser Web Worker entry (uses lib only)
 scripts/
   study.ts              Headless batch CLI (npm run study)
+  _studyWorker.ts       node:worker_threads worker used by --workers
   brepjsOverlap.ts      Independent OpenCascade overlap oracle (devDep)
+  preliminary-analyze.ts, preliminary-q4.ts    Offline analysis helpers
 tests/                  Vitest suites
 docs/
   PROOF.md              SAT overlap-test correctness proof
+data/preliminary/       CSVs backing THEORY.md §4.5
 ```
 
 ## Known gaps
