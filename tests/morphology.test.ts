@@ -16,6 +16,14 @@ describe('morphologicalHull', () => {
     expect(morphologicalHull([], 1)).toBe(null);
   });
 
+  it('applies default voxelSize/alpha/padVoxels when opts omitted', () => {
+    // Defaults: voxelSize=L/12, alpha=L. We only need the call to succeed.
+    const tet = unitPlanckton(1, 'R');
+    const result = morphologicalHull([tet], 1)!;
+    expect(result).not.toBe(null);
+    expect(result.volume).toBeGreaterThan(0);
+  });
+
   it('recovers V* ≈ L³/6 for a single Planckton with tiny α (closing is a no-op)', () => {
     const tet = unitPlanckton(1, 'R');
     const result = morphologicalHull([tet], 1, { voxelSize: 0.06, alpha: 0.05 })!;

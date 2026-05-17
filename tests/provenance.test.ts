@@ -23,6 +23,22 @@ describe('provenance()', () => {
     expect(p.commit).toBe('dev');
     expect(p.buildTime).toBe('dev');
   });
+
+  it('uses injected __BUILD_COMMIT__ / __BUILD_TIME__ when defined as strings', () => {
+    // Vite's `define` plugin replaces these at build time; emulate that by
+    // assigning the globals before calling provenance.
+    const g = globalThis as unknown as { __BUILD_COMMIT__?: string; __BUILD_TIME__?: string };
+    g.__BUILD_COMMIT__ = 'abc1234';
+    g.__BUILD_TIME__ = '2026-05-17T00:00:00Z';
+    try {
+      const p = provenance();
+      expect(p.commit).toBe('abc1234');
+      expect(p.buildTime).toBe('2026-05-17T00:00:00Z');
+    } finally {
+      delete g.__BUILD_COMMIT__;
+      delete g.__BUILD_TIME__;
+    }
+  });
 });
 
 describe('provenanceCsvHeader()', () => {

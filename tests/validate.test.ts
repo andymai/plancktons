@@ -19,6 +19,20 @@ describe('findOverlaps', () => {
       expect(findOverlaps(a, 1)).toEqual([]);
     }
   });
+
+  it('reports a pair when two tets are forced to coincide', () => {
+    // Construct a 2-tet "assembly" by hand where both tets share the same
+    // verts → trivially overlapping. This exercises the push branch.
+    const p = unitPlanckton(1, 'R');
+    const fake = {
+      tets: [p, { ...p }],
+      opts: { L: 1, rng: new Rng(1), chiralityBias: 0.5, strategy: 'uniform' as const },
+    } as unknown as Parameters<typeof findOverlaps>[0];
+    const overlaps = findOverlaps(fake, 1);
+    expect(overlaps).toHaveLength(1);
+    expect(overlaps[0]!.a).toBe(0);
+    expect(overlaps[0]!.b).toBe(1);
+  });
 });
 
 describe('sideOfFace', () => {
@@ -41,5 +55,24 @@ describe('mateOnCorrectSide', () => {
     const fakeMate = { ...parent, verts: parent.verts };
     const target = [parent.verts[0], parent.verts[2], parent.verts[1]] as const;
     expect(mateOnCorrectSide(fakeMate, target, parent)).toBe(false);
+  });
+
+  it('true when mate sits on the opposite side of the target face', () => {
+    const parent = unitPlanckton(1, 'R');
+    // Mirror the parent across the z=0 plane (face F0). The mirrored tet
+    // sits below the xy-plane while parent sits above → centroids on
+    // opposite sides of the F0 plane.
+    const mirroredVerts = parent.verts.map(
+      (v) => [v[0], v[1], -v[2]] as [number, number, number]
+    ) as [
+      [number, number, number],
+      [number, number, number],
+      [number, number, number],
+      [number, number, number],
+    ];
+    const mate = { ...parent, verts: mirroredVerts };
+    // F0 triangle (verts 0, 2, 1) is shared by parent and mate.
+    const target = [parent.verts[0], parent.verts[2], parent.verts[1]] as const;
+    expect(mateOnCorrectSide(mate, target, parent)).toBe(true);
   });
 });

@@ -1,6 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import { fitAsymptotePower, fitExpDecay, fitLogLog } from '../src/lib/scaling.js';
 
+describe('fitLogLog edge cases', () => {
+  it('returns null when xs and ys lengths differ', () => {
+    expect(fitLogLog([1, 2, 3], [1, 2])).toBe(null);
+  });
+
+  it('returns null when all x values are equal (sxx = 0 in log space)', () => {
+    expect(fitLogLog([1, 1, 1, 1], [1, 2, 3, 4])).toBe(null);
+  });
+
+  it('reports r² = 1 when y is constant (syy = 0 in log space)', () => {
+    const fit = fitLogLog([1, 2, 4, 8], [5, 5, 5, 5])!;
+    expect(fit.r2).toBe(1);
+    expect(fit.alpha).toBeCloseTo(0, 10);
+  });
+});
+
 describe('fitLogLog', () => {
   it('recovers exact exponent from a clean power law', () => {
     // y = 3 · x^2

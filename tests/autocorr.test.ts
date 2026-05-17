@@ -16,6 +16,17 @@ describe('autocorrelationS2', () => {
     expect(autocorrelationS2([], 1)).toBe(null);
   });
 
+  it('applies all option defaults when opts is omitted', () => {
+    // Defaults: voxelSize=L/10, padL=L/2, samples=100k, nBins=60, seed=1.
+    // We just need the call to succeed and return a populated bin set.
+    const tet = unitPlanckton(1, 'R');
+    const r = autocorrelationS2([tet], 1)!;
+    expect(r).not.toBe(null);
+    expect(r.r.length).toBe(60);
+    expect(r.s2.length).toBe(60);
+    expect(r.phi).toBeGreaterThan(0);
+  });
+
   it('φ falls between (V*/V_bbox)·0.5 and 1', () => {
     // Single tet, bbox = unit cube. V*/V_bbox = (1/6)/1 = 0.167. With L/10
     // voxelization at padL = 0.5, bbox grows to 2L per axis = 8 L³, so

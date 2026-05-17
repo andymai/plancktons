@@ -62,4 +62,44 @@ describe('runMcRefine', () => {
     const result = runMcRefine({ initial, steps: 25, temperature: 0.001, seed: 1 });
     expect(result.finalTets.length).toBe(initial.tets.length);
   });
+
+  it('empty assembly: etaOf returns 0; no proposals attempted', () => {
+    // `makeAssembly` seeds with one tet; rebuildFromTets([]) gives a truly
+    // empty assembly so we exercise etaOf's `tets.length === 0` branch.
+    const initial = rebuildFromTets([], {
+      L: 1,
+      rng: new Rng(1),
+      chiralityBias: 0.5,
+      strategy: 'uniform',
+    });
+    const result = runMcRefine({ initial, steps: 5, temperature: 0.01, seed: 1 });
+    expect(result.initialEta).toBe(0);
+    expect(result.finalEta).toBe(0);
+    expect(result.trajectory).toHaveLength(6);
+    expect(result.proposed).toBe(0);
+    expect(result.accepted).toBe(0);
+  });
+
+  it('single-tet assembly: no proposals possible (< 2 tets)', () => {
+    const initial = grow(11, 1);
+    expect(initial.tets.length).toBe(1);
+    const result = runMcRefine({ initial, steps: 4, temperature: 0.01, seed: 1 });
+    expect(result.proposed).toBe(0);
+    expect(result.accepted).toBe(0);
+    expect(result.finalTets).toHaveLength(1);
+  });
+
+  it('fires onStep hook with progressive step numbers', () => {
+    const initial = grow(11, 8);
+    const calls: Array<{ step: number; total: number; eta: number }> = [];
+    runMcRefine(
+      { initial, steps: 5, temperature: 0.001, seed: 1 },
+      {
+        onStep: (step, total, eta) => calls.push({ step, total, eta }),
+      }
+    );
+    expect(calls).toHaveLength(5);
+    expect(calls.map((c) => c.step)).toEqual([1, 2, 3, 4, 5]);
+    for (const c of calls) expect(c.total).toBe(5);
+  });
 });
