@@ -615,7 +615,7 @@ function MorphologyPanel() {
     <>
       <div className="panel-divider-small" />
       <div className="panel-title" style={{ marginBottom: 4 }}>
-        Morphological hull η_M
+        Morphological hull <Term name="etaM">η_M</Term>
       </div>
       <p className="caption" style={{ margin: '0 0 6px' }}>
         Third packing fraction: η_M = V★/V_morph where V_morph is the closure of the aggregate by a
@@ -677,7 +677,7 @@ function VoronoiPanel() {
     <>
       <div className="panel-divider-small" />
       <div className="panel-title" style={{ marginBottom: 4 }}>
-        Voronoi packing fraction η_V
+        Voronoi packing fraction <Term name="etaV">η_V</Term>
       </div>
       <p className="caption" style={{ margin: '0 0 6px' }}>
         Fourth η: per-tet Voronoi cell volume → η_V = V★/⟨V_voronoi⟩. The literature-standard metric

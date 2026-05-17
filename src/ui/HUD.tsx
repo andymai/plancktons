@@ -74,7 +74,9 @@ const GrowthHUD = memo(function GrowthHUD({
       {showAdvanced && (
         <>
           <div className="hud-divider" />
-          <div className="hud-section">Gyration / shape</div>
+          <div className="hud-section">
+            <Term name="gyrationTensor">Gyration / shape</Term>
+          </div>
           <div
             className="hud-row"
             title="Radius of gyration: R_g = √(λ₁+λ₂+λ₃). Characteristic size of the assembly."
@@ -105,11 +107,8 @@ const GrowthHUD = memo(function GrowthHUD({
             <span className="hud-value">{fmt(metrics.prolateness, 3)}</span>
           </div>
           <div className="hud-divider" />
-          <div
-            className="hud-section"
-            title="Steinhardt bond-orientational order parameters from face-shared neighbor bond directions. Rotation-invariant, in [0, 1]."
-          >
-            Bond-orientational order
+          <div className="hud-section">
+            <Term name="bondOrder">Bond-orientational order</Term>
           </div>
           <div
             className="hud-row"

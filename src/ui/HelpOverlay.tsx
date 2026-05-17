@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { useStore } from '../lib/store.js';
 import type { SceneId } from '../lib/store.js';
 import { GLOSSARY } from './glossary.js';
@@ -43,6 +43,7 @@ export function HelpOverlay() {
   const scene = useStore((s) => s.scene);
   const [tab, setTab] = useState<Tab>('scene');
   const dialogRef = useRef<HTMLDivElement | null>(null);
+  const backdropDownRef = useRef(false);
 
   useEffect(() => {
     if (!open) return;
@@ -86,8 +87,24 @@ export function HelpOverlay() {
 
   if (!open) return null;
 
+  // Track whether the press-and-release pair both happen on the backdrop;
+  // otherwise a drag that starts inside the dialog and releases on the
+  // backdrop would close the modal — annoying for text selection.
+  function onBackdropPointerDown(e: ReactMouseEvent) {
+    if (e.target === e.currentTarget) backdropDownRef.current = true;
+  }
+  function onBackdropClick(e: ReactMouseEvent) {
+    if (backdropDownRef.current && e.target === e.currentTarget) setOpen(false);
+    backdropDownRef.current = false;
+  }
+
   return (
-    <div className="overlay-backdrop" onClick={() => setOpen(false)} role="presentation">
+    <div
+      className="overlay-backdrop"
+      onMouseDown={onBackdropPointerDown}
+      onClick={onBackdropClick}
+      role="presentation"
+    >
       <div
         ref={dialogRef}
         className="help-overlay"

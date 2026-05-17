@@ -16,6 +16,7 @@ import {
 import { useWorkerRun } from './useWorkerRun.js';
 import { ProgressBar } from './ProgressBar.js';
 import { SvgPlot } from './SvgPlot.js';
+import { Term } from './Term.js';
 import { CloseIcon, DownloadIcon, PinIcon } from './icons.js';
 
 type FitModel = 'power' | 'asymptote+power' | 'exp';
@@ -825,11 +826,8 @@ function PairCorrelationPlot() {
 
   return (
     <details className="research-section collapsible">
-      <summary
-        className="research-title"
-        title="g(r) = local density at distance r normalized by bulk density. Random uniform → 1; periodic crystal → sharp peaks; amorphous → broad peaks decaying to 1."
-      >
-        Pair correlation g(r) (tet centroids)
+      <summary className="research-title">
+        <Term name="pairCorrelation">Pair correlation g(r)</Term> (tet centroids)
       </summary>
       <div className="research-row">
         <label>
@@ -1000,11 +998,8 @@ function KineticsPanel() {
 
   return (
     <details className="research-section collapsible">
-      <summary
-        className="research-title"
-        title="Avrami-KJMA kinetics: η_C(t) = η_∞ · (1 − exp(−K·t^n)). n=1 surface-limited, n=3 bulk-nucleation, n=4 increasing-nucleation."
-      >
-        Growth kinetics (Avrami)
+      <summary className="research-title">
+        Growth kinetics (<Term name="avrami">Avrami</Term>)
       </summary>
       <div className="research-row">
         <button onClick={run} disabled={job.running}>
