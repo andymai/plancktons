@@ -171,6 +171,5 @@ for (const N of Ns) {
 }
 process.stderr.write(`done in ${(Date.now() - t0) / 1000}s — ${allTrials.length} trials\n`);
 
-const text =
-  args.format === 'jsonl' ? trialsToJsonl(allTrials) : trialsToCSV(allTrials);
+const text = args.format === 'jsonl' ? trialsToJsonl(allTrials) : trialsToCSV(allTrials);
 emit(text, args.out);

@@ -164,7 +164,9 @@ export function freeSurfaceArea(a: Assembly): number {
 export function chiralityCounts(a: Assembly): { R: number; L: number } {
   let R = 0;
   let L = 0;
-  for (const t of a.tets) if (t.chirality === 'R') R++; else L++;
+  for (const t of a.tets)
+    if (t.chirality === 'R') R++;
+    else L++;
   return { R, L };
 }
 
@@ -207,9 +209,7 @@ export function freeFaceFraction(a: Assembly): number {
   return a.freeFaces.length / (4 * a.tets.length);
 }
 
-export function freeFaceShapeCounts(
-  a: Assembly
-): { isoceles: number; scalene: number } {
+export function freeFaceShapeCounts(a: Assembly): { isoceles: number; scalene: number } {
   const L = a.opts.L;
   const isoSig: [number, number, number] = [L, L, L * Math.SQRT2].sort((x, y) => x - y) as [
     number,

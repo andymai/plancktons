@@ -32,7 +32,11 @@ export function findOverlaps(assembly: Assembly, edgeLen: number): OverlapReport
 
 /** Signed distance from point to the plane of faceTri (positive = outward-normal side). */
 export function sideOfFace(
-  faceTri: readonly [readonly [number, number, number], readonly [number, number, number], readonly [number, number, number]],
+  faceTri: readonly [
+    readonly [number, number, number],
+    readonly [number, number, number],
+    readonly [number, number, number],
+  ],
   point: readonly [number, number, number]
 ): number {
   const a = faceTri[0] as [number, number, number];
@@ -49,7 +53,11 @@ export function sideOfFace(
  */
 export function mateOnCorrectSide(
   newTet: Planckton,
-  target: readonly [readonly [number, number, number], readonly [number, number, number], readonly [number, number, number]],
+  target: readonly [
+    readonly [number, number, number],
+    readonly [number, number, number],
+    readonly [number, number, number],
+  ],
   parent: Planckton
 ): boolean {
   const newC = centroid(newTet.verts[0], newTet.verts[1], newTet.verts[2], newTet.verts[3]);

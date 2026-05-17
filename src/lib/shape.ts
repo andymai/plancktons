@@ -170,9 +170,9 @@ export function gyrationDescriptors(points: ReadonlyArray<Vec3>): ShapeDescripto
     lambdas: [l1, l2, l3],
     axes: vectors,
     rg,
-    asphericity: b,       // literature b (length²) — not yet normalized
-    acylindricity: c,     // literature c (length²)
-    kappaSq,              // dimensionless ∈ [0, 1]
+    asphericity: b, // literature b (length²) — not yet normalized
+    acylindricity: c, // literature c (length²)
+    kappaSq, // dimensionless ∈ [0, 1]
     prolateness,
   };
 }

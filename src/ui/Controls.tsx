@@ -60,23 +60,16 @@ function SingleControls() {
     <div>
       <div className="panel-title">Chirality</div>
       <div className="chirality-toggle">
-        <button
-          className={`chir-btn ${chir === 'R' ? 'active' : ''}`}
-          onClick={() => set('R')}
-        >
+        <button className={`chir-btn ${chir === 'R' ? 'active' : ''}`} onClick={() => set('R')}>
           Right-handed (red)
         </button>
-        <button
-          className={`chir-btn ${chir === 'L' ? 'active' : ''}`}
-          onClick={() => set('L')}
-        >
+        <button className={`chir-btn ${chir === 'L' ? 'active' : ''}`} onClick={() => set('L')}>
           Left-handed (white)
         </button>
       </div>
       <p className="caption">
-        A Planckton (Hill tetrahedron) is a space-filling tet with two triangle
-        types: an isoceles right (1, 1, √2) and a scalene right (1, √2, √3).
-        The mirror image is its chiral twin.
+        A Planckton (Hill tetrahedron) is a space-filling tet with two triangle types: an isoceles
+        right (1, 1, √2) and a scalene right (1, √2, √3). The mirror image is its chiral twin.
       </p>
     </div>
   );
@@ -101,8 +94,8 @@ function CubeControls() {
         <span className="slider-value">{v.toFixed(2)}</span>
       </label>
       <p className="caption">
-        Six Plancktons (3 right + 3 left, one per permutation of (x, y, z))
-        tile a cube exactly. Each occupies L³ / 6 of the cube.
+        Six Plancktons (3 right + 3 left, one per permutation of (x, y, z)) tile a cube exactly.
+        Each occupies L³ / 6 of the cube.
       </p>
     </div>
   );
@@ -144,10 +137,9 @@ function ReptileControls() {
         </span>
       </label>
       <p className="caption">
-        Doubling a Planckton gives 8× the volume — so 8 unit Plancktons tile a
-        2× Planckton (depth 1). Recursing gives 64 (depth 2) or 512 (depth 3)
-        sub-Plancktons. This is the m³-reptile family Matoušek proved is the
-        only one for tetrahedra.
+        Doubling a Planckton gives 8× the volume — so 8 unit Plancktons tile a 2× Planckton (depth
+        1). Recursing gives 64 (depth 2) or 512 (depth 3) sub-Plancktons. This is the m³-reptile
+        family Matoušek proved is the only one for tetrahedra.
       </p>
     </div>
   );
@@ -163,7 +155,10 @@ function GrowthControls() {
   return (
     <div>
       <div className="panel-title">Random growth</div>
-      <label className="slider-row" title="Target number of Plancktons. Random face-to-face growth typically jams between N≈100 and N≈500 depending on strategy.">
+      <label
+        className="slider-row"
+        title="Target number of Plancktons. Random face-to-face growth typically jams between N≈100 and N≈500 depending on strategy."
+      >
         <span>N (target tets)</span>
         <input
           type="range"
@@ -186,7 +181,10 @@ function GrowthControls() {
           style={{ width: '4.2rem' }}
         />
       </label>
-      <label className="slider-row" title="Deterministic PRNG seed. Re-running with the same seed reproduces the exact same assembly.">
+      <label
+        className="slider-row"
+        title="Deterministic PRNG seed. Re-running with the same seed reproduces the exact same assembly."
+      >
         <span>Seed</span>
         <input
           type="number"
@@ -245,18 +243,14 @@ function GrowthControls() {
           value={growth.chiralityBias}
           onChange={(e) => setGrowth({ chiralityBias: parseFloat(e.target.value) })}
         />
-        <span className="slider-value">
-          R:{(growth.chiralityBias * 100).toFixed(0)}%
-        </span>
+        <span className="slider-value">R:{(growth.chiralityBias * 100).toFixed(0)}%</span>
       </label>
       <div className="panel-divider-small" />
       <label className="slider-row">
         <span>Animation</span>
         <select
           value={animationMode}
-          onChange={(e) =>
-            setAnimationMode(e.target.value as 'instant' | 'animated' | 'step')
-          }
+          onChange={(e) => setAnimationMode(e.target.value as 'instant' | 'animated' | 'step')}
         >
           <option value="instant">Instant snap</option>
           <option value="animated">Animated growth</option>
@@ -279,9 +273,9 @@ function GrowthControls() {
       )}
       {animationMode === 'step' && <StepButton />}
       <p className="caption">
-        Each step picks a random free face of the assembly and attaches a new
-        Planckton (random chirality) with a compatible face. The "compact"
-        strategy biases toward concave pockets, producing a denser shrink-wrap.
+        Each step picks a random free face of the assembly and attaches a new Planckton (random
+        chirality) with a compatible face. The "compact" strategy biases toward concave pockets,
+        producing a denser shrink-wrap.
       </p>
     </div>
   );
@@ -292,7 +286,11 @@ function StepButton() {
   return (
     <div className="slider-row">
       <span>Add tet</span>
-      <button onClick={bumpStep} style={{ flex: 1 }} title="Append one Planckton, clamped to the N target">
+      <button
+        onClick={bumpStep}
+        style={{ flex: 1 }}
+        title="Append one Planckton, clamped to the N target"
+      >
         +1 Planckton →
       </button>
     </div>
@@ -390,9 +388,8 @@ function AdvancedControls() {
         <span className="slider-value">{(color.tetInset * 100).toFixed(1)}%</span>
       </label>
       <p className="caption" style={{ margin: '4px 0 0' }}>
-        Tets are mathematically face-sharing (V = N·L³/6 exactly). A small
-        rendered gap avoids z-fighting on shared faces; set to 0 to see the
-        true touching configuration.
+        Tets are mathematically face-sharing (V = N·L³/6 exactly). A small rendered gap avoids
+        z-fighting on shared faces; set to 0 to see the true touching configuration.
       </p>
     </div>
   );

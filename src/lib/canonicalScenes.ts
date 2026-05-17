@@ -2,7 +2,10 @@ import type { Vec3 } from './vec.js';
 import type { Planckton, Chirality } from './planckton.js';
 
 const RING_IDX: ReadonlyArray<readonly [number, number, number]> = [
-  [1, 2, 3], [0, 3, 2], [0, 1, 3], [0, 2, 1],
+  [1, 2, 3],
+  [0, 3, 2],
+  [0, 1, 3],
+  [0, 2, 1],
 ];
 
 /** Build a tetrahedron from 4 arbitrary points, auto-orienting faces outward. */
@@ -37,7 +40,7 @@ export function tetFromPts(pts: readonly [Vec3, Vec3, Vec3, Vec3]): Planckton {
     const fx = (Vi[0] + Vj[0] + Vk[0]) / 3;
     const fy = (Vi[1] + Vj[1] + Vk[1]) / 3;
     const fz = (Vi[2] + Vj[2] + Vk[2]) / 3;
-    return ((fx - cx) * nx + (fy - cy) * ny + (fz - cz) * nz) >= 0
+    return (fx - cx) * nx + (fy - cy) * ny + (fz - cz) * nz >= 0
       ? ([i, j, k] as const)
       : ([i, k, j] as const);
   });
@@ -52,7 +55,12 @@ export function cubeTiling(L: number): Planckton[] {
     [0, 0, L],
   ];
   const perms: ReadonlyArray<[number, number, number]> = [
-    [0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0],
+    [0, 1, 2],
+    [0, 2, 1],
+    [1, 0, 2],
+    [1, 2, 0],
+    [2, 0, 1],
+    [2, 1, 0],
   ];
   return perms.map(([a, b, c]) => {
     const V0: Vec3 = [0, 0, 0];
@@ -69,11 +77,7 @@ export function eightReptile(L: number): Planckton[] {
   const W1: Vec3 = [2 * L, 0, 0];
   const W2: Vec3 = [2 * L, 2 * L, 0];
   const W3: Vec3 = [2 * L, 2 * L, 2 * L];
-  const mid = (a: Vec3, b: Vec3): Vec3 => [
-    (a[0] + b[0]) / 2,
-    (a[1] + b[1]) / 2,
-    (a[2] + b[2]) / 2,
-  ];
+  const mid = (a: Vec3, b: Vec3): Vec3 => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
   const M01 = mid(W0, W1);
   const M02 = mid(W0, W2);
   const M03 = mid(W0, W3);
@@ -95,10 +99,7 @@ export function eightReptile(L: number): Planckton[] {
   return pieces.map(tetFromPts);
 }
 
-export function explode(
-  pieces: ReadonlyArray<Planckton>,
-  amount: number
-): Planckton[] {
+export function explode(pieces: ReadonlyArray<Planckton>, amount: number): Planckton[] {
   if (amount === 0) return [...pieces];
   let cx = 0,
     cy = 0,

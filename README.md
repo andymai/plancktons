@@ -19,10 +19,10 @@ vertices `(0,0,0), (L,0,0), (L,L,0), (L,L,L)` and volume `L³ / 6`.
 
 Two face types, both right triangles:
 
-* `(L, L, L√2)` isoceles right (×2)
-* `(L, L√2, L√3)` scalene right (×2)
+- `(L, L, L√2)` isoceles right (×2)
+- `(L, L√2, L√3)` scalene right (×2)
 
-All 6 dihedral angles are *rational* multiples of π — which is exactly the
+All 6 dihedral angles are _rational_ multiples of π — which is exactly the
 condition (Dehn invariant = 0) making the Hill T scissors-congruent to a
 cube. So 6 Plancktons tile a cube, 8 tile a doubled Planckton, 64 tile it
 recursively, etc. — the **only** known reptile family of tetrahedra.
@@ -38,21 +38,20 @@ left-handed in the default color scheme).
    of `(x, y, z)`) tile a cube exactly. Explode slider.
 3. **8-reptile dissection** — eight unit Plancktons tile a doubled Planckton;
    recurse to 64 sub-Plancktons. Per Matoušek & Safernová 2010, this is
-   provably the *only* k-reptile family for tetrahedra (`k = m³`).
+   provably the _only_ k-reptile family for tetrahedra (`k = m³`).
 4. **Random face-to-face growth** — RSA-style assembly. Live readout of:
-
-   * `V★ = N L³/6` (sum of part volumes)
-   * `V` = convex-hull volume (vacuum-bag shrink-wrap upper bound)
-   * `η = V★/V` — packing efficiency
-   * Free surface area, vertex coordination, free-face fraction
-   * Gyration tensor: `R_g`, anisotropy `κ²`, prolateness `S`
-   * Optional **inertia ellipsoid** overlay
+   - `V★ = N L³/6` (sum of part volumes)
+   - `V` = convex-hull volume (vacuum-bag shrink-wrap upper bound)
+   - `η = V★/V` — packing efficiency
+   - Free surface area, vertex coordination, free-face fraction
+   - Gyration tensor: `R_g`, anisotropy `κ²`, prolateness `S`
+   - Optional **inertia ellipsoid** overlay
 
 ## Two growth strategies
 
-* **Uniform** — pick any free face with equal probability. Asymptotic
+- **Uniform** — pick any free face with equal probability. Asymptotic
   efficiency `η_∞ ≈ 0.25` (branchy fractal-like pile).
-* **Compact** — Boltzmann weight `p(face) ∝ exp(β · n̂ · ĉ)` biases toward
+- **Compact** — Boltzmann weight `p(face) ∝ exp(β · n̂ · ĉ)` biases toward
   concave pockets. Slider over `β`: `β = 0` recovers uniform; `β → ∞` is
   greedy. `β = 3` gives `η_∞ ≈ 0.34` — measurably tighter packing.
 
@@ -63,15 +62,15 @@ right-handed templates drawn during growth.
 
 Toggle **Advanced** in the sidebar to expose:
 
-* **Trial histogram** at fixed `N` — distribution of `η`, mean ± std, CSV
+- **Trial histogram** at fixed `N` — distribution of `η`, mean ± std, CSV
   export.
-* **`η` vs `N` curve** with confidence band, plus reference packing
+- **`η` vs `N` curve** with confidence band, plus reference packing
   densities (sphere FCC `0.7405`, regular tet `0.717`, RCP `0.637`, …)
   drawn as horizontal lines.
-* **Reference table** with full citations and source links.
-* **Detailed HUD** showing gyration descriptors, vertex coordination,
+- **Reference table** with full citations and source links.
+- **Detailed HUD** showing gyration descriptors, vertex coordination,
   free-face shape counts, chirality counts, bbox.
-* **Visual options**: color by chirality vs. by placement order; toggle hull
+- **Visual options**: color by chirality vs. by placement order; toggle hull
   / inertia ellipsoid; tweak tet inset, edge opacity.
 
 ## CLI — `scripts/study.ts`
@@ -98,11 +97,11 @@ the browser, so results are bit-identical and `seed` is fully reproducible
 
 ## Export and share
 
-* **🔗 Share link** — encodes scene/seed/N/strategy/β/chirality in the URL
+- **🔗 Share link** — encodes scene/seed/N/strategy/β/chirality in the URL
   hash. Click, paste, identical view.
-* **📸 PNG** — high-res canvas screenshot.
-* **🧊 STL** — watertight STL of the current assembly (for 3D printing).
-* **💾 JSON** — full state dump (vertices, chirality).
+- **📸 PNG** — high-res canvas screenshot.
+- **🧊 STL** — watertight STL of the current assembly (for 3D printing).
+- **💾 JSON** — full state dump (vertices, chirality).
 
 ## Local development
 
@@ -158,24 +157,24 @@ scripts/
 
 ## Status / known gaps
 
-* **Voronoi / alpha-shape `V_α`** — planned. Convex hull `V` is an
-  *upper* bound on the true vacuum-bag volume; assemblies with deep
+- **Voronoi / alpha-shape `V_α`** — planned. Convex hull `V` is an
+  _upper_ bound on the true vacuum-bag volume; assemblies with deep
   concavities have `V_α < V`.
-* **Worker pool** — heavy Research-mode sweeps (e.g. 500 trials × 12 N
+- **Worker pool** — heavy Research-mode sweeps (e.g. 500 trials × 12 N
   values) currently block the main thread. CLI is the workaround.
-* **Metropolis MC post-growth refinement** — would let `η_∞` approach the
+- **Metropolis MC post-growth refinement** — would let `η_∞` approach the
   true greedy maximum.
 
 ## References
 
 The full bibliographic list is in [THEORY.md §5–§6](./THEORY.md). The big two:
 
-* M.J.M. Hill, *Determination of the volumes of certain species of
-  tetrahedra without employment of the method of limits*, *Proc. Lond. Math.
-  Soc.* 2:39 (1896).
-* J. Matoušek & Z. Safernová, *On the nonexistence of k-reptile tetrahedra*,
+- M.J.M. Hill, _Determination of the volumes of certain species of
+  tetrahedra without employment of the method of limits_, _Proc. Lond. Math.
+  Soc._ 2:39 (1896).
+- J. Matoušek & Z. Safernová, _On the nonexistence of k-reptile tetrahedra_,
   [arXiv:1006.1807](https://arxiv.org/abs/1006.1807) (2010).
-* J.H. Conway & S. Torquato, *Packing, tiling, and covering with tetrahedra*,
+- J.H. Conway & S. Torquato, _Packing, tiling, and covering with tetrahedra_,
   PNAS 103:10612 (2006).
 
 ## License

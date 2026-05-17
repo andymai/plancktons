@@ -24,10 +24,22 @@ export function InertiaEllipsoid({
     const c = Math.sqrt(Math.max(0, l3)) * scaleFactor;
     const e = shape.axes;
     return new THREE.Matrix4().set(
-      e[0][0] * a, e[1][0] * b, e[2][0] * c, shape.com[0],
-      e[0][1] * a, e[1][1] * b, e[2][1] * c, shape.com[1],
-      e[0][2] * a, e[1][2] * b, e[2][2] * c, shape.com[2],
-      0, 0, 0, 1
+      e[0][0] * a,
+      e[1][0] * b,
+      e[2][0] * c,
+      shape.com[0],
+      e[0][1] * a,
+      e[1][1] * b,
+      e[2][1] * c,
+      shape.com[1],
+      e[0][2] * a,
+      e[1][2] * b,
+      e[2][2] * c,
+      shape.com[2],
+      0,
+      0,
+      0,
+      1
     );
   }, [shape, scaleFactor]);
   return (

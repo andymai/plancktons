@@ -7,11 +7,7 @@ import { PlancktonMesh } from './PlancktonMesh.js';
 
 export const REPTILE_L = 0.5;
 
-const mid = (a: Vec3, b: Vec3): Vec3 => [
-  (a[0] + b[0]) / 2,
-  (a[1] + b[1]) / 2,
-  (a[2] + b[2]) / 2,
-];
+const mid = (a: Vec3, b: Vec3): Vec3 => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
 
 /** Split one tetrahedron into 8 sub-tets via midpoint subdivision (corners + octahedron diagonal). */
 function subdivideOne(verts: readonly [Vec3, Vec3, Vec3, Vec3]): Planckton[] {

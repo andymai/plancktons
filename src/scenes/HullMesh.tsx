@@ -9,12 +9,7 @@ export interface HullMeshProps {
   opacity?: number;
 }
 
-export function HullMesh({
-  points,
-  faces,
-  color = '#5fa8e3',
-  opacity = 0.22,
-}: HullMeshProps) {
+export function HullMesh({ points, faces, color = '#5fa8e3', opacity = 0.22 }: HullMeshProps) {
   const geom = useMemo(() => hullGeometry(points, faces), [points, faces]);
   return (
     <mesh geometry={geom}>

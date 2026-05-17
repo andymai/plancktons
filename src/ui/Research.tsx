@@ -55,7 +55,14 @@ function Histogram() {
     }, 0);
   }
 
-  const histo = useMemo(() => buildHistogram(trials.map((t) => t.efficiency), 16), [trials]);
+  const histo = useMemo(
+    () =>
+      buildHistogram(
+        trials.map((t) => t.efficiency),
+        16
+      ),
+    [trials]
+  );
   const stats = useMemo(() => {
     if (trials.length === 0) return null;
     const effs = trials.map((t) => t.efficiency);
@@ -101,8 +108,8 @@ function Histogram() {
       </div>
       {stats && (
         <div className="stats-line">
-          mean {stats.mean.toFixed(3)} · std {stats.std.toFixed(3)} · min{' '}
-          {stats.min.toFixed(3)} · max {stats.max.toFixed(3)}
+          mean {stats.mean.toFixed(3)} · std {stats.std.toFixed(3)} · min {stats.min.toFixed(3)} ·
+          max {stats.max.toFixed(3)}
         </div>
       )}
       {err && <div className="error-line">⚠ {err}</div>}
@@ -223,16 +230,7 @@ function HistogramBars({ histo }: { histo: Histo }) {
         const x = (i / histo.bins.length) * W;
         const w = W / histo.bins.length - 1;
         const h = maxCount === 0 ? 0 : (c / maxCount) * (H - 24);
-        return (
-          <rect
-            key={i}
-            x={x + 0.5}
-            y={H - 18 - h}
-            width={w}
-            height={h}
-            fill="#5fa8e3"
-          />
-        );
+        return <rect key={i} x={x + 0.5} y={H - 18 - h} width={w} height={h} fill="#5fa8e3" />;
       })}
       <text x={4} y={H - 4} fontSize={10} fill="#999">
         {histo.edges[0]?.toFixed(2)}

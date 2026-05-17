@@ -48,7 +48,10 @@ export function Actions() {
 
   return (
     <div className="actions">
-      <button onClick={() => copyShareLink()} title="Copy a shareable URL with the current parameters">
+      <button
+        onClick={() => copyShareLink()}
+        title="Copy a shareable URL with the current parameters"
+      >
         🔗 Share link
       </button>
       <button onClick={() => takeScreenshot()} title="Save the canvas as PNG">

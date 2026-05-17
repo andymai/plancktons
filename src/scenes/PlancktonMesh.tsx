@@ -32,11 +32,7 @@ function shrunk(p: Planckton, inset: number): Planckton {
   };
 }
 
-export function PlancktonMesh({
-  planckton,
-  colorOverride,
-  opacity = 1,
-}: PlancktonMeshProps) {
+export function PlancktonMesh({ planckton, colorOverride, opacity = 1 }: PlancktonMeshProps) {
   const color = useStore((s) => s.color);
   const display = useMemo(
     () => (color.tetInset > 0 ? shrunk(planckton, color.tetInset) : planckton),
@@ -63,12 +59,7 @@ export function PlancktonMesh({
       </mesh>
       {color.showEdges && (
         <lineSegments geometry={edges}>
-          <lineBasicMaterial
-            color="#111"
-            transparent
-            opacity={color.edgeOpacity}
-            depthTest
-          />
+          <lineBasicMaterial color="#111" transparent opacity={color.edgeOpacity} depthTest />
         </lineSegments>
       )}
     </group>

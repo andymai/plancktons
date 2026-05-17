@@ -14,16 +14,10 @@ export function SingleScene() {
   return (
     <group>
       <group position={[gap, -L / 2, -L / 2]}>
-        <PlancktonMesh
-          planckton={right}
-          opacity={singleChirality === 'R' ? 1.0 : 0.35}
-        />
+        <PlancktonMesh planckton={right} opacity={singleChirality === 'R' ? 1.0 : 0.35} />
       </group>
       <group position={[-gap, -L / 2, -L / 2]}>
-        <PlancktonMesh
-          planckton={left}
-          opacity={singleChirality === 'L' ? 1.0 : 0.35}
-        />
+        <PlancktonMesh planckton={left} opacity={singleChirality === 'L' ? 1.0 : 0.35} />
       </group>
     </group>
   );

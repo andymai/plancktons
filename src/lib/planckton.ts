@@ -69,20 +69,14 @@ export function tetVolume(verts: readonly [Vec3, Vec3, Vec3, Vec3]): number {
 
 /** Sorted edge-length signature; two triangles are congruent iff signatures match. */
 export function edgeSig(tri: readonly [Vec3, Vec3, Vec3]): [number, number, number] {
-  return [
-    norm(sub(tri[1], tri[0])),
-    norm(sub(tri[2], tri[1])),
-    norm(sub(tri[0], tri[2])),
-  ].sort((a, b) => a - b) as [number, number, number];
+  return [norm(sub(tri[1], tri[0])), norm(sub(tri[2], tri[1])), norm(sub(tri[0], tri[2]))].sort(
+    (a, b) => a - b
+  ) as [number, number, number];
 }
 
 const EPS = 1e-6;
 export function sigEq(a: [number, number, number], b: [number, number, number]): boolean {
-  return (
-    Math.abs(a[0] - b[0]) < EPS &&
-    Math.abs(a[1] - b[1]) < EPS &&
-    Math.abs(a[2] - b[2]) < EPS
-  );
+  return Math.abs(a[0] - b[0]) < EPS && Math.abs(a[1] - b[1]) < EPS && Math.abs(a[2] - b[2]) < EPS;
 }
 
 /**
@@ -165,11 +159,7 @@ export function matePlanckton(
 // Overlap detection (vertex + centroid + edge-face)
 // ---------------------------------------------------------------------------
 
-function pointStrictlyIn(
-  p: Vec3,
-  t: readonly [Vec3, Vec3, Vec3, Vec3],
-  margin: number
-): boolean {
+function pointStrictlyIn(p: Vec3, t: readonly [Vec3, Vec3, Vec3, Vec3], margin: number): boolean {
   const v0 = sub(t[1], t[0]);
   const v1 = sub(t[2], t[0]);
   const v2 = sub(t[3], t[0]);
@@ -183,23 +173,13 @@ function pointStrictlyIn(
   return c0 > margin && c1 > margin && c2 > margin && c3 > margin;
 }
 
-function segPlaneHit(
-  p0: Vec3,
-  p1: Vec3,
-  fa: Vec3,
-  fb: Vec3,
-  fc: Vec3
-): Vec3 | null {
+function segPlaneHit(p0: Vec3, p1: Vec3, fa: Vec3, fb: Vec3, fc: Vec3): Vec3 | null {
   const n = cross(sub(fb, fa), sub(fc, fa));
   const denom = dot(n, sub(p1, p0));
   if (Math.abs(denom) < 1e-12) return null;
   const t = dot(n, sub(fa, p0)) / denom;
   if (t <= 1e-6 || t >= 1 - 1e-6) return null;
-  return [
-    p0[0] + t * (p1[0] - p0[0]),
-    p0[1] + t * (p1[1] - p0[1]),
-    p0[2] + t * (p1[2] - p0[2]),
-  ];
+  return [p0[0] + t * (p1[0] - p0[0]), p0[1] + t * (p1[1] - p0[1]), p0[2] + t * (p1[2] - p0[2])];
 }
 
 function pointInTri(p: Vec3, a: Vec3, b: Vec3, c: Vec3, margin: number): boolean {
@@ -219,10 +199,18 @@ function pointInTri(p: Vec3, a: Vec3, b: Vec3, c: Vec3, margin: number): boolean
 }
 
 const TET_EDGES: ReadonlyArray<readonly [number, number]> = [
-  [0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3],
+  [0, 1],
+  [0, 2],
+  [0, 3],
+  [1, 2],
+  [1, 3],
+  [2, 3],
 ];
 const TET_FACES: ReadonlyArray<readonly [number, number, number]> = [
-  [1, 2, 3], [0, 3, 2], [0, 1, 3], [0, 2, 1],
+  [1, 2, 3],
+  [0, 3, 2],
+  [0, 1, 3],
+  [0, 2, 1],
 ];
 
 export function tetsOverlap(
@@ -238,14 +226,28 @@ export function tetsOverlap(
   const triMargin = 1e-3;
   for (const [i, j] of TET_EDGES) {
     for (const [fi, fj, fk] of TET_FACES) {
-      const hit = segPlaneHit(A[i] as Vec3, A[j] as Vec3, B[fi] as Vec3, B[fj] as Vec3, B[fk] as Vec3);
-      if (hit && pointInTri(hit, B[fi] as Vec3, B[fj] as Vec3, B[fk] as Vec3, triMargin)) return true;
+      const hit = segPlaneHit(
+        A[i] as Vec3,
+        A[j] as Vec3,
+        B[fi] as Vec3,
+        B[fj] as Vec3,
+        B[fk] as Vec3
+      );
+      if (hit && pointInTri(hit, B[fi] as Vec3, B[fj] as Vec3, B[fk] as Vec3, triMargin))
+        return true;
     }
   }
   for (const [i, j] of TET_EDGES) {
     for (const [fi, fj, fk] of TET_FACES) {
-      const hit = segPlaneHit(B[i] as Vec3, B[j] as Vec3, A[fi] as Vec3, A[fj] as Vec3, A[fk] as Vec3);
-      if (hit && pointInTri(hit, A[fi] as Vec3, A[fj] as Vec3, A[fk] as Vec3, triMargin)) return true;
+      const hit = segPlaneHit(
+        B[i] as Vec3,
+        B[j] as Vec3,
+        A[fi] as Vec3,
+        A[fj] as Vec3,
+        A[fk] as Vec3
+      );
+      if (hit && pointInTri(hit, A[fi] as Vec3, A[fj] as Vec3, A[fk] as Vec3, triMargin))
+        return true;
     }
   }
   return false;

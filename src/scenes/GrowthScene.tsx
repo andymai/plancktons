@@ -36,17 +36,17 @@ export interface GrowthMetrics {
   hullOk: boolean;
   stalled: boolean;
   // physics
-  rg: number;                       // radius of gyration
-  asphericity: number;              // Rudnick–Gaspari b = λ₁ − ½(λ₂+λ₃), length²
-  acylindricity: number;            // c = λ₂ − λ₃, length²
-  kappaSq: number;                  // shape anisotropy ∈ [0, 1]
-  prolateness: number;              // S, sign = rod (+) / disc (−)
+  rg: number; // radius of gyration
+  asphericity: number; // Rudnick–Gaspari b = λ₁ − ½(λ₂+λ₃), length²
+  acylindricity: number; // c = λ₂ − λ₃, length²
+  kappaSq: number; // shape anisotropy ∈ [0, 1]
+  prolateness: number; // S, sign = rod (+) / disc (−)
   chirR: number;
   chirL: number;
-  freeFaceFrac: number;             // free faces / (4·N)
-  meanVertexCoord: number;          // ⟨coordination⟩
+  freeFaceFrac: number; // free faces / (4·N)
+  meanVertexCoord: number; // ⟨coordination⟩
   maxVertexCoord: number;
-  shape: ShapeDescriptors | null;   // full descriptors for ellipsoid overlay
+  shape: ShapeDescriptors | null; // full descriptors for ellipsoid overlay
 }
 
 /**
@@ -84,11 +84,7 @@ function useGrownAssembly(
   }, [baseAssembly, targetN]);
 }
 
-export function GrowthScene({
-  onMetrics,
-}: {
-  onMetrics?: (m: GrowthMetrics) => void;
-}) {
+export function GrowthScene({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => void }) {
   const growth = useStore((s) => s.growth);
   const animationMode = useStore((s) => s.animationMode);
   const animSpeed = useStore((s) => s.animSpeed);
