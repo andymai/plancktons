@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { isAtLeast, MODE_ORDER } from '../src/lib/store.js';
+import { isAtLeast, MODE_ORDER, useStore } from '../src/lib/store.js';
 import { decodeStateFromHash, encodeStateToHash } from '../src/lib/exports.js';
 
 describe('isAtLeast', () => {
@@ -64,5 +64,40 @@ describe('share-link mode round-trip', () => {
     const both = btoa(JSON.stringify({ m: 'explore', a: true }));
     window.history.replaceState(null, '', '/#' + both);
     expect(decodeStateFromHash()?.mode).toBe('explore');
+  });
+});
+
+describe('togglePlay', () => {
+  beforeEach(() => {
+    useStore.setState({ animSpeed: 12, lastNonZeroAnimSpeed: 12 });
+  });
+
+  it('pause stores current speed; resume restores it', () => {
+    const { togglePlay } = useStore.getState();
+    useStore.setState({ animSpeed: 7 });
+    togglePlay();
+    expect(useStore.getState().animSpeed).toBe(0);
+    expect(useStore.getState().lastNonZeroAnimSpeed).toBe(7);
+    togglePlay();
+    expect(useStore.getState().animSpeed).toBe(7);
+  });
+
+  it('keyboard pause and transport pause restore to the same speed', () => {
+    const { togglePlay } = useStore.getState();
+    useStore.setState({ animSpeed: 5 });
+    togglePlay();
+    togglePlay();
+    expect(useStore.getState().animSpeed).toBe(5);
+    togglePlay();
+    togglePlay();
+    expect(useStore.getState().animSpeed).toBe(5);
+  });
+
+  it('toggling from default state pauses at 12 then resumes at 12', () => {
+    const { togglePlay } = useStore.getState();
+    togglePlay();
+    expect(useStore.getState().animSpeed).toBe(0);
+    togglePlay();
+    expect(useStore.getState().animSpeed).toBe(12);
   });
 });
