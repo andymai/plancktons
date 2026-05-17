@@ -292,6 +292,59 @@ export function chiralityCounts(a: Assembly): { R: number; L: number } {
 }
 
 /**
+ * Rebuild an Assembly from a flat tet list, recomputing freeFaces by face-
+ * triangle vertex-hash collision and reseeding the spatial hash. Used by MC
+ * refinement after a leaf displacement, where the modified tet list needs a
+ * fresh freeFaces + spatialHash without replaying the mating history.
+ *
+ * Requires matePlanckton-style vertex-coincident face mating (#8) for the
+ * hash collisions to actually match.
+ */
+export function rebuildFromTets(tets: ReadonlyArray<Planckton>, opts: AssemblyOptions): Assembly {
+  const a: Assembly = {
+    tets: tets.map((t) => ({ ...t })),
+    freeFaces: [],
+    opts,
+    spatialHash: createSpatialHash(2 * opts.L),
+  };
+  const eps = 1e-6 * opts.L;
+  const inv = 1 / eps;
+  const quant = (v: Vec3): string =>
+    `${Math.round(v[0] * inv)},${Math.round(v[1] * inv)},${Math.round(v[2] * inv)}`;
+  const keyOf = (tri: readonly [Vec3, Vec3, Vec3]): string =>
+    [quant(tri[0]), quant(tri[1]), quant(tri[2])].sort().join('|');
+  const counts = new Map<string, number>();
+  const tetFaceKeys: string[][] = [];
+  for (let i = 0; i < tets.length; i++) {
+    const t = tets[i]!;
+    const faces = faceTriangles(t);
+    const keys: string[] = [];
+    for (let f = 0; f < 4; f++) {
+      const key = keyOf(faces[f] as [Vec3, Vec3, Vec3]);
+      keys.push(key);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    tetFaceKeys.push(keys);
+    insertTet(a.spatialHash, i, tetCentroid(t.verts));
+  }
+  for (let i = 0; i < tets.length; i++) {
+    const t = tets[i]!;
+    const faces = faceTriangles(t);
+    const keys = tetFaceKeys[i]!;
+    for (let f = 0; f < 4; f++) {
+      if (counts.get(keys[f]!) === 1) {
+        a.freeFaces.push({
+          tri: faces[f] as [Vec3, Vec3, Vec3],
+          tetIdx: i,
+          faceIdx: f,
+        });
+      }
+    }
+  }
+  return a;
+}
+
+/**
  * Vertex coordination = how many tets share each spatial vertex.
  * Quantizes vertex positions to 1e-6 · L for matching.
  */
