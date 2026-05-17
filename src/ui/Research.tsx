@@ -1,19 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useStore } from '../lib/store.js';
-import {
-  type CurvePoint,
-  type TrialResult,
-  downloadCSV,
-  runCurve,
-  runStudy,
-  trialsToCSV,
-} from '../lib/study.js';
+import { type CurvePoint, type TrialResult, downloadCSV, trialsToCSV } from '../lib/study.js';
 import { PACKING_REFERENCES } from '../lib/references.js';
-import { pairCorrelation, type PairCorrelation } from '../lib/paircorr.js';
-import { Rng } from '../lib/rng.js';
-import { growOne, makeAssembly, type GrowthStrategy } from '../lib/assembly.js';
-import { computeHull } from '../lib/hull.js';
-import { centroid } from '../lib/vec.js';
+import { type PairCorrelation } from '../lib/paircorr.js';
 import {
   fitAsymptotePower,
   fitExpDecay,
@@ -22,6 +11,8 @@ import {
   type ExpDecayFit,
   type LogLogFit,
 } from '../lib/scaling.js';
+import { useWorkerRun } from './useWorkerRun.js';
+import { ProgressBar } from './ProgressBar.js';
 
 type FitModel = 'power' | 'asymptote+power' | 'exp';
 type YMetric = 'etaC' | 'etaB';
@@ -42,32 +33,6 @@ function bestFitModel(f: CombinedFit): FitModel {
 }
 
 const DEFAULT_NS = [1, 2, 4, 6, 8, 12, 16, 20, 25, 30, 40, 50];
-
-// Defer heavy compute by one tick so the "Running…" UI commits before the
-// main thread blocks. Centralises the running/err/setTimeout pattern shared
-// by all three sweep controls.
-function useDeferredRun(work: () => void): {
-  running: boolean;
-  err: string | null;
-  run: () => void;
-} {
-  const [running, setRunning] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  function run() {
-    setRunning(true);
-    setErr(null);
-    setTimeout(() => {
-      try {
-        work();
-      } catch (e) {
-        setErr(e instanceof Error ? e.message : String(e));
-      } finally {
-        setRunning(false);
-      }
-    }, 0);
-  }
-  return { running, err, run };
-}
 
 export function Research() {
   const advanced = useStore((s) => s.advanced);
@@ -118,21 +83,29 @@ function paramLabel(growth: {
 
 function Histogram() {
   const growth = useStore((s) => s.growth);
-  const [trials, setTrials] = useState<TrialResult[]>([]);
   const [snapshot, setSnapshot] = useState<SavedRun | null>(null);
   const [count, setCount] = useState(100);
 
-  const { running, err, run } = useDeferredRun(() => {
-    const t = runStudy({
-      N: growth.N,
-      trials: count,
-      startSeed: growth.seed,
-      chiralityBias: growth.chiralityBias,
-      strategy: growth.strategy,
-      compactBeta: growth.compactBeta,
+  const job = useWorkerRun<{ kind: 'study'; trials: TrialResult[] }>();
+  // Stable [] when there's no result, so downstream useMemos with `[trials]`
+  // deps don't re-execute every render. job.result identity is preserved
+  // across re-renders by useWorkerRun until the next run() call.
+  const trials = useMemo<TrialResult[]>(() => job.result?.trials ?? [], [job.result]);
+  const running = job.running;
+  const err = job.err;
+  const progress = job.progress;
+  const run = () =>
+    job.run({
+      kind: 'study',
+      params: {
+        N: growth.N,
+        trials: count,
+        startSeed: growth.seed,
+        chiralityBias: growth.chiralityBias,
+        strategy: growth.strategy,
+        compactBeta: growth.compactBeta,
+      },
     });
-    setTrials(t);
-  });
 
   const stats = useMemo(() => statsOf(trials), [trials]);
   const snapStats = useMemo(() => (snapshot ? statsOf(snapshot.trials) : null), [snapshot]);
@@ -163,12 +136,13 @@ function Histogram() {
             step={10}
             onChange={(e) => setCount(parseInt(e.target.value, 10) || 100)}
             style={{ width: '5rem' }}
-            title="Number of independent trials at the current N. 10000+ trials are fine; main-thread compute will block briefly."
+            title="Number of independent trials at the current N. Runs on a Web Worker so the UI stays responsive."
           />
         </label>
         <button onClick={run} disabled={running}>
           {running ? 'Running…' : 'Run study'}
         </button>
+        {running && <button onClick={job.cancel}>cancel</button>}
         {trials.length > 0 && (
           <button
             onClick={() => setSnapshot({ label: currentLabel, trials: [...trials] })}
@@ -216,6 +190,9 @@ function Histogram() {
           n={snapStats.n}
         </div>
       )}
+      {progress && running && (
+        <ProgressBar done={progress.done} total={progress.total} label="trials" />
+      )}
       {err && <div className="error-line">⚠ {err}</div>}
       {histo && <HistogramBars histo={histo} />}
     </div>
@@ -225,24 +202,26 @@ function Histogram() {
 function Curve() {
   const growth = useStore((s) => s.growth);
   const [trialsPerN, setTrialsPerN] = useState(15);
-  const [points, setPoints] = useState<CurvePoint[]>([]);
   const [logLog, setLogLog] = useState(false);
   const [showFit, setShowFit] = useState(true);
   const [showSpread, setShowSpread] = useState(false);
   const [yMetric, setYMetric] = useState<YMetric>('etaC');
 
-  const { running, err, run } = useDeferredRun(() => {
-    setPoints(
-      runCurve(
-        DEFAULT_NS,
-        trialsPerN,
-        growth.seed,
-        growth.chiralityBias,
-        growth.strategy,
-        growth.compactBeta
-      )
-    );
-  });
+  const job = useWorkerRun<{ kind: 'curve'; points: CurvePoint[] }>();
+  const points = useMemo<CurvePoint[]>(() => job.result?.points ?? [], [job.result]);
+  const running = job.running;
+  const err = job.err;
+  const progress = job.progress;
+  const run = () =>
+    job.run({
+      kind: 'curve',
+      Ns: DEFAULT_NS,
+      trialsPerN,
+      startSeed: growth.seed,
+      chiralityBias: growth.chiralityBias,
+      strategy: growth.strategy,
+      compactBeta: growth.compactBeta,
+    });
 
   // All three candidate models on (1 - η) vs N. AIC picks the best.
   const fits = useMemo<CombinedFit>(() => {
@@ -292,7 +271,11 @@ function Curve() {
         <button onClick={run} disabled={running}>
           {running ? 'Running…' : 'Run sweep'}
         </button>
+        {running && <button onClick={job.cancel}>cancel</button>}
       </div>
+      {progress && running && (
+        <ProgressBar done={progress.done} total={progress.total} label="trials" />
+      )}
       <div className="research-row">
         <label title="η_C = V*/V_hull (compactness, NOT a real packing density) vs η_B = V*/V_bbox (literature-comparable).">
           y:&nbsp;
@@ -713,17 +696,23 @@ function fitPredictor(model: FitModel, fits: CombinedFit): ((n: number) => numbe
 
 function PairCorrelationPlot() {
   const growth = useStore((s) => s.growth);
-  const [pc, setPc] = useState<PairCorrelation | null>(null);
   const [nTrials, setNTrials] = useState(20);
 
-  const { running, err, run } = useDeferredRun(() => {
-    const result = computeAveragedPairCorrelation(growth, nTrials);
-    if (result === null) {
-      setPc(null);
-      throw new Error('No assemblies produced ≥2 tets.');
-    }
-    setPc(result);
-  });
+  const job = useWorkerRun<{ kind: 'paircorr'; pc: PairCorrelation | null }>();
+  const pc = job.result?.pc ?? null;
+  const running = job.running;
+  const err = job.err;
+  const progress = job.progress;
+  const run = () =>
+    job.run({
+      kind: 'paircorr',
+      N: growth.N,
+      seed: growth.seed,
+      chiralityBias: growth.chiralityBias,
+      strategy: growth.strategy,
+      compactBeta: growth.compactBeta,
+      nTrials,
+    });
 
   return (
     <div className="research-section">
@@ -750,70 +739,18 @@ function PairCorrelationPlot() {
         <button onClick={run} disabled={running}>
           {running ? 'Running…' : `Compute g(r) at N=${growth.N}`}
         </button>
+        {running && <button onClick={job.cancel}>cancel</button>}
       </div>
+      {progress && running && (
+        <ProgressBar done={progress.done} total={progress.total} label="trials" />
+      )}
       {err && <div className="error-line">⚠ {err}</div>}
+      {pc === null && job.result && !running && (
+        <div className="error-line">⚠ No assemblies produced ≥2 tets.</div>
+      )}
       {pc && pc.r.length > 0 && <PairCorrPlot pc={pc} />}
     </div>
   );
-}
-
-function computeAveragedPairCorrelation(
-  growth: {
-    N: number;
-    seed: number;
-    chiralityBias: number;
-    strategy: GrowthStrategy;
-    compactBeta: number;
-  },
-  nTrials: number
-): PairCorrelation | null {
-  const accum: number[] = [];
-  let rArr: number[] = [];
-  let countSum: number[] = [];
-  let totalRho = 0;
-  let used = 0;
-  for (let t = 0; t < nTrials; t++) {
-    const seed = growth.seed + t * 9973;
-    const a = makeAssembly({
-      L: 1,
-      rng: new Rng(seed),
-      chiralityBias: growth.chiralityBias,
-      strategy: growth.strategy,
-      compactBeta: growth.compactBeta,
-    });
-    while (a.tets.length < growth.N) {
-      if (growOne(a) !== 'grown') break;
-    }
-    if (a.tets.length < 2) continue;
-    const allV = a.tets.flatMap((tt) => [...tt.verts]);
-    const hull = computeHull(allV);
-    if (!hull) continue;
-    const cents = a.tets.map((tt) => centroid(tt.verts[0], tt.verts[1], tt.verts[2], tt.verts[3]));
-    // rMax scales with cluster bounding radius so peaks are visible at every N.
-    const bsize = hull.bbox.size;
-    const rMax = 0.6 * Math.sqrt(bsize[0] ** 2 + bsize[1] ** 2 + bsize[2] ** 2);
-    const single = pairCorrelation(cents, hull.volume, rMax, 60);
-    if (single.r.length === 0) continue;
-    if (accum.length === 0) {
-      accum.push(...single.g);
-      countSum = [...single.counts];
-      rArr = [...single.r];
-    } else {
-      for (let k = 0; k < accum.length; k++) {
-        accum[k]! += single.g[k] ?? 0;
-        countSum[k]! += single.counts[k] ?? 0;
-      }
-    }
-    totalRho += single.rhoBulk;
-    used++;
-  }
-  if (used === 0) return null;
-  return {
-    r: rArr,
-    g: accum.map((v) => v / used),
-    counts: countSum,
-    rhoBulk: totalRho / used,
-  };
 }
 
 function PairCorrPlot({ pc }: { pc: PairCorrelation }) {

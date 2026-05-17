@@ -139,6 +139,31 @@ input[type='range'] {
   gap: 6px;
   align-items: center;
 }
+.progress-bar {
+  position: relative;
+  height: 14px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 4px 0 6px;
+}
+.progress-bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--accent);
+  transition: width 80ms linear;
+}
+.progress-bar-label {
+  position: relative;
+  display: block;
+  text-align: center;
+  font-size: 10px;
+  line-height: 14px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  mix-blend-mode: difference;
+}
 .action-link {
   background: var(--panel-2);
   border: 1px solid var(--border);

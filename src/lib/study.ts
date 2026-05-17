@@ -45,7 +45,12 @@ export interface StudyParams {
   compactBeta?: number;
 }
 
-export function runStudy(p: StudyParams): TrialResult[] {
+export interface StudyHooks {
+  /** Called after each trial completes, before the next starts. */
+  onTrial?: (done: number, total: number, last: TrialResult) => void;
+}
+
+export function runStudy(p: StudyParams, hooks?: StudyHooks): TrialResult[] {
   const out: TrialResult[] = [];
   for (let t = 0; t < p.trials; t++) {
     const seed = p.startSeed + t * 9973;
@@ -68,7 +73,7 @@ export function runStudy(p: StudyParams): TrialResult[] {
     const shape = gyrationDescriptors(allV);
     const coord = vertexCoordination(a);
     const chir = chiralityCounts(a);
-    out.push({
+    const trial: TrialResult = {
       trial: t,
       N: a.tets.length,
       seed,
@@ -86,7 +91,9 @@ export function runStudy(p: StudyParams): TrialResult[] {
       meanTetCoord: meanTetCoordination(a),
       chirR: chir.R,
       ms,
-    });
+    };
+    out.push(trial);
+    hooks?.onTrial?.(out.length, p.trials, trial);
   }
   return out;
 }
@@ -122,29 +129,41 @@ function meanStd(xs: number[]): { mean: number; std: number; sem: number } {
   return { mean: m, std, sem: std / Math.sqrt(n) };
 }
 
+export interface CurveHooks {
+  /** Called after each N completes. */
+  onN?: (doneNs: number, totalNs: number, lastPoint: CurvePoint) => void;
+  /** Called after each trial within an N. */
+  onTrial?: (doneTrials: number, totalTrials: number) => void;
+}
+
 export function runCurve(
   Ns: number[],
   trialsPerN: number,
   startSeed: number,
   chiralityBias: number,
   strategy: GrowthStrategy,
-  compactBeta?: number
+  compactBeta?: number,
+  hooks?: CurveHooks
 ): CurvePoint[] {
-  return Ns.map((N) => {
-    const trials = runStudy({
-      N,
-      trials: trialsPerN,
-      startSeed,
-      chiralityBias,
-      strategy,
-      ...(compactBeta !== undefined ? { compactBeta } : {}),
-    });
+  const points: CurvePoint[] = [];
+  for (const N of Ns) {
+    const trials = runStudy(
+      {
+        N,
+        trials: trialsPerN,
+        startSeed,
+        chiralityBias,
+        strategy,
+        ...(compactBeta !== undefined ? { compactBeta } : {}),
+      },
+      hooks?.onTrial ? { onTrial: (done, total) => hooks.onTrial!(done, total) } : undefined
+    );
     const n = trials.length;
     const eff = meanStd(trials.map((t) => t.efficiency));
     const beff = meanStd(trials.map((t) => t.bboxEfficiency).filter((x) => Number.isFinite(x)));
     const rg = meanStd(trials.map((t) => t.rg).filter((x) => Number.isFinite(x)));
     const z = meanStd(trials.map((t) => t.meanTetCoord));
-    return {
+    const point: CurvePoint = {
       N,
       meanEff: eff.mean,
       stdEff: eff.std,
@@ -158,7 +177,10 @@ export function runCurve(
       meanVstar: n === 0 ? NaN : trials.reduce((s, t) => s + t.Vstar, 0) / n,
       nReached: trials.filter((t) => t.N >= N).length,
     };
-  });
+    points.push(point);
+    hooks?.onN?.(points.length, Ns.length, point);
+  }
+  return points;
 }
 
 const CSV_COLUMNS = [
