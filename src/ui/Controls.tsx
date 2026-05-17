@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useStore, isAtLeast } from '../lib/store.js';
+import type { GrowthParams } from '../lib/store.js';
 import { DraftSlider } from './DraftSlider.js';
 import { useDraftValue } from './useDraftValue.js';
 import { useWorkerRun } from './useWorkerRun.js';
@@ -10,16 +11,7 @@ import type { VoronoiResult } from '../lib/voronoi.js';
 import type { McRefineResult } from '../lib/mcRefine.js';
 import type { GrowthJob } from '../worker/study.worker.js';
 
-interface GrowthState {
-  N: number;
-  seed: number;
-  chiralityBias: number;
-  strategy: 'uniform' | 'compact';
-  compactBeta: number;
-}
-
-/** Bundle the growth-state slice every analysis panel sends to the worker. */
-function growthJob(g: GrowthState): GrowthJob {
+function growthJob(g: GrowthParams): GrowthJob {
   return {
     L: 1,
     N: g.N,

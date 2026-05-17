@@ -24,7 +24,6 @@ export function Term({ name, children }: Props) {
         onFocus={() => setHover(true)}
         onBlur={() => setHover(false)}
         onClick={() => setHelpOpen(true)}
-        title={undefined}
       >
         {children ?? entry.shortLabel}
       </button>

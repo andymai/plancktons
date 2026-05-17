@@ -972,6 +972,13 @@ function PairCorrPlot({ pc, aniso }: { pc: PairCorrelation; aniso: PairCorrelati
   );
 }
 
+function avramiRegime(n: number): string {
+  if (n < 1.5) return 'surface-limited (n ≈ 1)';
+  if (n < 2.5) return '2D growth (n ≈ 2)';
+  if (n < 3.5) return '3D bulk (n ≈ 3)';
+  return 'increasing-rate nucleation (n ≥ 4)';
+}
+
 function KineticsPanel() {
   const growth = useStore((s) => s.growth);
   const job = useWorkerRun<{ kind: 'kinetics'; kinetics: KineticsResult }>();
@@ -1023,13 +1030,7 @@ function KineticsPanel() {
               </strong>
               &nbsp;· K = {result.fit.K.toExponential(2)} &nbsp;· R² = {result.fit.r2.toFixed(3)}
               {' · '}
-              {result.fit.n < 1.5
-                ? 'surface-limited (n ≈ 1)'
-                : result.fit.n < 2.5
-                  ? '2D growth (n ≈ 2)'
-                  : result.fit.n < 3.5
-                    ? '3D bulk (n ≈ 3)'
-                    : 'increasing-rate nucleation (n ≥ 4)'}
+              {avramiRegime(result.fit.n)}
             </div>
           ) : (
             <div className="stats-line" style={{ color: 'var(--text-dim)' }}>

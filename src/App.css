@@ -144,8 +144,7 @@ input[type='range'] {
 .pane-right {
   border-left: 1px solid var(--border);
 }
-.pane-resizer,
-.sidebar-resizer {
+.pane-resizer {
   width: 6px;
   cursor: col-resize;
   background: var(--border);
@@ -153,9 +152,7 @@ input[type='range'] {
   transition: background 120ms ease;
 }
 .pane-resizer:hover,
-.pane-resizer:active,
-.sidebar-resizer:hover,
-.sidebar-resizer:active {
+.pane-resizer:active {
   background: var(--accent);
 }
 .pane-resizer:focus-visible {
@@ -926,8 +923,7 @@ details.collapsible[open] > summary {
   .canvas-wrap {
     min-height: 40vh;
   }
-  .pane-resizer,
-  .sidebar-resizer {
+  .pane-resizer {
     display: none;
   }
   .topbar {

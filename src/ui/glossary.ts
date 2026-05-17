@@ -1,12 +1,7 @@
 export interface GlossaryEntry {
-  /** Inline label used by <Term> when no children are passed. */
   shortLabel: string;
-  /** ≤ 80 chars; the hover-popover blurb. */
   short: string;
-  /** Long-form markdown shown in the help overlay. */
   body: string;
-  /** Optional anchor into README / THEORY, prefixed with import.meta.env.BASE_URL at the call site. */
-  link?: string;
 }
 
 export const GLOSSARY: Record<string, GlossaryEntry> = {

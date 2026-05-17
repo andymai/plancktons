@@ -7,7 +7,6 @@ export type AnimationMode = 'instant' | 'animated' | 'step';
 export type Mode = 'learn' | 'explore' | 'research';
 export const MODE_ORDER: readonly Mode[] = ['learn', 'explore', 'research'] as const;
 
-/** True when `current` is at or past `required` in the progressive-disclosure ladder. */
 export function isAtLeast(current: Mode, required: Mode): boolean {
   return MODE_ORDER.indexOf(current) >= MODE_ORDER.indexOf(required);
 }
@@ -68,13 +67,11 @@ interface State {
   setAnimationMode: (m: AnimationMode) => void;
   animSpeed: number; // tets per second
   setAnimSpeed: (n: number) => void;
-  /** Monotonic counter - bump to advance one tet in step mode. */
+  // Monotonic counters; each scene watches these to step / restart / jump.
   stepTrigger: number;
   bumpStep: () => void;
-  /** Monotonic counter - bump to restart growth animation from N=1 (animated mode). */
   resetTrigger: number;
   bumpReset: () => void;
-  /** Monotonic counter - bump to jump animation/step state to target N. */
   jumpEndTrigger: number;
   bumpJumpEnd: () => void;
 
@@ -82,7 +79,6 @@ interface State {
   color: ColorOpts;
   setColor: (c: Partial<ColorOpts>) => void;
 
-  // Progressive-disclosure mode (Learn → Explore → Research).
   mode: Mode;
   setMode: (m: Mode) => void;
 }

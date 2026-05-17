@@ -1,18 +1,14 @@
 import { useEffect } from 'react';
 import { useStore, MODE_ORDER } from '../lib/store.js';
+import type { AnimationMode } from '../lib/store.js';
 
-/**
- * Global keyboard shortcuts:
- *   Space         play/pause (animated mode) or step (step mode)
- *   R             randomize seed
- *   N             next seed (seed + 1)
- *   ←/→           cycle scenes
- *   1/2/3/4       jump to scene
- *   ?             cycle disclosure mode (learn → explore → research)
- *
- * Skipped when a text input has focus.
- */
 const SCENES = ['single', 'cube', 'reptile', 'growth'] as const;
+const ANIMATION_CYCLE: readonly AnimationMode[] = ['instant', 'animated', 'step'] as const;
+
+function nextAnimationMode(m: AnimationMode): AnimationMode {
+  const i = ANIMATION_CYCLE.indexOf(m);
+  return ANIMATION_CYCLE[(i + 1) % ANIMATION_CYCLE.length]!;
+}
 
 export function useKeyboardShortcuts() {
   const setScene = useStore((s) => s.setScene);
@@ -71,15 +67,7 @@ export function useKeyboardShortcuts() {
         }
         case 'a':
         case 'A':
-          if (st.scene === 'growth') {
-            setAnimationMode(
-              st.animationMode === 'instant'
-                ? 'animated'
-                : st.animationMode === 'animated'
-                  ? 'step'
-                  : 'instant'
-            );
-          }
+          if (st.scene === 'growth') setAnimationMode(nextAnimationMode(st.animationMode));
           break;
       }
     }

@@ -18,25 +18,17 @@ interface UiState {
 const LS_FIRST_VISIT = 'plancktons.firstVisitDismissed';
 const LS_METRICS_HIDDEN = 'plancktons.metricsHidden';
 
-function loadMetricsHidden(): boolean {
+function lsGet(key: string): string | null {
   try {
-    return localStorage.getItem(LS_METRICS_HIDDEN) === '1';
+    return localStorage.getItem(key);
   } catch {
-    return false;
+    return null;
   }
 }
 
-function loadFirstVisit(): boolean {
+function lsSet(key: string, value: string): void {
   try {
-    return localStorage.getItem(LS_FIRST_VISIT) === '1';
-  } catch {
-    return false;
-  }
-}
-
-function saveFirstVisit(): void {
-  try {
-    localStorage.setItem(LS_FIRST_VISIT, '1');
+    localStorage.setItem(key, value);
   } catch {
     /* private mode */
   }
@@ -54,21 +46,17 @@ export const useUiStore = create<UiState>((set) => ({
   setSectionCollapsed: (id, collapsed) =>
     set((s) => ({ collapsedSections: { ...s.collapsedSections, [id]: collapsed } })),
 
-  metricsHidden: loadMetricsHidden(),
+  metricsHidden: lsGet(LS_METRICS_HIDDEN) === '1',
   toggleMetricsHidden: () =>
     set((s) => {
       const next = !s.metricsHidden;
-      try {
-        localStorage.setItem(LS_METRICS_HIDDEN, next ? '1' : '0');
-      } catch {
-        /* private mode */
-      }
+      lsSet(LS_METRICS_HIDDEN, next ? '1' : '0');
       return { metricsHidden: next };
     }),
 
-  firstVisitDismissed: loadFirstVisit(),
+  firstVisitDismissed: lsGet(LS_FIRST_VISIT) === '1',
   dismissFirstVisit: () => {
-    saveFirstVisit();
+    lsSet(LS_FIRST_VISIT, '1');
     set({ firstVisitDismissed: true });
   },
 }));
