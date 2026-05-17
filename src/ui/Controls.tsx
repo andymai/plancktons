@@ -529,8 +529,12 @@ function AdvancedControls() {
 function MorphologyPanel() {
   const scene = useStore((s) => s.scene);
   const growth = useStore((s) => s.growth);
+  // Plain controlled state - the compute is button-triggered (worker job),
+  // not per-tick, so we don't need DraftSlider's commit-on-release. Using
+  // DraftSlider here previously caused a UX bug where the displayed alpha
+  // could diverge from the committed alpha if the release mouseup landed
+  // outside the input element.
   const [alpha, setAlpha] = useState(0.5);
-  const [draftAlpha, setDraftAlpha] = useDraftValue(alpha);
   const job = useWorkerRun<{ kind: 'morph'; morph: MorphologyResult | null }>();
   const morph = job.result?.morph ?? null;
   // V_morph is only meaningful for the growth aggregate (other scenes are
@@ -578,15 +582,15 @@ function MorphologyPanel() {
         title="Probe-sphere radius α (units of L). Larger α fills bigger pockets. α = L is the natural choice for a Hill T₁ orthoscheme."
       >
         <span>α</span>
-        <DraftSlider
+        <input
+          type="range"
           min={0.05}
           max={2}
           step={0.05}
           value={alpha}
-          onCommit={setAlpha}
-          onDraftChange={setDraftAlpha}
+          onChange={(e) => setAlpha(parseFloat(e.target.value))}
         />
-        <span className="slider-value">{draftAlpha.toFixed(2)} L</span>
+        <span className="slider-value">{alpha.toFixed(2)} L</span>
       </label>
       <div className="research-row">
         <button onClick={run} disabled={job.running}>
