@@ -1,5 +1,6 @@
 import type { GrowthMetrics } from '../scenes/GrowthScene.js';
 import { useStore, isAtLeast } from '../lib/store.js';
+import { Term } from './Term.js';
 
 const fmt = (n: number, d = 4) => (Number.isFinite(n) ? n.toFixed(d) : '-');
 const pct = (n: number) => (Number.isFinite(n) ? `${(n * 100).toFixed(1)}%` : '-');
@@ -48,18 +49,16 @@ export function HUD({ metrics }: { metrics: GrowthMetrics | null }) {
         <span className="hud-label">V (hull)</span>
         <span className="hud-value">{fmt(metrics.V)}</span>
       </div>
-      <div
-        className="hud-row hud-prominent"
-        title="η_C = V*/V_hull. Convex compactness, not a true packing density - the hull shrink-wraps the aggregate so this can approach 1 even for sparse clusters. Compare values WITHIN this app; do not compare against literature sphere RCP/FCC."
-      >
-        <span className="hud-label">η_C = V*/V_hull</span>
+      <div className="hud-row hud-prominent">
+        <span className="hud-label">
+          <Term name="etaC">η_C</Term> = V*/V_hull
+        </span>
         <span className="hud-value">{pct(metrics.efficiency)}</span>
       </div>
-      <div
-        className="hud-row hud-prominent"
-        title="η_B = V*/V_bbox. Bbox packing fraction. The bbox is a fixed-orientation container, so this IS comparable to literature sphere RCP ≈ 0.636, sphere FCC ≈ 0.74, etc."
-      >
-        <span className="hud-label">η_B = V*/V_bbox</span>
+      <div className="hud-row hud-prominent">
+        <span className="hud-label">
+          <Term name="etaB">η_B</Term> = V*/V_bbox
+        </span>
         <span className="hud-value">{pct(metrics.bboxEfficiency)}</span>
       </div>
       <div
@@ -223,8 +222,10 @@ function SingleHUD() {
         <span className="hud-label">V₁V₂, V₀V₃</span>
         <span className="hud-value">π/3</span>
       </div>
-      <div className="hud-row" title="Dehn invariant = 0 iff scissors-congruent to a cube">
-        <span className="hud-label">Dehn invariant</span>
+      <div className="hud-row">
+        <span className="hud-label">
+          <Term name="dehnInvariant">Dehn invariant</Term>
+        </span>
         <span className="hud-value">0</span>
       </div>
     </div>

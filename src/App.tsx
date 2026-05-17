@@ -5,9 +5,12 @@ import { Actions } from './ui/Actions.js';
 import { Research } from './ui/Research.js';
 import { ModeSwitch } from './ui/ModeSwitch.js';
 import { MetricsPanel } from './ui/MetricsPanel.js';
+import { HelpOverlay } from './ui/HelpOverlay.js';
+import { FirstVisitToast } from './ui/FirstVisitToast.js';
 import { ErrorBoundary } from './ui/ErrorBoundary.js';
 import { ResizableSidebar } from './ui/ResizableSidebar.js';
 import { useKeyboardShortcuts } from './ui/useKeyboard.js';
+import { useUiStore } from './ui/uiStore.js';
 import type { GrowthMetrics } from './scenes/GrowthScene.js';
 import { decodeStateFromHash } from './lib/exports.js';
 import { useStore } from './lib/store.js';
@@ -64,6 +67,7 @@ export default function App() {
         </div>
         <div className="topbar-right">
           <ModeSwitch />
+          <HelpButton />
           <Actions />
         </div>
       </header>
@@ -79,6 +83,23 @@ export default function App() {
         </main>
         <MetricsPanel metrics={metrics} />
       </div>
+      <HelpOverlay />
+      <FirstVisitToast />
     </div>
+  );
+}
+
+function HelpButton() {
+  const setOpen = useUiStore((s) => s.setHelpOpen);
+  return (
+    <button
+      type="button"
+      className="help-button"
+      onClick={() => setOpen(true)}
+      title="Help & glossary"
+      aria-label="Open help"
+    >
+      ?
+    </button>
   );
 }

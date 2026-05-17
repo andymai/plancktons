@@ -4,6 +4,7 @@ import { DraftSlider } from './DraftSlider.js';
 import { useDraftValue } from './useDraftValue.js';
 import { useWorkerRun } from './useWorkerRun.js';
 import { ProgressBar } from './ProgressBar.js';
+import { Term } from './Term.js';
 import type { MorphologyResult } from '../lib/morphology.js';
 import type { VoronoiResult } from '../lib/voronoi.js';
 import type { McRefineResult } from '../lib/mcRefine.js';
@@ -166,9 +167,10 @@ function SingleControls() {
         Show dihedral angles
       </label>
       <p className="caption">
-        A Planckton (Hill T₁ orthoscheme). Four faces, two shapes: isoceles-right (1, 1, √2) and
-        scalene-right (1, √2, √3). The two chiralities are mirror images. All 6 dihedral angles are
-        rational multiples of π - the Dehn invariant property.
+        A <Term name="planckton" /> (<Term name="hillT1" /> orthoscheme). Four faces, two shapes:
+        isoceles-right (1, 1, √2) and scalene-right (1, √2, √3). The two{' '}
+        <Term name="chirality">chiralities</Term> are mirror images. All 6 dihedral angles are
+        rational multiples of π — the <Term name="dehnInvariant" /> property.
       </p>
     </div>
   );
@@ -256,8 +258,9 @@ function ReptileControls() {
         </span>
       </label>
       <p className="caption">
-        A 2× Planckton splits into 8 unit copies. Recursing gives 8ᵈ pieces. This is the m³-reptile
-        family - Matoušek &amp; Safernová (2010) proved it is the only such family for tetrahedra.
+        A 2× <Term name="planckton" /> splits into 8 unit copies. Recursing gives 8ᵈ pieces. This is
+        the <Term name="reptile">m³-reptile</Term> family — Matoušek &amp; Safernová (2010) proved
+        it is the only such family for tetrahedra.
       </p>
     </div>
   );
