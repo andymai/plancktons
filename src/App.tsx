@@ -5,6 +5,7 @@ import { HUD } from './ui/HUD.js';
 import { Actions } from './ui/Actions.js';
 import { Research } from './ui/Research.js';
 import { ErrorBoundary } from './ui/ErrorBoundary.js';
+import { ResizableSidebar } from './ui/ResizableSidebar.js';
 import { useKeyboardShortcuts } from './ui/useKeyboard.js';
 import type { GrowthMetrics } from './scenes/GrowthScene.js';
 import { decodeStateFromHash } from './lib/exports.js';
@@ -54,10 +55,10 @@ export default function App() {
         <Actions />
       </header>
       <div className="layout">
-        <aside className="sidebar">
+        <ResizableSidebar>
           <Controls />
           <Research />
-        </aside>
+        </ResizableSidebar>
         <main className="canvas-wrap">
           <ErrorBoundary>
             <SceneCanvas onMetrics={setMetrics} />

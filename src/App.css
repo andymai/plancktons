@@ -106,20 +106,31 @@ input[type='range'] {
 }
 
 .layout {
-  display: grid;
-  grid-template-columns: 340px 1fr;
+  display: flex;
   flex: 1;
   min-height: 0;
 }
 .sidebar {
   overflow-y: auto;
   background: var(--panel);
-  border-right: 1px solid var(--border);
   padding: 12px;
+  flex: 0 0 auto;
+}
+.sidebar-resizer {
+  width: 6px;
+  cursor: col-resize;
+  background: var(--border);
+  flex: 0 0 6px;
+  transition: background 120ms ease;
+}
+.sidebar-resizer:hover,
+.sidebar-resizer:active {
+  background: var(--accent);
 }
 .canvas-wrap {
   position: relative;
   min-height: 0;
+  flex: 1 1 auto;
 }
 
 .actions {
@@ -165,6 +176,42 @@ input[type='range'] {
   color: var(--text-dim);
   margin-top: 4px;
   margin-bottom: 4px;
+}
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.shortcuts-details {
+  margin-top: 14px;
+  padding: 6px 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 11px;
+}
+.shortcuts-details summary {
+  cursor: pointer;
+  color: var(--text-dim);
+  user-select: none;
+}
+.shortcuts-table {
+  margin-top: 6px;
+  width: 100%;
+  border-collapse: collapse;
+}
+.shortcuts-table td {
+  padding: 2px 6px;
+}
+.shortcuts-table td:first-child {
+  color: var(--accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: nowrap;
+  width: 70px;
+}
+.shortcuts-table td:last-child {
+  color: var(--text-dim);
 }
 .panel-divider {
   height: 1px;
@@ -241,14 +288,13 @@ input[type='range'] {
   color: var(--text-dim);
 }
 .advanced-toggle {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-dim);
-}
-.advanced-toggle label {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   cursor: pointer;
+  user-select: none;
 }
 
 .hud {
@@ -439,12 +485,15 @@ input[type='range'] {
 /* --- mobile: stack sidebar above canvas, shorter sidebar height ---------- */
 @media (max-width: 720px) {
   .layout {
-    grid-template-columns: 1fr;
-    grid-template-rows: minmax(280px, 45vh) 1fr;
+    flex-direction: column;
   }
   .sidebar {
-    border-right: none;
+    width: 100% !important;
+    max-height: 45vh;
     border-bottom: 1px solid var(--border);
+  }
+  .sidebar-resizer {
+    display: none;
   }
   .topbar {
     flex-direction: column;

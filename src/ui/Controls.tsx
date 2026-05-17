@@ -14,13 +14,24 @@ export function Controls() {
   const setAdvanced = useStore((s) => s.setAdvanced);
   return (
     <div className="controls">
-      <div className="panel-title">Scene</div>
+      <div className="panel-header">
+        <span className="panel-title">Scene</span>
+        <label className="advanced-toggle" title="Toggle advanced/research controls (keyboard: ?)">
+          <input
+            type="checkbox"
+            checked={advanced}
+            onChange={(e) => setAdvanced(e.target.checked)}
+          />
+          Advanced
+        </label>
+      </div>
       <div className="scene-list">
-        {SCENES.map((s) => (
+        {SCENES.map((s, i) => (
           <button
             key={s.id}
             className={`scene-button ${scene === s.id ? 'active' : ''}`}
             onClick={() => setScene(s.id)}
+            title={`Keyboard: ${i + 1}`}
           >
             {s.label}
           </button>
@@ -28,19 +39,54 @@ export function Controls() {
       </div>
       <div className="panel-divider" />
       <SceneControls />
-      <div className="panel-divider" />
-      <div className="advanced-toggle">
-        <label>
-          <input
-            type="checkbox"
-            checked={advanced}
-            onChange={(e) => setAdvanced(e.target.checked)}
-          />
-          Advanced mode
-        </label>
-      </div>
-      {advanced && <AdvancedControls />}
+      {advanced && (
+        <>
+          <div className="panel-divider" />
+          <AdvancedControls />
+        </>
+      )}
+      <ShortcutsHint />
     </div>
+  );
+}
+
+function ShortcutsHint() {
+  return (
+    <details className="shortcuts-details">
+      <summary>Keyboard shortcuts</summary>
+      <table className="shortcuts-table">
+        <tbody>
+          <tr>
+            <td>1 – 4</td>
+            <td>jump to scene</td>
+          </tr>
+          <tr>
+            <td>← / →</td>
+            <td>cycle scenes</td>
+          </tr>
+          <tr>
+            <td>R</td>
+            <td>random seed</td>
+          </tr>
+          <tr>
+            <td>N</td>
+            <td>next seed (seed + 1)</td>
+          </tr>
+          <tr>
+            <td>A</td>
+            <td>cycle animation mode</td>
+          </tr>
+          <tr>
+            <td>Space</td>
+            <td>play/pause (animated) or step</td>
+          </tr>
+          <tr>
+            <td>?</td>
+            <td>toggle advanced</td>
+          </tr>
+        </tbody>
+      </table>
+    </details>
   );
 }
 
@@ -165,7 +211,7 @@ function GrowthControls() {
           min={1}
           max={500}
           step={1}
-          value={growth.N}
+          value={Math.min(500, growth.N)}
           onChange={(e) => setGrowth({ N: parseInt(e.target.value, 10) })}
         />
         <input
@@ -179,6 +225,7 @@ function GrowthControls() {
             if (Number.isFinite(n) && n >= 1) setGrowth({ N: n });
           }}
           style={{ width: '4.2rem' }}
+          title="Slider tops at 500; type above for N up to 2000 (slow at extreme N)."
         />
       </label>
       <label
@@ -195,15 +242,15 @@ function GrowthControls() {
         />
         <button
           onClick={() => setGrowth({ seed: Math.floor(Math.random() * 1e6) })}
-          title="Random seed"
+          title="Random seed (keyboard: R)"
         >
-          🎲
+          random
         </button>
         <button
           onClick={() => setGrowth({ seed: growth.seed + 1 })}
-          title="Increment seed (next deterministic trial)"
+          title="Next deterministic trial — seed + 1 (keyboard: N)"
         >
-          ↺
+          next
         </button>
       </label>
       <label className="slider-row">
@@ -285,13 +332,13 @@ function StepButton() {
   const bumpStep = useStore((s) => s.bumpStep);
   return (
     <div className="slider-row">
-      <span>Add tet</span>
+      <span>Step</span>
       <button
         onClick={bumpStep}
         style={{ flex: 1 }}
-        title="Append one Planckton, clamped to the N target"
+        title="Append one Planckton, clamped to the N target (keyboard: Space)"
       >
-        +1 Planckton →
+        Add tet
       </button>
     </div>
   );
