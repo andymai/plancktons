@@ -46,7 +46,7 @@ describe('runCurve', () => {
     expect(points[1]!.N).toBe(10);
   });
 
-  it('handles trial-failures gracefully (returns NaN, not crash)', () => {
+  it('returns NaN on trial failure instead of throwing', () => {
     const points = runCurve([1], 0, 1, 0.5, 'uniform');
     expect(points[0]!.meanEff).toBeNaN();
   });
