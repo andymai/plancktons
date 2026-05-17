@@ -15,7 +15,9 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-      - run: npm ci
+      # Use install (not ci) to tolerate the known npm < 11.11 lockfile
+      # drift that drops @emnapi entries; see CONTRIBUTING.md.
+      - run: npm install --no-audit --no-fund
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run format:check

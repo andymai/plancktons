@@ -32,15 +32,14 @@ the `commit-msg` hook runs `commitlint` against them.
 ## Lockfile gotcha (npm < 11.11)
 
 On older npm, `npm install` may drop top-level `@emnapi/core` and
-`@emnapi/runtime` entries from `package-lock.json`. CI (which uses newer
-npm) then fails `npm ci` with `Missing: @emnapi/...`. If you see this:
+`@emnapi/runtime` entries from `package-lock.json`. CI used to fail
+`npm ci` with `Missing: @emnapi/...`; we now run `npm install --no-audit
+--no-fund` in CI so the lockfile is self-healing.
 
-1. Open `package-lock.json` and find the `node_modules/@emnapi/wasi-threads`
-   block.
-2. Insert two sibling blocks for `node_modules/@emnapi/core` and
-   `node_modules/@emnapi/runtime` (each at version `1.10.0`, mirroring the
-   `wasi-threads` shape) just before `wasi-threads`.
-
+For local development, if you want a strict `npm ci`-clean lockfile,
+manually re-add the two `node_modules/@emnapi/core` and
+`node_modules/@emnapi/runtime` entries (version `1.10.0`, mirroring the
+adjacent `node_modules/@emnapi/wasi-threads` block) before committing.
 Or upgrade to npm ≥ 11.11 and the issue goes away.
 
 ## Layout
