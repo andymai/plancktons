@@ -33,7 +33,10 @@ function bestFitModel(f: CombinedFit): FitModel {
   return candidates[0]?.name ?? 'power';
 }
 
-const DEFAULT_NS = [1, 2, 4, 6, 8, 12, 16, 20, 25, 30, 40, 50];
+// Extended past N=50 so the fit models see the η(N) tail (asymptote-vs-power
+// is only decidable once the curve has visibly flattened). At trialsPerN=15
+// the full sweep stays under ~30 s in the worker.
+const DEFAULT_NS = [1, 2, 4, 6, 8, 12, 16, 20, 25, 30, 40, 50, 70, 100, 150, 200];
 
 export function Research() {
   const advanced = useStore((s) => s.advanced);

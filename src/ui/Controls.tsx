@@ -253,14 +253,14 @@ function GrowthControls() {
       <div className="panel-title">Random face-to-face growth</div>
       <label
         className="slider-row"
-        title="Target Planckton count. Random face-to-face growth typically jams between N≈100 and N≈500 depending on strategy."
+        title="Target Planckton count. Slider goes to 1000 to cover the asymptotic regime (η flattens near N ≈ 500-1000 for compact β=3). Type for higher; growth is ~3 s/trial at N=400, ~10 s/trial at N=1000."
       >
         <span>Plancktons (N)</span>
         <DraftSlider
           min={1}
-          max={500}
+          max={1000}
           step={1}
-          value={Math.min(500, growth.N)}
+          value={Math.min(1000, growth.N)}
           onCommit={(v) => setGrowth({ N: v })}
           onDraftChange={setDraftN}
         />
