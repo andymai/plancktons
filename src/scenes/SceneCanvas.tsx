@@ -1,5 +1,5 @@
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment, ContactShadows } from '@react-three/drei';
+import { OrbitControls, Environment } from '@react-three/drei';
 import { useStore } from '../lib/store.js';
 import { SingleScene } from './SingleScene.js';
 import { CubeScene } from './CubeScene.js';
@@ -25,7 +25,6 @@ export function SceneCanvas({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => v
       />
       <directionalLight position={[-4, 2, -3]} intensity={0.35} />
       <Environment preset="city" />
-      <ContactShadows position={[0, -1.2, 0]} opacity={0.4} blur={2.4} far={6} scale={10} />
       {scene === 'single' && <SingleScene />}
       {scene === 'cube' && <CubeScene />}
       {scene === 'reptile' && <ReptileScene />}
