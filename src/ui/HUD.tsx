@@ -198,7 +198,7 @@ function SingleHUD() {
         title="Four right-triangle faces: two isoceles (L,L,√2L) and two scalene (L,√2L,√3L)."
       >
         <span className="hud-label">faces</span>
-        <span className="hud-value">2 iso right + 2 scalene right</span>
+        <span className="hud-value">2 iso + 2 scalene</span>
       </div>
       <div className="hud-divider" />
       <div className="hud-section">Dihedral angles (rational π)</div>
