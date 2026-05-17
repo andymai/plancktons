@@ -7,6 +7,9 @@ const pct = (n: number) => (Number.isFinite(n) ? `${(n * 100).toFixed(1)}%` : '�
 export function HUD({ metrics }: { metrics: GrowthMetrics | null }) {
   const scene = useStore((s) => s.scene);
   const advanced = useStore((s) => s.advanced);
+  if (scene === 'single') return <SingleHUD />;
+  if (scene === 'cube') return <CubeHUD />;
+  if (scene === 'reptile') return <ReptileHUD />;
   if (scene !== 'growth' || !metrics) return null;
   return (
     <div className="hud">
@@ -106,6 +109,59 @@ export function HUD({ metrics }: { metrics: GrowthMetrics | null }) {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+function SingleHUD() {
+  return (
+    <div className="hud">
+      <div className="hud-section">Hill T (Planckton)</div>
+      <div className="hud-row"><span className="hud-label">volume</span><span className="hud-value">L³/6 ≈ 0.1667</span></div>
+      <div className="hud-row"><span className="hud-label">edges</span><span className="hud-value">3·L, 2·√2L, 1·√3L</span></div>
+      <div className="hud-row"><span className="hud-label">faces</span><span className="hud-value">2 iso right + 2 scalene right</span></div>
+      <div className="hud-divider" />
+      <div className="hud-section">Dihedral angles (rational π)</div>
+      <div className="hud-row"><span className="hud-label">V₀V₁, V₂V₃</span><span className="hud-value">π/2</span></div>
+      <div className="hud-row"><span className="hud-label">V₀V₂, V₁V₃</span><span className="hud-value">π/4</span></div>
+      <div className="hud-row"><span className="hud-label">V₁V₂, V₀V₃</span><span className="hud-value">π/3</span></div>
+      <div className="hud-row" title="Dehn invariant = 0 iff scissors-congruent to a cube">
+        <span className="hud-label">Dehn invariant</span>
+        <span className="hud-value">0</span>
+      </div>
+    </div>
+  );
+}
+
+function CubeHUD() {
+  return (
+    <div className="hud">
+      <div className="hud-section">6-piece cube tiling</div>
+      <div className="hud-row"><span className="hud-label">N</span><span className="hud-value">6</span></div>
+      <div className="hud-row"><span className="hud-label">chirality split</span><span className="hud-value">3 R + 3 L</span></div>
+      <div className="hud-row"><span className="hud-label">V (cube)</span><span className="hud-value">L³</span></div>
+      <div className="hud-row"><span className="hud-label">V★ = 6·L³/6</span><span className="hud-value">L³</span></div>
+      <div className="hud-row hud-prominent"><span className="hud-label">η = V★/V</span><span className="hud-value">100.0%</span></div>
+      <div className="hud-row" title="Surface area of the cube"><span className="hud-label">surface</span><span className="hud-value">6·L²</span></div>
+    </div>
+  );
+}
+
+function ReptileHUD() {
+  const depth = useStore((s) => s.reptileDepth);
+  const count = 8 ** depth;
+  const pieceVol = 1 / 6 / 8 ** (depth - 1);
+  return (
+    <div className="hud">
+      <div className="hud-section">8-reptile (depth {depth})</div>
+      <div className="hud-row"><span className="hud-label">N (sub-Plancktons)</span><span className="hud-value">{count}</span></div>
+      <div className="hud-row"><span className="hud-label">per-piece volume</span><span className="hud-value">L³/(6·8^{depth - 1}) ≈ {pieceVol.toFixed(6)}</span></div>
+      <div className="hud-row"><span className="hud-label">V (parent)</span><span className="hud-value">(2L)³/6 ≈ 1.3333</span></div>
+      <div className="hud-row hud-prominent"><span className="hud-label">η = V★/V</span><span className="hud-value">100.0%</span></div>
+      <div className="hud-row" title="Matoušek & Safernová 2010 proved the m³-reptile family is the only one for tets">
+        <span className="hud-label">k-reptile family</span>
+        <span className="hud-value">k = m³ only</span>
+      </div>
     </div>
   );
 }

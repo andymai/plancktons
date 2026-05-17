@@ -372,6 +372,19 @@ input[type='range'] {
   color: #ff8888;
   font-size: 11px;
 }
+.error-boundary {
+  padding: 20px;
+  color: #ff8888;
+  background: rgba(216, 58, 58, 0.08);
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  margin: 20px;
+  font-family: monospace;
+}
+.error-boundary pre {
+  white-space: pre-wrap;
+  font-size: 12px;
+}
 .references-details {
   background: var(--panel-2);
   border: 1px solid var(--border);

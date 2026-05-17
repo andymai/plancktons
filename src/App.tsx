@@ -4,6 +4,7 @@ import { Controls } from './ui/Controls.js';
 import { HUD } from './ui/HUD.js';
 import { Actions } from './ui/Actions.js';
 import { Research } from './ui/Research.js';
+import { ErrorBoundary } from './ui/ErrorBoundary.js';
 import type { GrowthMetrics } from './scenes/GrowthScene.js';
 import { decodeStateFromHash } from './lib/exports.js';
 import { useStore } from './lib/store.js';
@@ -56,7 +57,9 @@ export default function App() {
           <Research />
         </aside>
         <main className="canvas-wrap">
-          <SceneCanvas onMetrics={setMetrics} />
+          <ErrorBoundary>
+            <SceneCanvas onMetrics={setMetrics} />
+          </ErrorBoundary>
           <HUD metrics={metrics} />
         </main>
       </div>

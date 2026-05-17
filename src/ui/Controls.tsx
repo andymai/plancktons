@@ -201,6 +201,12 @@ function GrowthControls() {
         >
           🎲
         </button>
+        <button
+          onClick={() => setGrowth({ seed: growth.seed + 1 })}
+          title="Increment seed (next deterministic trial)"
+        >
+          ↺
+        </button>
       </label>
       <label className="slider-row">
         <span>Strategy</span>
