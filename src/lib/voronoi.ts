@@ -22,7 +22,6 @@ export interface VoronoiResult {
   volumes: number[];
   /** True if the cell did NOT touch the bbox boundary. */
   bounded: boolean[];
-  /** Voxel side used. */
   voxelSize: number;
   /** Grid dimensions [nx, ny, nz]. */
   dims: [number, number, number];

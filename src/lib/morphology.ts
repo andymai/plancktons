@@ -12,7 +12,6 @@ import type { Planckton } from './planckton.js';
 export interface MorphologyResult {
   /** V_morph: closed volume in physical units (L³). */
   volume: number;
-  /** Voxel side length used. */
   voxelSize: number;
   /** Grid dimensions [nx, ny, nz]. */
   dims: [number, number, number];
