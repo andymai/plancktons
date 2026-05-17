@@ -126,12 +126,17 @@ input[type='range'] {
   flex: 1;
   min-height: 0;
 }
-.sidebar {
+.sidebar,
+.pane {
   overflow-y: auto;
   background: var(--panel);
   padding: 12px;
   flex: 0 0 auto;
 }
+.pane-right {
+  border-left: 1px solid var(--border);
+}
+.pane-resizer,
 .sidebar-resizer {
   width: 6px;
   cursor: col-resize;
@@ -139,9 +144,15 @@ input[type='range'] {
   flex: 0 0 6px;
   transition: background 120ms ease;
 }
+.pane-resizer:hover,
+.pane-resizer:active,
 .sidebar-resizer:hover,
 .sidebar-resizer:active {
   background: var(--accent);
+}
+.pane-resizer:focus-visible {
+  background: var(--accent);
+  outline: none;
 }
 .canvas-wrap {
   position: relative;
@@ -412,18 +423,40 @@ input[type='range'] {
 }
 
 .hud {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: rgba(20, 23, 28, 0.88);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 14px;
-  min-width: 240px;
-  max-height: calc(100vh - 80px);
-  overflow-y: auto;
   font-variant-numeric: tabular-nums;
-  backdrop-filter: blur(6px);
+}
+.hud-empty {
+  color: var(--text-dim);
+}
+.metrics-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.metrics-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.metrics-collapse,
+.metrics-tab {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px 8px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  line-height: 1.2;
+}
+.metrics-tab {
+  align-self: flex-start;
+  height: 36px;
+  margin: 12px 0;
+  border-radius: 6px 0 0 6px;
+  border-right: none;
+  padding: 0 8px;
 }
 .hud-row {
   display: flex;
@@ -600,16 +633,28 @@ input[type='range'] {
   text-decoration: underline;
 }
 
-/* --- mobile: stack sidebar above canvas, shorter sidebar height ---------- */
+/* --- mobile: stack sidebar / canvas / metrics vertically ----------------- */
 @media (max-width: 720px) {
   .layout {
     flex-direction: column;
   }
-  .sidebar {
+  .sidebar,
+  .pane {
     width: 100% !important;
     max-height: 45vh;
+  }
+  .sidebar {
     border-bottom: 1px solid var(--border);
   }
+  .pane-right {
+    border-left: none;
+    border-top: 1px solid var(--border);
+    max-height: 35vh;
+  }
+  .canvas-wrap {
+    min-height: 40vh;
+  }
+  .pane-resizer,
   .sidebar-resizer {
     display: none;
   }
@@ -622,10 +667,15 @@ input[type='range'] {
     display: none;
   }
   .hud {
-    top: 8px;
-    right: 8px;
-    min-width: 160px;
     font-size: 11px;
+  }
+  .metrics-tab {
+    align-self: center;
+    width: 100%;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    margin: 6px 0;
   }
   .plot {
     width: 100% !important;

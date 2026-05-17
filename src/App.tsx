@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { SceneCanvas } from './scenes/SceneCanvas.js';
 import { Controls } from './ui/Controls.js';
-import { HUD } from './ui/HUD.js';
 import { Actions } from './ui/Actions.js';
 import { Research } from './ui/Research.js';
 import { ModeSwitch } from './ui/ModeSwitch.js';
+import { MetricsPanel } from './ui/MetricsPanel.js';
 import { ErrorBoundary } from './ui/ErrorBoundary.js';
 import { ResizableSidebar } from './ui/ResizableSidebar.js';
 import { useKeyboardShortcuts } from './ui/useKeyboard.js';
@@ -76,8 +76,8 @@ export default function App() {
           <ErrorBoundary>
             <SceneCanvas onMetrics={setMetrics} />
           </ErrorBoundary>
-          <HUD metrics={metrics} />
         </main>
+        <MetricsPanel metrics={metrics} />
       </div>
     </div>
   );

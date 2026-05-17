@@ -11,7 +11,15 @@ export function HUD({ metrics }: { metrics: GrowthMetrics | null }) {
   if (scene === 'single') return <SingleHUD />;
   if (scene === 'cube') return <CubeHUD />;
   if (scene === 'reptile') return <ReptileHUD />;
-  if (scene !== 'growth' || !metrics) return null;
+  if (scene !== 'growth' || !metrics) {
+    return (
+      <div className="hud hud-empty">
+        <p className="caption" style={{ margin: 0 }}>
+          Pick a scene to see its metrics.
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="hud">
       <div
