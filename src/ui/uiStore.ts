@@ -34,6 +34,16 @@ function lsSet(key: string, value: string): void {
   }
 }
 
+function defaultMetricsHidden(): boolean {
+  const stored = lsGet(LS_METRICS_HIDDEN);
+  if (stored != null) return stored === '1';
+  try {
+    return window.matchMedia('(max-width: 720px)').matches;
+  } catch {
+    return false;
+  }
+}
+
 export const useUiStore = create<UiState>((set) => ({
   helpOpen: false,
   setHelpOpen: (helpOpen) => set({ helpOpen }),
@@ -46,7 +56,7 @@ export const useUiStore = create<UiState>((set) => ({
   setSectionCollapsed: (id, collapsed) =>
     set((s) => ({ collapsedSections: { ...s.collapsedSections, [id]: collapsed } })),
 
-  metricsHidden: lsGet(LS_METRICS_HIDDEN) === '1',
+  metricsHidden: defaultMetricsHidden(),
   toggleMetricsHidden: () =>
     set((s) => {
       const next = !s.metricsHidden;
