@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useStore } from '../lib/store.js';
+import { useStore, isAtLeast } from '../lib/store.js';
 import { DraftSlider } from './DraftSlider.js';
 import { useDraftValue } from './useDraftValue.js';
 import { useWorkerRun } from './useWorkerRun.js';
@@ -55,25 +55,19 @@ const SCENES = [
 export function Controls() {
   const scene = useStore((s) => s.scene);
   const setScene = useStore((s) => s.setScene);
-  const advanced = useStore((s) => s.advanced);
-  const setAdvanced = useStore((s) => s.setAdvanced);
+  const mode = useStore((s) => s.mode);
   return (
     <div className="controls">
       <div className="panel-header">
         <span className="panel-title">Scene</span>
-        <label className="advanced-toggle" title="Toggle advanced/research controls (keyboard: ?)">
-          <input
-            type="checkbox"
-            checked={advanced}
-            onChange={(e) => setAdvanced(e.target.checked)}
-          />
-          Advanced
-        </label>
       </div>
-      <div className="scene-list">
+      <div className="scene-list" role="radiogroup" aria-label="Scene">
         {SCENES.map((s, i) => (
           <button
             key={s.id}
+            type="button"
+            role="radio"
+            aria-checked={scene === s.id}
             className={`scene-button ${scene === s.id ? 'active' : ''}`}
             onClick={() => setScene(s.id)}
             title={`${s.tip}  (Keyboard: ${i + 1})`}
@@ -84,10 +78,10 @@ export function Controls() {
       </div>
       <div className="panel-divider" />
       <SceneControls />
-      {advanced && (
+      {isAtLeast(mode, 'explore') && (
         <>
           <div className="panel-divider" />
-          <AdvancedControls />
+          <DisplayControls />
         </>
       )}
       <ShortcutsHint />
@@ -127,7 +121,7 @@ function ShortcutsHint() {
           </tr>
           <tr>
             <td>?</td>
-            <td>toggle advanced</td>
+            <td>cycle mode (learn / explore / research)</td>
           </tr>
         </tbody>
       </table>
@@ -432,7 +426,8 @@ function StepButton() {
   );
 }
 
-function AdvancedControls() {
+function DisplayControls() {
+  const mode = useStore((s) => s.mode);
   const color = useStore((s) => s.color);
   const setColor = useStore((s) => s.setColor);
   return (
@@ -552,9 +547,13 @@ function AdvancedControls() {
         Plancktons share faces exactly in the math (V★ = N·L³/6). The render gap is purely cosmetic
         - set to 0 to see touching faces.
       </p>
-      <MorphologyPanel />
-      <VoronoiPanel />
-      <McRefinePanel />
+      {isAtLeast(mode, 'research') && (
+        <>
+          <MorphologyPanel />
+          <VoronoiPanel />
+          <McRefinePanel />
+        </>
+      )}
     </div>
   );
 }

@@ -53,13 +53,13 @@ describe('plancktonsToSTL', () => {
 // ──────────────────────────────────────────────────────────────────────
 
 const SAMPLE_STATE = {
-  scene: 'growth',
+  scene: 'growth' as const,
   singleChirality: 'L' as const,
   cubeExplode: 0.3,
   reptileExplode: 0.5,
   reptileDepth: 2,
   growth: { N: 42, seed: 9999, chiralityBias: 0.7, strategy: 'compact', compactBeta: 7.5 },
-  advanced: true,
+  mode: 'research' as const,
 };
 
 describe('URL hash round-trip', () => {
@@ -82,7 +82,25 @@ describe('URL hash round-trip', () => {
     expect(decoded?.growth?.seed).toBe(SAMPLE_STATE.growth.seed);
     expect(decoded?.growth?.chiralityBias).toBeCloseTo(SAMPLE_STATE.growth.chiralityBias);
     expect(decoded?.growth?.compactBeta).toBeCloseTo(SAMPLE_STATE.growth.compactBeta);
-    expect(decoded?.advanced).toBe(SAMPLE_STATE.advanced);
+    expect(decoded?.mode).toBe(SAMPLE_STATE.mode);
+  });
+
+  it('decodes legacy `a` field to mode (a:true → research, a:false → learn)', () => {
+    const legacyAdvanced = btoa(JSON.stringify({ a: true }));
+    window.history.replaceState(null, '', '/#' + legacyAdvanced);
+    expect(decodeStateFromHash()?.mode).toBe('research');
+
+    const legacyBasic = btoa(JSON.stringify({ a: false }));
+    window.history.replaceState(null, '', '/#' + legacyBasic);
+    expect(decodeStateFromHash()?.mode).toBe('learn');
+  });
+
+  it('rejects unknown scene/mode strings instead of casting them through', () => {
+    const bogus = btoa(JSON.stringify({ s: 'wormhole', m: 'godmode' }));
+    window.history.replaceState(null, '', '/#' + bogus);
+    const decoded = decodeStateFromHash();
+    expect(decoded?.scene).toBeUndefined();
+    expect(decoded?.mode).toBeUndefined();
   });
 
   it('decodeStateFromHash returns null when no hash', () => {

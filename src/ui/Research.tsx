@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useStore } from '../lib/store.js';
+import { useStore, isAtLeast } from '../lib/store.js';
 import { type CurvePoint, type TrialResult, downloadCSV, trialsToCSV } from '../lib/study.js';
 import { PACKING_REFERENCES } from '../lib/references.js';
 import { type PairCorrelation, type PairCorrelationAniso } from '../lib/paircorr.js';
@@ -41,8 +41,8 @@ function bestFitModel(f: CombinedFit): FitModel {
 const DEFAULT_NS = [1, 2, 4, 6, 8, 12, 16, 20, 25, 30, 40, 50, 70, 100, 150, 200];
 
 export function Research() {
-  const advanced = useStore((s) => s.advanced);
-  if (!advanced) return null;
+  const mode = useStore((s) => s.mode);
+  if (!isAtLeast(mode, 'research')) return null;
   return (
     <div className="research">
       <div className="panel-title">Research mode</div>

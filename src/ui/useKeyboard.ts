@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useStore } from '../lib/store.js';
+import { useStore, MODE_ORDER } from '../lib/store.js';
 
 /**
  * Global keyboard shortcuts:
@@ -8,7 +8,7 @@ import { useStore } from '../lib/store.js';
  *   N             next seed (seed + 1)
  *   ←/→           cycle scenes
  *   1/2/3/4       jump to scene
- *   ?             toggle advanced mode
+ *   ?             cycle disclosure mode (learn → explore → research)
  *
  * Skipped when a text input has focus.
  */
@@ -20,7 +20,7 @@ export function useKeyboardShortcuts() {
   const setAnimSpeed = useStore((s) => s.setAnimSpeed);
   const setAnimationMode = useStore((s) => s.setAnimationMode);
   const bumpStep = useStore((s) => s.bumpStep);
-  const setAdvanced = useStore((s) => s.setAdvanced);
+  const setMode = useStore((s) => s.setMode);
 
   useEffect(() => {
     function handler(e: KeyboardEvent) {
@@ -64,9 +64,11 @@ export function useKeyboardShortcuts() {
         case '4':
           setScene(SCENES[parseInt(e.key, 10) - 1]!);
           break;
-        case '?':
-          setAdvanced(!st.advanced);
+        case '?': {
+          const i = MODE_ORDER.indexOf(st.mode);
+          setMode(MODE_ORDER[(i + 1) % MODE_ORDER.length]!);
           break;
+        }
         case 'a':
         case 'A':
           if (st.scene === 'growth') {
@@ -83,5 +85,5 @@ export function useKeyboardShortcuts() {
     }
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [setScene, setGrowth, setAnimSpeed, setAnimationMode, bumpStep, setAdvanced]);
+  }, [setScene, setGrowth, setAnimSpeed, setAnimationMode, bumpStep, setMode]);
 }

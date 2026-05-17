@@ -4,6 +4,14 @@ import type { GrowthStrategy } from './assembly.js';
 export type SceneId = 'single' | 'cube' | 'reptile' | 'growth';
 export type AnimationMode = 'instant' | 'animated' | 'step';
 
+export type Mode = 'learn' | 'explore' | 'research';
+export const MODE_ORDER: readonly Mode[] = ['learn', 'explore', 'research'] as const;
+
+/** True when `current` is at or past `required` in the progressive-disclosure ladder. */
+export function isAtLeast(current: Mode, required: Mode): boolean {
+  return MODE_ORDER.indexOf(current) >= MODE_ORDER.indexOf(required);
+}
+
 export type ColorMode = 'chirality' | 'depth' | 'coordination';
 
 export interface ColorOpts {
@@ -68,9 +76,9 @@ interface State {
   color: ColorOpts;
   setColor: (c: Partial<ColorOpts>) => void;
 
-  // Mode
-  advanced: boolean;
-  setAdvanced: (b: boolean) => void;
+  // Progressive-disclosure mode (Learn → Explore → Research).
+  mode: Mode;
+  setMode: (m: Mode) => void;
 }
 
 const DEFAULT_COLOR: ColorOpts = {
@@ -131,6 +139,6 @@ export const useStore = create<State>((set) => ({
   color: DEFAULT_COLOR,
   setColor: (c) => set((s) => ({ color: { ...s.color, ...c } })),
 
-  advanced: true,
-  setAdvanced: (advanced) => set({ advanced }),
+  mode: 'learn',
+  setMode: (mode) => set({ mode }),
 }));

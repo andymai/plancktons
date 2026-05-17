@@ -101,14 +101,19 @@ function downloadBlob(blob: Blob, filename: string): void {
 
 // --------------------------- URL hash state --------------------------------
 
+export type ShareMode = 'learn' | 'explore' | 'research';
+export type ShareScene = 'single' | 'cube' | 'reptile' | 'growth';
+const SHARE_MODES: ReadonlySet<ShareMode> = new Set(['learn', 'explore', 'research']);
+const SHARE_SCENES: ReadonlySet<ShareScene> = new Set(['single', 'cube', 'reptile', 'growth']);
+
 interface SnapshotState {
-  scene: string;
+  scene: ShareScene;
   singleChirality: 'R' | 'L';
   cubeExplode: number;
   reptileExplode: number;
   reptileDepth: number;
   growth: { N: number; seed: number; chiralityBias: number; strategy: string; compactBeta: number };
-  advanced: boolean;
+  mode: ShareMode;
 }
 
 export function encodeStateToHash(state: SnapshotState): string {
@@ -125,7 +130,7 @@ export function encodeStateToHash(state: SnapshotState): string {
       st: state.growth.strategy,
       b: state.growth.compactBeta,
     },
-    a: state.advanced,
+    m: state.mode,
   };
   const json = JSON.stringify(payload);
   const b64 = btoa(json);
@@ -145,11 +150,12 @@ export function decodeStateFromHash(): Partial<SnapshotState> | null {
       re?: number;
       rd?: number;
       g?: { N?: number; sd?: number; cb?: number; st?: string; b?: number };
+      m?: string;
       a?: boolean;
     };
     const result: Partial<SnapshotState> = {};
-    if (p.s) result.scene = p.s;
-    if (p.sc) result.singleChirality = p.sc;
+    if (p.s && SHARE_SCENES.has(p.s as ShareScene)) result.scene = p.s as ShareScene;
+    if (p.sc === 'R' || p.sc === 'L') result.singleChirality = p.sc;
     if (typeof p.ce === 'number') result.cubeExplode = p.ce;
     if (typeof p.re === 'number') result.reptileExplode = p.re;
     if (typeof p.rd === 'number') result.reptileDepth = p.rd;
@@ -162,7 +168,13 @@ export function decodeStateFromHash(): Partial<SnapshotState> | null {
         compactBeta: p.g.b ?? 3,
       };
     }
-    if (typeof p.a === 'boolean') result.advanced = p.a;
+    if (p.m && SHARE_MODES.has(p.m as ShareMode)) {
+      result.mode = p.m as ShareMode;
+    } else if (p.a === true) {
+      result.mode = 'research';
+    } else if (p.a === false) {
+      result.mode = 'learn';
+    }
     return result;
   } catch (err) {
     console.warn('decodeStateFromHash: invalid hash', err);

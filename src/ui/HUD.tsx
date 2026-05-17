@@ -1,12 +1,13 @@
 import type { GrowthMetrics } from '../scenes/GrowthScene.js';
-import { useStore } from '../lib/store.js';
+import { useStore, isAtLeast } from '../lib/store.js';
 
 const fmt = (n: number, d = 4) => (Number.isFinite(n) ? n.toFixed(d) : '-');
 const pct = (n: number) => (Number.isFinite(n) ? `${(n * 100).toFixed(1)}%` : '-');
 
 export function HUD({ metrics }: { metrics: GrowthMetrics | null }) {
   const scene = useStore((s) => s.scene);
-  const advanced = useStore((s) => s.advanced);
+  const mode = useStore((s) => s.mode);
+  const showAdvanced = isAtLeast(mode, 'explore');
   if (scene === 'single') return <SingleHUD />;
   if (scene === 'cube') return <CubeHUD />;
   if (scene === 'reptile') return <ReptileHUD />;
@@ -61,7 +62,7 @@ export function HUD({ metrics }: { metrics: GrowthMetrics | null }) {
         <span className="hud-value">{fmt(metrics.surfaceArea, 3)}</span>
       </div>
       {!metrics.hullOk && <div className="hud-warn">⚠ Hull computation failed (degenerate?)</div>}
-      {advanced && (
+      {showAdvanced && (
         <>
           <div className="hud-divider" />
           <div className="hud-section">Gyration / shape</div>

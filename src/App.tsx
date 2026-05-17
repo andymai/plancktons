@@ -4,6 +4,7 @@ import { Controls } from './ui/Controls.js';
 import { HUD } from './ui/HUD.js';
 import { Actions } from './ui/Actions.js';
 import { Research } from './ui/Research.js';
+import { ModeSwitch } from './ui/ModeSwitch.js';
 import { ErrorBoundary } from './ui/ErrorBoundary.js';
 import { ResizableSidebar } from './ui/ResizableSidebar.js';
 import { useKeyboardShortcuts } from './ui/useKeyboard.js';
@@ -12,15 +13,15 @@ import { decodeStateFromHash } from './lib/exports.js';
 import { useStore } from './lib/store.js';
 import './App.css';
 
-function applyHashStateOnce() {
+function applyHashStateOnce(): boolean {
   const hadHash = !!window.location.hash;
   const s = decodeStateFromHash();
   if (!s) {
     if (hadHash) console.warn('Share link was invalid; using defaults.');
-    return;
+    return false;
   }
   const store = useStore.getState();
-  if (s.scene) store.setScene(s.scene as 'single' | 'cube' | 'reptile' | 'growth');
+  if (s.scene) store.setScene(s.scene);
   if (s.singleChirality) store.setSingleChirality(s.singleChirality);
   if (typeof s.cubeExplode === 'number') store.setCubeExplode(s.cubeExplode);
   if (typeof s.reptileExplode === 'number') store.setReptileExplode(s.reptileExplode);
@@ -34,7 +35,8 @@ function applyHashStateOnce() {
       compactBeta: s.growth.compactBeta,
     });
   }
-  if (typeof s.advanced === 'boolean') store.setAdvanced(s.advanced);
+  if (s.mode) store.setMode(s.mode);
+  return hadHash;
 }
 
 export default function App() {
@@ -60,7 +62,10 @@ export default function App() {
             Planckton packing - a Hill T₁ orthoscheme study
           </span>
         </div>
-        <Actions />
+        <div className="topbar-right">
+          <ModeSwitch />
+          <Actions />
+        </div>
       </header>
       <div className="layout">
         <ResizableSidebar>

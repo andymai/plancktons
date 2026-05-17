@@ -159,6 +159,42 @@ input[type='range'] {
 .actions .action-link {
   white-space: nowrap;
 }
+.topbar-right {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.mode-switch {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--panel-2);
+}
+.mode-button {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 5px 12px;
+  color: var(--text-dim);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+.mode-button:hover:not(:disabled):not(.active) {
+  background: #2d333d;
+  color: var(--text);
+}
+.mode-button.active {
+  background: var(--accent);
+  color: #0c1117;
+}
+.mode-button + .mode-button {
+  border-left: 1px solid var(--border);
+}
 .svg-plot-wrap {
   position: relative;
   display: inline-block;
