@@ -48,6 +48,14 @@ src/worker/   Web Worker entry — uses lib only
 
 `vitest.config.ts` only collects coverage from `src/lib/**/*.ts` (with hand-picked exclusions for DOM-bound modules: `store.ts`, `exports.ts`, `mesh.ts`, `references.ts`). Scenes and UI are covered via integration, not units. **Keep `src/lib/*` pure** — adding a React or THREE import there will violate the layering invariant the test setup encodes.
 
+### Two stores: shared (`src/lib/store.ts`) vs UI-only (`src/ui/uiStore.ts`)
+
+`src/lib/store.ts` is the documented exception to the "no React in lib" rule (it imports `zustand` and is coverage-excluded). It holds **share-linkable** state: `scene`, `growth`, `mode` (Learn → Explore → Research), color settings, animation mode, the `*Trigger` counters GrowthScene watches. Anything encoded into the URL hash via `exports.ts` lives here.
+
+`src/ui/uiStore.ts` holds **ephemeral** UI state that should _not_ round-trip through share links: `helpOpen`, `metricsHidden`, `firstVisitDismissed`. Put new UI-only state here, not in `lib/store`. The boundary keeps share links stable as the UI evolves.
+
+`isAtLeast(mode, level)` is the single gate every component uses to decide what to render (`mode !== 'learn'` for Display + advanced HUD, `mode === 'research'` for Research panels + Analyses). Don't read `mode` directly with `===` in components — use the helper so the ladder stays in one place.
+
 ### The simulation kernel is shared by browser, worker, and CLI
 
 `scripts/study.ts` (CLI), `src/worker/study.worker.ts` (off-main-thread), and `src/scenes/GrowthScene.tsx` (interactive) all call into `src/lib/study.ts` / `src/lib/assembly.ts`. Results are bit-identical across the three because the RNG (`src/lib/rng.ts`) is a deterministic LCG seeded with `seed_t = startSeed + t·9973`. If you change anything in the lib that touches simulation output, all three call sites are affected simultaneously — that's intentional.
@@ -65,6 +73,10 @@ The curve pool depends on a contract in `study.worker.ts`: the curve handler mus
 ### `ALGORITHM_VERSION` is load-bearing
 
 `src/lib/provenance.ts` exports `ALGORITHM_VERSION` (currently `'2'`). It is stamped into every CSV/JSON export's `#`-commented provenance block alongside the git short-hash. **Bump it whenever you change anything that affects simulation output**: SAT margin/tolerance, free-face ordering, growth strategy logic, RNG arithmetic, mating/perm enumeration, etc. Downstream consumers rely on this to detect when archived data and live code diverge. Not bumping it on a behavior change is a silent correctness bug.
+
+### Share-link hash format
+
+`src/lib/exports.ts` encodes the snapshot as base64-of-JSON in `location.hash`. Validated unions: `s` (scene) and `m` (mode) are checked against `SHARE_SCENES` / `SHARE_MODES` before any cast; unknown values are dropped, not silently accepted. Decoder precedence for the disclosure mode: `m` wins if valid, otherwise legacy `a:true → research` / `a:false → learn`, otherwise leave the store default. When adding a new share-linkable field, extend `SnapshotState`, the encoder payload, **and** the decoder's validation — and add a round-trip test in `tests/exports.test.ts`.
 
 ### Overlap correctness — SAT, not heuristics
 

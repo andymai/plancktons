@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useStore } from '../lib/store.js';
+import { useStore, isAtLeast } from '../lib/store.js';
 import { type CurvePoint, type TrialResult, downloadCSV, trialsToCSV } from '../lib/study.js';
 import { PACKING_REFERENCES } from '../lib/references.js';
 import { type PairCorrelation, type PairCorrelationAniso } from '../lib/paircorr.js';
@@ -16,6 +16,8 @@ import {
 import { useWorkerRun } from './useWorkerRun.js';
 import { ProgressBar } from './ProgressBar.js';
 import { SvgPlot } from './SvgPlot.js';
+import { Term } from './Term.js';
+import { CloseIcon, DownloadIcon, PinIcon } from './icons.js';
 
 type FitModel = 'power' | 'asymptote+power' | 'exp';
 type YMetric = 'etaC' | 'etaB';
@@ -41,8 +43,8 @@ function bestFitModel(f: CombinedFit): FitModel {
 const DEFAULT_NS = [1, 2, 4, 6, 8, 12, 16, 20, 25, 30, 40, 50, 70, 100, 150, 200];
 
 export function Research() {
-  const advanced = useStore((s) => s.advanced);
-  if (!advanced) return null;
+  const mode = useStore((s) => s.mode);
+  if (!isAtLeast(mode, 'research')) return null;
   return (
     <div className="research">
       <div className="panel-title">Research mode</div>
@@ -93,6 +95,7 @@ function Histogram() {
   const growth = useStore((s) => s.growth);
   const [snapshot, setSnapshot] = useState<SavedRun | null>(null);
   const [count, setCount] = useState(100);
+  const [bParams, setBParams] = useState<typeof growth | null>(null);
 
   const job = useWorkerRun<{ kind: 'study'; trials: TrialResult[] }>();
   // useMemo so downstream `[trials]` deps don't fire on every render.
@@ -100,18 +103,21 @@ function Histogram() {
   const running = job.running;
   const err = job.err;
   const progress = job.progress;
-  const run = () =>
+  const run = () => {
+    const params = { ...growth };
+    setBParams(params);
     job.run({
       kind: 'study',
       params: {
-        N: growth.N,
+        N: params.N,
         trials: count,
-        startSeed: growth.seed,
-        chiralityBias: growth.chiralityBias,
-        strategy: growth.strategy,
-        compactBeta: growth.compactBeta,
+        startSeed: params.seed,
+        chiralityBias: params.chiralityBias,
+        strategy: params.strategy,
+        compactBeta: params.compactBeta,
       },
     });
+  };
 
   const stats = useMemo(() => statsOf(trials), [trials]);
   const snapStats = useMemo(() => (snapshot ? statsOf(snapshot.trials) : null), [snapshot]);
@@ -126,11 +132,15 @@ function Histogram() {
     [trials, snapshot]
   );
 
-  const currentLabel = paramLabel(growth);
+  // Label the current B series with the params used at run() time, not the
+  // current sidebar values - prevents the displayed legend from drifting if
+  // the user changes parameters after kicking off a study.
+  const currentLabel = paramLabel(bParams ?? growth);
+  const exportParams = bParams ?? growth;
 
   return (
-    <div className="research-section">
-      <div className="research-title">Efficiency histogram (N={growth.N})</div>
+    <details className="research-section collapsible" open>
+      <summary className="research-title">Efficiency histogram (N={growth.N})</summary>
       <div className="research-row">
         <label>
           Trials:&nbsp;
@@ -154,12 +164,16 @@ function Histogram() {
             onClick={() => setSnapshot({ label: currentLabel, trials: [...trials] })}
             title="Save the current trials as 'A' so the next run overlays as 'B' for comparison."
           >
-            📌 Save A
+            <PinIcon /> Pin as A
           </button>
         )}
         {snapshot && (
-          <button onClick={() => setSnapshot(null)} title="Clear the saved comparison run">
-            ✕
+          <button
+            onClick={() => setSnapshot(null)}
+            title="Clear the saved comparison run"
+            aria-label="Clear comparison A"
+          >
+            <CloseIcon />
           </button>
         )}
         {trials.length > 0 && (
@@ -168,24 +182,24 @@ function Histogram() {
               downloadCSV(
                 trialsToCSV(trials, {
                   studyParams: {
-                    N: growth.N,
-                    chiralityBias: growth.chiralityBias,
-                    strategy: growth.strategy,
-                    compactBeta: growth.compactBeta,
-                    startSeed: growth.seed,
+                    N: exportParams.N,
+                    chiralityBias: exportParams.chiralityBias,
+                    strategy: exportParams.strategy,
+                    compactBeta: exportParams.compactBeta,
+                    startSeed: exportParams.seed,
                   },
                 }),
-                `plancktons_trials_N${growth.N}_${growth.strategy}.csv`
+                `plancktons_trials_N${exportParams.N}_${exportParams.strategy}.csv`
               )
             }
           >
-            ⬇ CSV
+            <DownloadIcon /> CSV
           </button>
         )}
       </div>
       {stats && (
         <div className="stats-line">
-          <span style={{ color: '#5fa8e3' }}>B (current)</span>: μ={stats.mean.toFixed(3)} ±{' '}
+          <span style={{ color: '#5fa8e3' }}>B ({currentLabel})</span>: μ={stats.mean.toFixed(3)} ±{' '}
           {stats.sem.toFixed(4)} (SEM) · σ={stats.std.toFixed(3)} · n={stats.n}
         </div>
       )}
@@ -201,7 +215,7 @@ function Histogram() {
       )}
       {err && <div className="error-line">⚠ {err}</div>}
       {histo && <HistogramBars histo={histo} />}
-    </div>
+    </details>
   );
 }
 
@@ -271,8 +285,8 @@ function Curve() {
   const { power, asym, exp } = fits;
 
   return (
-    <div className="research-section">
-      <div className="research-title">η vs N (current strategy)</div>
+    <details className="research-section collapsible" open>
+      <summary className="research-title">η vs N (current strategy)</summary>
       <div className="research-row">
         <label>
           Trials/N:&nbsp;
@@ -296,12 +310,16 @@ function Curve() {
             onClick={() => setSnapshot({ label: paramLabel(growth), points: [...points] })}
             title="Save the current sweep as A so the next sweep overlays as B."
           >
-            📌 Save A
+            <PinIcon /> Pin as A
           </button>
         )}
         {snapshot && (
-          <button onClick={() => setSnapshot(null)} title="Clear the saved overlay">
-            ✕
+          <button
+            onClick={() => setSnapshot(null)}
+            title="Clear the saved overlay"
+            aria-label="Clear sweep A"
+          >
+            <CloseIcon />
           </button>
         )}
       </div>
@@ -441,7 +459,7 @@ function Curve() {
           </tbody>
         </table>
       )}
-    </div>
+    </details>
   );
 }
 
@@ -807,13 +825,10 @@ function PairCorrelationPlot() {
     });
 
   return (
-    <div className="research-section">
-      <div
-        className="research-title"
-        title="g(r) = local density at distance r normalized by bulk density. Random uniform → 1; periodic crystal → sharp peaks; amorphous → broad peaks decaying to 1."
-      >
-        Pair correlation g(r) (tet centroids)
-      </div>
+    <details className="research-section collapsible">
+      <summary className="research-title">
+        <Term name="pairCorrelation">Pair correlation g(r)</Term> (tet centroids)
+      </summary>
       <div className="research-row">
         <label>
           Trials:&nbsp;
@@ -849,7 +864,7 @@ function PairCorrelationPlot() {
         <div className="error-line">⚠ No assemblies produced ≥2 tets.</div>
       )}
       {pc && pc.r.length > 0 && <PairCorrPlot pc={pc} aniso={pcAniso} />}
-    </div>
+    </details>
   );
 }
 
@@ -955,6 +970,13 @@ function PairCorrPlot({ pc, aniso }: { pc: PairCorrelation; aniso: PairCorrelati
   );
 }
 
+function avramiRegime(n: number): string {
+  if (n < 1.5) return 'surface-limited (n ≈ 1)';
+  if (n < 2.5) return '2D growth (n ≈ 2)';
+  if (n < 3.5) return '3D bulk (n ≈ 3)';
+  return 'increasing-rate nucleation (n ≥ 4)';
+}
+
 function KineticsPanel() {
   const growth = useStore((s) => s.growth);
   const job = useWorkerRun<{ kind: 'kinetics'; kinetics: KineticsResult }>();
@@ -975,13 +997,10 @@ function KineticsPanel() {
   }
 
   return (
-    <div className="research-section">
-      <div
-        className="research-title"
-        title="Avrami-KJMA kinetics: η_C(t) = η_∞ · (1 − exp(−K·t^n)). n=1 surface-limited, n=3 bulk-nucleation, n=4 increasing-nucleation."
-      >
-        Growth kinetics (Avrami)
-      </div>
+    <details className="research-section collapsible">
+      <summary className="research-title">
+        Growth kinetics (<Term name="avrami">Avrami</Term>)
+      </summary>
       <div className="research-row">
         <button onClick={run} disabled={job.running}>
           {job.running ? 'Running…' : `Run to N=${growth.N}`}
@@ -1006,13 +1025,7 @@ function KineticsPanel() {
               </strong>
               &nbsp;· K = {result.fit.K.toExponential(2)} &nbsp;· R² = {result.fit.r2.toFixed(3)}
               {' · '}
-              {result.fit.n < 1.5
-                ? 'surface-limited (n ≈ 1)'
-                : result.fit.n < 2.5
-                  ? '2D growth (n ≈ 2)'
-                  : result.fit.n < 3.5
-                    ? '3D bulk (n ≈ 3)'
-                    : 'increasing-rate nucleation (n ≥ 4)'}
+              {avramiRegime(result.fit.n)}
             </div>
           ) : (
             <div className="stats-line" style={{ color: 'var(--text-dim)' }}>
@@ -1021,7 +1034,7 @@ function KineticsPanel() {
           )}
         </>
       )}
-    </div>
+    </details>
   );
 }
 
@@ -1115,13 +1128,13 @@ function AutocorrPanel() {
   }
 
   return (
-    <div className="research-section">
-      <div
+    <details className="research-section collapsible">
+      <summary
         className="research-title"
         title="S₂(r) = P(two random points distance r apart are both inside the aggregate). S₂(0) = φ (volume fraction); S₂(∞) = φ² (statistically independent). The drop from φ to φ² happens at the correlation length — typical feature size of the cluster."
       >
         Two-point autocorrelation S₂(r)
-      </div>
+      </summary>
       <div className="research-row">
         <button onClick={run} disabled={job.running}>
           {job.running ? 'Computing…' : `Compute S₂(r) at N=${growth.N}`}
@@ -1138,7 +1151,7 @@ function AutocorrPanel() {
           </div>
         </>
       )}
-    </div>
+    </details>
   );
 }
 

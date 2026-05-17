@@ -28,11 +28,16 @@ export function useWorkerRun<R extends StudyResult>() {
   const abortRef = useRef<AbortController | null>(null);
 
   const run = useCallback(async (job: StudyJobInput, opts?: Pick<RunOptions, 'onProgress'>) => {
-    abortRef.current?.abort();
+    const prev = abortRef.current;
     const ctrl = new AbortController();
     abortRef.current = ctrl;
+    // Aborting the prior run schedules an AbortError in its catch handler.
+    // That handler now clears running:true — but only if it's still the
+    // active controller, so we don't undo this new run's own setState below.
+    prev?.abort();
     setState({ running: true, err: null, progress: null, result: null });
     const onProgress = (done: number, total: number) => {
+      if (ctrl.signal.aborted) return;
       opts?.onProgress?.(done, total);
       setState((s) => ({ ...s, progress: { done, total } }));
     };
@@ -41,7 +46,13 @@ export function useWorkerRun<R extends StudyResult>() {
       if (ctrl.signal.aborted) return;
       setState({ running: false, err: null, progress: null, result });
     } catch (e) {
-      if ((e as { name?: string }).name === 'AbortError') return;
+      const aborted = (e as { name?: string }).name === 'AbortError';
+      if (aborted) {
+        if (abortRef.current === ctrl) {
+          setState({ running: false, err: null, progress: null, result: null });
+        }
+        return;
+      }
       setState({
         running: false,
         err: e instanceof Error ? e.message : String(e),

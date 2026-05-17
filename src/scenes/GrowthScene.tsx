@@ -114,6 +114,8 @@ export function GrowthScene({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => v
   const animationMode = useStore((s) => s.animationMode);
   const animSpeed = useStore((s) => s.animSpeed);
   const stepTrigger = useStore((s) => s.stepTrigger);
+  const resetTrigger = useStore((s) => s.resetTrigger);
+  const jumpEndTrigger = useStore((s) => s.jumpEndTrigger);
   const color = useStore((s) => s.color);
 
   // Reset the rendered tet count whenever the simulation identity changes
@@ -127,6 +129,8 @@ export function GrowthScene({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => v
   const [prevSimKey, setPrevSimKey] = useState(simKey);
   const [grown, setGrown] = useState(growth.N);
   const [prevStep, setPrevStep] = useState(stepTrigger);
+  const [prevReset, setPrevReset] = useState(resetTrigger);
+  const [prevJumpEnd, setPrevJumpEnd] = useState(jumpEndTrigger);
   if (prevSimKey !== simKey) {
     setPrevSimKey(simKey);
     setGrown(animationMode === 'instant' ? growth.N : 1);
@@ -134,6 +138,12 @@ export function GrowthScene({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => v
   } else if (animationMode === 'step' && prevStep !== stepTrigger) {
     setPrevStep(stepTrigger);
     setGrown((n) => Math.min(growth.N, n + 1));
+  } else if (prevReset !== resetTrigger) {
+    setPrevReset(resetTrigger);
+    setGrown(1);
+  } else if (prevJumpEnd !== jumpEndTrigger) {
+    setPrevJumpEnd(jumpEndTrigger);
+    setGrown(growth.N);
   }
   // Instant mode tracks growth.N directly; other modes use the grown counter.
   const currentN = animationMode === 'instant' ? growth.N : Math.min(growth.N, grown);

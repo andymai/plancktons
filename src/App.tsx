@@ -1,26 +1,31 @@
 import { useEffect, useState } from 'react';
 import { SceneCanvas } from './scenes/SceneCanvas.js';
 import { Controls } from './ui/Controls.js';
-import { HUD } from './ui/HUD.js';
 import { Actions } from './ui/Actions.js';
 import { Research } from './ui/Research.js';
+import { ModeSwitch } from './ui/ModeSwitch.js';
+import { MetricsPanel } from './ui/MetricsPanel.js';
+import { Transport } from './ui/Transport.js';
+import { HelpOverlay } from './ui/HelpOverlay.js';
+import { FirstVisitToast } from './ui/FirstVisitToast.js';
 import { ErrorBoundary } from './ui/ErrorBoundary.js';
 import { ResizableSidebar } from './ui/ResizableSidebar.js';
 import { useKeyboardShortcuts } from './ui/useKeyboard.js';
+import { useUiStore } from './ui/uiStore.js';
 import type { GrowthMetrics } from './scenes/GrowthScene.js';
 import { decodeStateFromHash } from './lib/exports.js';
 import { useStore } from './lib/store.js';
 import './App.css';
 
-function applyHashStateOnce() {
+function applyHashStateOnce(): boolean {
   const hadHash = !!window.location.hash;
   const s = decodeStateFromHash();
   if (!s) {
     if (hadHash) console.warn('Share link was invalid; using defaults.');
-    return;
+    return false;
   }
   const store = useStore.getState();
-  if (s.scene) store.setScene(s.scene as 'single' | 'cube' | 'reptile' | 'growth');
+  if (s.scene) store.setScene(s.scene);
   if (s.singleChirality) store.setSingleChirality(s.singleChirality);
   if (typeof s.cubeExplode === 'number') store.setCubeExplode(s.cubeExplode);
   if (typeof s.reptileExplode === 'number') store.setReptileExplode(s.reptileExplode);
@@ -34,7 +39,8 @@ function applyHashStateOnce() {
       compactBeta: s.growth.compactBeta,
     });
   }
-  if (typeof s.advanced === 'boolean') store.setAdvanced(s.advanced);
+  if (s.mode) store.setMode(s.mode);
+  return hadHash;
 }
 
 export default function App() {
@@ -60,7 +66,11 @@ export default function App() {
             Planckton packing - a Hill T₁ orthoscheme study
           </span>
         </div>
-        <Actions />
+        <div className="topbar-right">
+          <ModeSwitch />
+          <HelpButton />
+          <Actions />
+        </div>
       </header>
       <div className="layout">
         <ResizableSidebar>
@@ -71,9 +81,27 @@ export default function App() {
           <ErrorBoundary>
             <SceneCanvas onMetrics={setMetrics} />
           </ErrorBoundary>
-          <HUD metrics={metrics} />
+          <Transport metrics={metrics} />
         </main>
+        <MetricsPanel metrics={metrics} />
       </div>
+      <HelpOverlay />
+      <FirstVisitToast />
     </div>
+  );
+}
+
+function HelpButton() {
+  const setOpen = useUiStore((s) => s.setHelpOpen);
+  return (
+    <button
+      type="button"
+      className="help-button"
+      onClick={() => setOpen(true)}
+      title="Help & glossary"
+      aria-label="Open help"
+    >
+      ?
+    </button>
   );
 }

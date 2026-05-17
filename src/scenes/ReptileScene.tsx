@@ -56,9 +56,12 @@ export function ReptileScene() {
     tRef.current += delta;
     setExplode(0.5 - 0.5 * Math.cos(tRef.current * 2.5));
   });
+  // Split the memo so 60Hz autoplay (which updates reptileExplode every frame)
+  // doesn't rebuild the 8^depth subdivision — at depth=3 that's 512 pieces.
+  const subdivided = useMemo(() => recursiveReptile(REPTILE_L, reptileDepth), [reptileDepth]);
   const pieces = useMemo(
-    () => explode(recursiveReptile(REPTILE_L, reptileDepth), reptileExplode * REPTILE_L * 2),
-    [reptileExplode, reptileDepth]
+    () => explode(subdivided, reptileExplode * REPTILE_L * 2),
+    [subdivided, reptileExplode]
   );
   return (
     <group position={[-REPTILE_L, -REPTILE_L, -REPTILE_L]}>

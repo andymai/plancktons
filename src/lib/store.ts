@@ -4,6 +4,13 @@ import type { GrowthStrategy } from './assembly.js';
 export type SceneId = 'single' | 'cube' | 'reptile' | 'growth';
 export type AnimationMode = 'instant' | 'animated' | 'step';
 
+export type Mode = 'learn' | 'explore' | 'research';
+export const MODE_ORDER: readonly Mode[] = ['learn', 'explore', 'research'] as const;
+
+export function isAtLeast(current: Mode, required: Mode): boolean {
+  return MODE_ORDER.indexOf(current) >= MODE_ORDER.indexOf(required);
+}
+
 export type ColorMode = 'chirality' | 'depth' | 'coordination';
 
 export interface ColorOpts {
@@ -60,17 +67,28 @@ interface State {
   setAnimationMode: (m: AnimationMode) => void;
   animSpeed: number; // tets per second
   setAnimSpeed: (n: number) => void;
-  /** Monotonic counter - bump to advance one tet in step mode. */
+  /** Tracks the most recent non-zero animSpeed so togglePlay can resume to it. */
+  lastNonZeroAnimSpeed: number;
+  /**
+   * Toggle animSpeed between 0 (paused) and the most recent non-zero value.
+   * Shared by the Space keyboard shortcut and the Transport play/pause button
+   * so the resume speed is consistent regardless of which surface paused.
+   */
+  togglePlay: () => void;
+  // Monotonic counters; each scene watches these to step / restart / jump.
   stepTrigger: number;
   bumpStep: () => void;
+  resetTrigger: number;
+  bumpReset: () => void;
+  jumpEndTrigger: number;
+  bumpJumpEnd: () => void;
 
   // Visual
   color: ColorOpts;
   setColor: (c: Partial<ColorOpts>) => void;
 
-  // Mode
-  advanced: boolean;
-  setAdvanced: (b: boolean) => void;
+  mode: Mode;
+  setMode: (m: Mode) => void;
 }
 
 const DEFAULT_COLOR: ColorOpts = {
@@ -125,12 +143,24 @@ export const useStore = create<State>((set) => ({
   setAnimationMode: (animationMode) => set({ animationMode }),
   animSpeed: 12,
   setAnimSpeed: (animSpeed) => set({ animSpeed }),
+  togglePlay: () =>
+    set((s) => {
+      if (s.animSpeed > 0) {
+        return { animSpeed: 0, lastNonZeroAnimSpeed: s.animSpeed };
+      }
+      return { animSpeed: s.lastNonZeroAnimSpeed };
+    }),
+  lastNonZeroAnimSpeed: 12,
   stepTrigger: 0,
   bumpStep: () => set((s) => ({ stepTrigger: s.stepTrigger + 1 })),
+  resetTrigger: 0,
+  bumpReset: () => set((s) => ({ resetTrigger: s.resetTrigger + 1 })),
+  jumpEndTrigger: 0,
+  bumpJumpEnd: () => set((s) => ({ jumpEndTrigger: s.jumpEndTrigger + 1 })),
 
   color: DEFAULT_COLOR,
   setColor: (c) => set((s) => ({ color: { ...s.color, ...c } })),
 
-  advanced: true,
-  setAdvanced: (advanced) => set({ advanced }),
+  mode: 'learn',
+  setMode: (mode) => set({ mode }),
 }));

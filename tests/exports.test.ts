@@ -53,13 +53,13 @@ describe('plancktonsToSTL', () => {
 // ──────────────────────────────────────────────────────────────────────
 
 const SAMPLE_STATE = {
-  scene: 'growth',
+  scene: 'growth' as const,
   singleChirality: 'L' as const,
   cubeExplode: 0.3,
   reptileExplode: 0.5,
   reptileDepth: 2,
   growth: { N: 42, seed: 9999, chiralityBias: 0.7, strategy: 'compact', compactBeta: 7.5 },
-  advanced: true,
+  mode: 'research' as const,
 };
 
 describe('URL hash round-trip', () => {
@@ -82,7 +82,25 @@ describe('URL hash round-trip', () => {
     expect(decoded?.growth?.seed).toBe(SAMPLE_STATE.growth.seed);
     expect(decoded?.growth?.chiralityBias).toBeCloseTo(SAMPLE_STATE.growth.chiralityBias);
     expect(decoded?.growth?.compactBeta).toBeCloseTo(SAMPLE_STATE.growth.compactBeta);
-    expect(decoded?.advanced).toBe(SAMPLE_STATE.advanced);
+    expect(decoded?.mode).toBe(SAMPLE_STATE.mode);
+  });
+
+  it('decodes legacy `a` field to mode (a:true → research, a:false → learn)', () => {
+    const legacyAdvanced = btoa(JSON.stringify({ a: true }));
+    window.history.replaceState(null, '', '/#' + legacyAdvanced);
+    expect(decodeStateFromHash()?.mode).toBe('research');
+
+    const legacyBasic = btoa(JSON.stringify({ a: false }));
+    window.history.replaceState(null, '', '/#' + legacyBasic);
+    expect(decodeStateFromHash()?.mode).toBe('learn');
+  });
+
+  it('rejects unknown scene/mode strings instead of casting them through', () => {
+    const bogus = btoa(JSON.stringify({ s: 'wormhole', m: 'godmode' }));
+    window.history.replaceState(null, '', '/#' + bogus);
+    const decoded = decodeStateFromHash();
+    expect(decoded?.scene).toBeUndefined();
+    expect(decoded?.mode).toBeUndefined();
   });
 
   it('decodeStateFromHash returns null when no hash', () => {
@@ -110,5 +128,31 @@ describe('URL hash round-trip', () => {
     expect(decoded?.growth?.seed).toBe(99);
     expect(decoded?.growth?.compactBeta).toBe(3); // default
     expect(decoded?.growth?.strategy).toBe('uniform'); // default
+  });
+
+  it('clamps out-of-range growth values to safe defaults', () => {
+    const bogus = btoa(
+      JSON.stringify({
+        g: { N: 99999, sd: -1, cb: 5, st: 'crazy', b: -10 },
+        ce: 17,
+        rd: 99,
+      })
+    );
+    window.history.replaceState(null, '', '/#' + bogus);
+    const decoded = decodeStateFromHash();
+    expect(decoded?.growth?.N).toBe(2000);
+    expect(decoded?.growth?.seed).toBe(0);
+    expect(decoded?.growth?.chiralityBias).toBe(1);
+    expect(decoded?.growth?.strategy).toBe('uniform');
+    expect(decoded?.growth?.compactBeta).toBe(0);
+    expect(decoded?.cubeExplode).toBe(1);
+    expect(decoded?.reptileDepth).toBe(3);
+  });
+
+  it('rejects non-numeric N (string) instead of poisoning the store', () => {
+    const bogus = btoa(JSON.stringify({ g: { N: 'abc' } }));
+    window.history.replaceState(null, '', '/#' + bogus);
+    const decoded = decodeStateFromHash();
+    expect(decoded?.growth?.N).toBe(20); // fallback default, not "abc"
   });
 });

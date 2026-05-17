@@ -1,24 +1,18 @@
 import { useState } from 'react';
-import { useStore } from '../lib/store.js';
+import { useStore, isAtLeast } from '../lib/store.js';
+import type { GrowthParams, SceneId } from '../lib/store.js';
 import { DraftSlider } from './DraftSlider.js';
 import { useDraftValue } from './useDraftValue.js';
 import { useWorkerRun } from './useWorkerRun.js';
 import { ProgressBar } from './ProgressBar.js';
+import { Term } from './Term.js';
+import { useRadioGroup } from './useRadioGroup.js';
 import type { MorphologyResult } from '../lib/morphology.js';
 import type { VoronoiResult } from '../lib/voronoi.js';
 import type { McRefineResult } from '../lib/mcRefine.js';
 import type { GrowthJob } from '../worker/study.worker.js';
 
-interface GrowthState {
-  N: number;
-  seed: number;
-  chiralityBias: number;
-  strategy: 'uniform' | 'compact';
-  compactBeta: number;
-}
-
-/** Bundle the growth-state slice every analysis panel sends to the worker. */
-function growthJob(g: GrowthState): GrowthJob {
+function growthJob(g: GrowthParams): GrowthJob {
   return {
     L: 1,
     N: g.N,
@@ -52,31 +46,29 @@ const SCENES = [
   },
 ];
 
+const SCENE_IDS = SCENES.map((s) => s.id) as readonly SceneId[];
+
 export function Controls() {
   const scene = useStore((s) => s.scene);
   const setScene = useStore((s) => s.setScene);
-  const advanced = useStore((s) => s.advanced);
-  const setAdvanced = useStore((s) => s.setAdvanced);
+  const mode = useStore((s) => s.mode);
+  const getSceneRadioProps = useRadioGroup(SCENE_IDS, scene, setScene);
   return (
     <div className="controls">
       <div className="panel-header">
         <span className="panel-title">Scene</span>
-        <label className="advanced-toggle" title="Toggle advanced/research controls (keyboard: ?)">
-          <input
-            type="checkbox"
-            checked={advanced}
-            onChange={(e) => setAdvanced(e.target.checked)}
-          />
-          Advanced
-        </label>
       </div>
-      <div className="scene-list">
+      <div className="scene-list" role="radiogroup" aria-label="Scene">
         {SCENES.map((s, i) => (
           <button
             key={s.id}
+            type="button"
+            role="radio"
+            aria-checked={scene === s.id}
             className={`scene-button ${scene === s.id ? 'active' : ''}`}
             onClick={() => setScene(s.id)}
             title={`${s.tip}  (Keyboard: ${i + 1})`}
+            {...getSceneRadioProps(s.id)}
           >
             {s.label}
           </button>
@@ -84,10 +76,16 @@ export function Controls() {
       </div>
       <div className="panel-divider" />
       <SceneControls />
-      {advanced && (
+      {isAtLeast(mode, 'explore') && (
         <>
           <div className="panel-divider" />
-          <AdvancedControls />
+          <DisplayControls />
+        </>
+      )}
+      {isAtLeast(mode, 'research') && (
+        <>
+          <div className="panel-divider" />
+          <AnalysesControls />
         </>
       )}
       <ShortcutsHint />
@@ -127,7 +125,7 @@ function ShortcutsHint() {
           </tr>
           <tr>
             <td>?</td>
-            <td>toggle advanced</td>
+            <td>cycle mode (learn / explore / research)</td>
           </tr>
         </tbody>
       </table>
@@ -144,19 +142,36 @@ function SceneControls() {
   return null;
 }
 
+const CHIRALITY_IDS = ['R', 'L'] as const;
+
 function SingleControls() {
   const chir = useStore((s) => s.singleChirality);
   const set = useStore((s) => s.setSingleChirality);
   const showAngles = useStore((s) => s.singleShowAngles);
   const setShowAngles = useStore((s) => s.setSingleShowAngles);
+  const getRadioProps = useRadioGroup(CHIRALITY_IDS, chir, set);
   return (
     <div>
       <div className="panel-title">Chirality</div>
-      <div className="chirality-toggle">
-        <button className={`chir-btn ${chir === 'R' ? 'active' : ''}`} onClick={() => set('R')}>
+      <div className="chirality-toggle" role="radiogroup" aria-label="Chirality">
+        <button
+          type="button"
+          role="radio"
+          aria-checked={chir === 'R'}
+          className={`chir-btn ${chir === 'R' ? 'active' : ''}`}
+          onClick={() => set('R')}
+          {...getRadioProps('R')}
+        >
           Right (red)
         </button>
-        <button className={`chir-btn ${chir === 'L' ? 'active' : ''}`} onClick={() => set('L')}>
+        <button
+          type="button"
+          role="radio"
+          aria-checked={chir === 'L'}
+          className={`chir-btn ${chir === 'L' ? 'active' : ''}`}
+          onClick={() => set('L')}
+          {...getRadioProps('L')}
+        >
           Left (white)
         </button>
       </div>
@@ -172,9 +187,10 @@ function SingleControls() {
         Show dihedral angles
       </label>
       <p className="caption">
-        A Planckton (Hill T₁ orthoscheme). Four faces, two shapes: isoceles-right (1, 1, √2) and
-        scalene-right (1, √2, √3). The two chiralities are mirror images. All 6 dihedral angles are
-        rational multiples of π - the Dehn invariant property.
+        A <Term name="planckton" /> (<Term name="hillT1" /> orthoscheme). Four faces, two shapes:
+        isoceles-right (1, 1, √2) and scalene-right (1, √2, √3). The two{' '}
+        <Term name="chirality">chiralities</Term> are mirror images. All 6 dihedral angles are
+        rational multiples of π — the <Term name="dehnInvariant" /> property.
       </p>
     </div>
   );
@@ -209,8 +225,9 @@ function CubeControls() {
         Auto-play scissors-congruence morph
       </label>
       <p className="caption">
-        Six Plancktons - 3 R + 3 L, one per permutation of (x, y, z) - fill a cube exactly. Each has
-        volume L³/6.
+        Six <Term name="planckton">Plancktons</Term> — 3 R + 3 L, one per permutation of (x, y, z) —
+        fill a cube exactly. Each has volume L³/6. The Dehn invariant collapses to zero, so this is
+        a <Term name="scissorsCongruence" /> in action.
       </p>
     </div>
   );
@@ -262,8 +279,9 @@ function ReptileControls() {
         </span>
       </label>
       <p className="caption">
-        A 2× Planckton splits into 8 unit copies. Recursing gives 8ᵈ pieces. This is the m³-reptile
-        family - Matoušek &amp; Safernová (2010) proved it is the only such family for tetrahedra.
+        A 2× <Term name="planckton" /> splits into 8 unit copies. Recursing gives 8ᵈ pieces. This is
+        the <Term name="reptile">m³-reptile</Term> family — Matoušek &amp; Safernová (2010) proved
+        it is the only such family for tetrahedra.
       </p>
     </div>
   );
@@ -276,6 +294,7 @@ function GrowthControls() {
   const setAnimationMode = useStore((s) => s.setAnimationMode);
   const animSpeed = useStore((s) => s.animSpeed);
   const setAnimSpeed = useStore((s) => s.setAnimSpeed);
+  const lastNonZeroAnimSpeed = useStore((s) => s.lastNonZeroAnimSpeed);
   const [draftN, setDraftN] = useDraftValue(growth.N);
   const [draftBeta, setDraftBeta] = useDraftValue(growth.compactBeta);
   const [draftChir, setDraftChir] = useDraftValue(growth.chiralityBias);
@@ -303,10 +322,10 @@ function GrowthControls() {
           value={draftN}
           onChange={(e) => {
             const n = parseInt(e.target.value, 10);
-            if (Number.isFinite(n) && n >= 1) setGrowth({ N: n });
+            if (Number.isFinite(n) && n >= 1) setGrowth({ N: Math.min(2000, n) });
           }}
           style={{ width: '4.2rem' }}
-          title="Slider tops at 500; type above for N up to 2000 (slow at extreme N)."
+          title="Slider tops at 1000; type above for N up to 2000 (slow at extreme N)."
         />
       </label>
       <label
@@ -400,17 +419,19 @@ function GrowthControls() {
             min={0.5}
             max={30}
             step={0.5}
-            value={animSpeed}
+            value={animSpeed > 0 ? animSpeed : lastNonZeroAnimSpeed}
             onChange={(e) => setAnimSpeed(parseFloat(e.target.value))}
           />
-          <span className="slider-value">{animSpeed.toFixed(1)}/s</span>
+          <span className="slider-value">
+            {animSpeed > 0 ? `${animSpeed.toFixed(1)}/s` : 'paused'}
+          </span>
         </label>
       )}
       {animationMode === 'step' && <StepButton />}
       <p className="caption">
-        Each step picks a free face at random and glues a fresh Planckton onto a congruent face.
-        SAT-checked rejection guarantees no two Plancktons overlap. Compact mode biases toward
-        concave pockets - tighter packings, but also earlier jamming.
+        Each step picks a free face at random and glues a fresh <Term name="planckton" /> onto a
+        congruent face. SAT-checked rejection guarantees no two Plancktons overlap. Compact mode
+        biases toward concave pockets — tighter packings, but also earlier <Term name="jamming" />.
       </p>
     </div>
   );
@@ -432,7 +453,7 @@ function StepButton() {
   );
 }
 
-function AdvancedControls() {
+function DisplayControls() {
   const color = useStore((s) => s.color);
   const setColor = useStore((s) => s.setColor);
   return (
@@ -497,17 +518,6 @@ function AdvancedControls() {
         />
         Gyration ellipsoid
       </label>
-      <label
-        className="checkbox-row"
-        title="Show known packing densities (sphere FCC, regular tet, RCP, RLP, …) as horizontal lines on the V*/V curve"
-      >
-        <input
-          type="checkbox"
-          checked={color.showReferences}
-          onChange={(e) => setColor({ showReferences: e.target.checked })}
-        />
-        Reference densities on plots
-      </label>
       <label className="checkbox-row">
         <input
           type="checkbox"
@@ -552,6 +562,27 @@ function AdvancedControls() {
         Plancktons share faces exactly in the math (V★ = N·L³/6). The render gap is purely cosmetic
         - set to 0 to see touching faces.
       </p>
+    </div>
+  );
+}
+
+function AnalysesControls() {
+  const color = useStore((s) => s.color);
+  const setColor = useStore((s) => s.setColor);
+  return (
+    <div>
+      <div className="panel-title">Analyses</div>
+      <label
+        className="checkbox-row"
+        title="Show known packing densities (sphere FCC, regular tet, RCP, RLP, …) as horizontal lines on the V*/V curve"
+      >
+        <input
+          type="checkbox"
+          checked={color.showReferences}
+          onChange={(e) => setColor({ showReferences: e.target.checked })}
+        />
+        Reference densities on plots
+      </label>
       <MorphologyPanel />
       <VoronoiPanel />
       <McRefinePanel />
@@ -587,7 +618,7 @@ function MorphologyPanel() {
     <>
       <div className="panel-divider-small" />
       <div className="panel-title" style={{ marginBottom: 4 }}>
-        Morphological hull η_M
+        Morphological hull <Term name="etaM">η_M</Term>
       </div>
       <p className="caption" style={{ margin: '0 0 6px' }}>
         Third packing fraction: η_M = V★/V_morph where V_morph is the closure of the aggregate by a
@@ -649,7 +680,7 @@ function VoronoiPanel() {
     <>
       <div className="panel-divider-small" />
       <div className="panel-title" style={{ marginBottom: 4 }}>
-        Voronoi packing fraction η_V
+        Voronoi packing fraction <Term name="etaV">η_V</Term>
       </div>
       <p className="caption" style={{ margin: '0 0 6px' }}>
         Fourth η: per-tet Voronoi cell volume → η_V = V★/⟨V_voronoi⟩. The literature-standard metric

@@ -1,26 +1,22 @@
 import { useEffect } from 'react';
-import { useStore } from '../lib/store.js';
+import { useStore, MODE_ORDER } from '../lib/store.js';
+import type { AnimationMode } from '../lib/store.js';
 
-/**
- * Global keyboard shortcuts:
- *   Space         play/pause (animated mode) or step (step mode)
- *   R             randomize seed
- *   N             next seed (seed + 1)
- *   ←/→           cycle scenes
- *   1/2/3/4       jump to scene
- *   ?             toggle advanced mode
- *
- * Skipped when a text input has focus.
- */
 const SCENES = ['single', 'cube', 'reptile', 'growth'] as const;
+const ANIMATION_CYCLE: readonly AnimationMode[] = ['instant', 'animated', 'step'] as const;
+
+function nextAnimationMode(m: AnimationMode): AnimationMode {
+  const i = ANIMATION_CYCLE.indexOf(m);
+  return ANIMATION_CYCLE[(i + 1) % ANIMATION_CYCLE.length]!;
+}
 
 export function useKeyboardShortcuts() {
   const setScene = useStore((s) => s.setScene);
   const setGrowth = useStore((s) => s.setGrowth);
-  const setAnimSpeed = useStore((s) => s.setAnimSpeed);
+  const togglePlay = useStore((s) => s.togglePlay);
   const setAnimationMode = useStore((s) => s.setAnimationMode);
   const bumpStep = useStore((s) => s.bumpStep);
-  const setAdvanced = useStore((s) => s.setAdvanced);
+  const setMode = useStore((s) => s.setMode);
 
   useEffect(() => {
     function handler(e: KeyboardEvent) {
@@ -29,15 +25,15 @@ export function useKeyboardShortcuts() {
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target?.isContentEditable) {
         return;
       }
+      // Suppress global shortcuts while a modal is open so Arrow/Space/R/N
+      // can't mutate the underlying scene/seed/mode from inside the dialog.
+      if (target?.closest('.overlay-backdrop, .export-menu-list')) return;
       const st = useStore.getState();
       switch (e.key) {
         case ' ':
           if (st.scene !== 'growth') return;
-          if (st.animationMode === 'animated') {
-            setAnimSpeed(st.animSpeed === 0 ? 4 : 0);
-          } else if (st.animationMode === 'step') {
-            bumpStep();
-          }
+          if (st.animationMode === 'animated') togglePlay();
+          else if (st.animationMode === 'step') bumpStep();
           e.preventDefault();
           break;
         case 'r':
@@ -64,24 +60,18 @@ export function useKeyboardShortcuts() {
         case '4':
           setScene(SCENES[parseInt(e.key, 10) - 1]!);
           break;
-        case '?':
-          setAdvanced(!st.advanced);
+        case '?': {
+          const i = MODE_ORDER.indexOf(st.mode);
+          setMode(MODE_ORDER[(i + 1) % MODE_ORDER.length]!);
           break;
+        }
         case 'a':
         case 'A':
-          if (st.scene === 'growth') {
-            setAnimationMode(
-              st.animationMode === 'instant'
-                ? 'animated'
-                : st.animationMode === 'animated'
-                  ? 'step'
-                  : 'instant'
-            );
-          }
+          if (st.scene === 'growth') setAnimationMode(nextAnimationMode(st.animationMode));
           break;
       }
     }
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [setScene, setGrowth, setAnimSpeed, setAnimationMode, bumpStep, setAdvanced]);
+  }, [setScene, setGrowth, togglePlay, setAnimationMode, bumpStep, setMode]);
 }

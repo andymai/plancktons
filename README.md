@@ -81,7 +81,17 @@ Both strategies use a two-phase placement:
    chirality × template face × perm) before declaring "jammed". If any valid
    placement exists, it is found.
 
-## Research mode (Advanced toggle)
+## Disclosure modes
+
+A three-position switch in the topbar — **Learn / Explore / Research** — controls how much UI is exposed:
+
+- **Learn** (default) — scene picker, essential growth parameters (N, seed, strategy), basic metrics tile (N, η_C, η_B, free surface). Inline dotted-underlined terms open a glossary popover; the `?` button opens a full help overlay with scene-aware primer + concepts + glossary tabs.
+- **Explore** — adds the Display panel (colors, hull, gyration ellipsoid, edge outlines, render gap) and the advanced metrics sections (gyration / shape, bond-orientational order, topology / chirality, bounding box).
+- **Research** — adds histograms, η-vs-N sweeps, pair correlation, kinetics, autocorrelation, MC refinement, and the morphological / Voronoi η variants. Reference packing densities overlay onto the plots.
+
+Press `?` to cycle modes. The state round-trips through the share link as `m: learn|explore|research`; legacy links with `a: true/false` still decode (`true → research`, `false → learn`).
+
+## Research mode features
 
 - **Trial histogram** at fixed N - distribution of η_C, A/B overlay, mean ±
   SEM, CSV export with build provenance.

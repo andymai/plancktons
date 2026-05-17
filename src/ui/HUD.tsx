@@ -1,16 +1,28 @@
+import { memo } from 'react';
 import type { GrowthMetrics } from '../scenes/GrowthScene.js';
-import { useStore } from '../lib/store.js';
+import { useStore, isAtLeast } from '../lib/store.js';
+import { Term } from './Term.js';
 
 const fmt = (n: number, d = 4) => (Number.isFinite(n) ? n.toFixed(d) : '-');
 const pct = (n: number) => (Number.isFinite(n) ? `${(n * 100).toFixed(1)}%` : '-');
 
 export function HUD({ metrics }: { metrics: GrowthMetrics | null }) {
   const scene = useStore((s) => s.scene);
-  const advanced = useStore((s) => s.advanced);
+  const mode = useStore((s) => s.mode);
   if (scene === 'single') return <SingleHUD />;
   if (scene === 'cube') return <CubeHUD />;
   if (scene === 'reptile') return <ReptileHUD />;
-  if (scene !== 'growth' || !metrics) return null;
+  if (!metrics) return null;
+  return <GrowthHUD metrics={metrics} showAdvanced={isAtLeast(mode, 'explore')} />;
+}
+
+const GrowthHUD = memo(function GrowthHUD({
+  metrics,
+  showAdvanced,
+}: {
+  metrics: GrowthMetrics;
+  showAdvanced: boolean;
+}) {
   return (
     <div className="hud">
       <div
@@ -21,7 +33,7 @@ export function HUD({ metrics }: { metrics: GrowthMetrics | null }) {
         <span className="hud-value">
           {metrics.N}
           {metrics.stalled && (
-            <span className="hud-stalled" title="No more valid placements">
+            <span className="hud-stalled" role="status" title="No more valid placements">
               {' '}
               / {metrics.targetN} stalled
             </span>
@@ -39,18 +51,16 @@ export function HUD({ metrics }: { metrics: GrowthMetrics | null }) {
         <span className="hud-label">V (hull)</span>
         <span className="hud-value">{fmt(metrics.V)}</span>
       </div>
-      <div
-        className="hud-row hud-prominent"
-        title="η_C = V*/V_hull. Convex compactness, not a true packing density - the hull shrink-wraps the aggregate so this can approach 1 even for sparse clusters. Compare values WITHIN this app; do not compare against literature sphere RCP/FCC."
-      >
-        <span className="hud-label">η_C = V*/V_hull</span>
+      <div className="hud-row hud-prominent">
+        <span className="hud-label">
+          <Term name="etaC">η_C</Term> = V*/V_hull
+        </span>
         <span className="hud-value">{pct(metrics.efficiency)}</span>
       </div>
-      <div
-        className="hud-row hud-prominent"
-        title="η_B = V*/V_bbox. Bbox packing fraction. The bbox is a fixed-orientation container, so this IS comparable to literature sphere RCP ≈ 0.636, sphere FCC ≈ 0.74, etc."
-      >
-        <span className="hud-label">η_B = V*/V_bbox</span>
+      <div className="hud-row hud-prominent">
+        <span className="hud-label">
+          <Term name="etaB">η_B</Term> = V*/V_bbox
+        </span>
         <span className="hud-value">{pct(metrics.bboxEfficiency)}</span>
       </div>
       <div
@@ -61,10 +71,12 @@ export function HUD({ metrics }: { metrics: GrowthMetrics | null }) {
         <span className="hud-value">{fmt(metrics.surfaceArea, 3)}</span>
       </div>
       {!metrics.hullOk && <div className="hud-warn">⚠ Hull computation failed (degenerate?)</div>}
-      {advanced && (
+      {showAdvanced && (
         <>
           <div className="hud-divider" />
-          <div className="hud-section">Gyration / shape</div>
+          <div className="hud-section">
+            <Term name="gyrationTensor">Gyration / shape</Term>
+          </div>
           <div
             className="hud-row"
             title="Radius of gyration: R_g = √(λ₁+λ₂+λ₃). Characteristic size of the assembly."
@@ -95,11 +107,8 @@ export function HUD({ metrics }: { metrics: GrowthMetrics | null }) {
             <span className="hud-value">{fmt(metrics.prolateness, 3)}</span>
           </div>
           <div className="hud-divider" />
-          <div
-            className="hud-section"
-            title="Steinhardt bond-orientational order parameters from face-shared neighbor bond directions. Rotation-invariant, in [0, 1]."
-          >
-            Bond-orientational order
+          <div className="hud-section">
+            <Term name="bondOrder">Bond-orientational order</Term>
           </div>
           <div
             className="hud-row"
@@ -168,7 +177,7 @@ export function HUD({ metrics }: { metrics: GrowthMetrics | null }) {
       )}
     </div>
   );
-}
+});
 
 function SingleHUD() {
   return (
@@ -198,7 +207,7 @@ function SingleHUD() {
         title="Four right-triangle faces: two isoceles (L,L,√2L) and two scalene (L,√2L,√3L)."
       >
         <span className="hud-label">faces</span>
-        <span className="hud-value">2 iso right + 2 scalene right</span>
+        <span className="hud-value">2 iso + 2 scalene</span>
       </div>
       <div className="hud-divider" />
       <div className="hud-section">Dihedral angles (rational π)</div>
@@ -214,8 +223,10 @@ function SingleHUD() {
         <span className="hud-label">V₁V₂, V₀V₃</span>
         <span className="hud-value">π/3</span>
       </div>
-      <div className="hud-row" title="Dehn invariant = 0 iff scissors-congruent to a cube">
-        <span className="hud-label">Dehn invariant</span>
+      <div className="hud-row">
+        <span className="hud-label">
+          <Term name="dehnInvariant">Dehn invariant</Term>
+        </span>
         <span className="hud-value">0</span>
       </div>
     </div>
