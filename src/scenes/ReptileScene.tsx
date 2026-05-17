@@ -24,10 +24,12 @@ function subdivideOne(verts: readonly [Vec3, Vec3, Vec3, Vec3]): Planckton[] {
     [M01, V1, M12, M13],
     [M02, M12, V2, M23],
     [M03, M13, M23, V3],
-    [M02, M13, M01, M03],
-    [M02, M13, M03, M23],
-    [M02, M13, M23, M12],
-    [M02, M13, M12, M01],
+    // Octahedron pieces in Hill-path order so tetFromPts returns the correct
+    // chirality. Matches canonicalScenes.eightReptile — see comment there.
+    [M01, M02, M03, M13],
+    [M02, M03, M13, M23],
+    [M02, M12, M13, M23],
+    [M01, M02, M12, M13],
   ];
   return inner.map(tetFromPts);
 }

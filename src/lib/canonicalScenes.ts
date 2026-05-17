@@ -8,7 +8,15 @@ const RING_IDX: ReadonlyArray<readonly [number, number, number]> = [
   [0, 2, 1],
 ];
 
-/** Build a tetrahedron from 4 arbitrary points, auto-orienting faces outward. */
+/**
+ * Build a tetrahedron from 4 arbitrary points, auto-orienting faces outward.
+ *
+ * For a Hill orthoscheme, chirality is sign(det(V1-V0, V2-V0, V3-V0)) — which
+ * equals the geometric handedness **iff V0→V1→V2→V3 is the Hill path** (three
+ * mutually perpendicular consecutive edges of equal length). Pass vertices in
+ * Hill-path order; otherwise the determinant trick reports an arbitrary sign
+ * based on vertex ordering, not the actual chirality.
+ */
 export function tetFromPts(pts: readonly [Vec3, Vec3, Vec3, Vec3]): Planckton {
   const [V0, V1, V2, V3] = pts;
   const cx = (V0[0] + V1[0] + V2[0] + V3[0]) / 4;
@@ -85,16 +93,20 @@ export function eightReptile(L: number): Planckton[] {
   const M13 = mid(W1, W3);
   const M23 = mid(W2, W3);
   const pieces: ReadonlyArray<[Vec3, Vec3, Vec3, Vec3]> = [
-    // 4 corner sub-tets
+    // 4 corner sub-tets — each in Hill-path order, inheriting parent chirality.
     [W0, M01, M02, M03],
     [M01, W1, M12, M13],
     [M02, M12, W2, M23],
     [M03, M13, M23, W3],
-    // 4 octahedron sub-tets sharing the diagonal M02-M13
-    [M02, M13, M01, M03],
-    [M02, M13, M03, M23],
-    [M02, M13, M23, M12],
-    [M02, M13, M12, M01],
+    // 4 octahedron sub-tets sharing the M02-M13 axis. Each is given in its own
+    // Hill-path order so tetFromPts recovers the correct geometric chirality.
+    // Algebraically (parent edges a,b,c): the four paths have edge triples
+    // (b,c,a), (c,a,b), (a,c,b), (b,a,c) — the first two preserve parent
+    // chirality, the last two flip it, giving the 6+2 split.
+    [M01, M02, M03, M13],
+    [M02, M03, M13, M23],
+    [M02, M12, M13, M23],
+    [M01, M02, M12, M13],
   ];
   return pieces.map(tetFromPts);
 }

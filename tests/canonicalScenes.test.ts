@@ -37,6 +37,17 @@ describe('eightReptile', () => {
       expect(sum).toBeCloseTo((2 * L) ** 3 / 6, 8);
     }
   });
+
+  // Matoušek decomposition: a Hill T₁ tet splits into 8 sub-tets in the 6+2
+  // chirality pattern. The parent is R (its Hill path W0→W1→W2→W3 has
+  // det(a,b,c) > 0), so we expect 6 R + 2 L children.
+  it('chirality split is 6 R + 2 L (Matoušek decomposition)', () => {
+    const pieces = eightReptile(1);
+    const R = pieces.filter((p) => p.chirality === 'R').length;
+    const L = pieces.filter((p) => p.chirality === 'L').length;
+    expect(R).toBe(6);
+    expect(L).toBe(2);
+  });
 });
 
 describe('recursive midpoint subdivision (depth 2, 3)', () => {
@@ -77,6 +88,53 @@ describe('recursive midpoint subdivision (depth 2, 3)', () => {
     pieces = pieces.flatMap(subdivide).flatMap(subdivide);
     expect(pieces).toHaveLength(512);
     for (const p of pieces) expect(tetVolume(p)).toBeCloseTo(1 / 384, 10);
+  });
+});
+
+// Each R parent → 6R + 2L children; each L parent → 6L + 2R children. The
+// recurrence (f, g) ↦ (6f + 2g, 2f + 6g) starting at (1, 0) gives the
+// chirality counts at any depth. This test only makes sense if vertices come
+// out of tetFromPts in Hill-path order at every level — i.e. the bug fix
+// holds recursively.
+describe('reptile chirality propagates correctly under recursion', () => {
+  it('matches the 6f+2g / 2f+6g recurrence at depths 1, 2, 3', () => {
+    let f = 1; // R count, starting from one R parent
+    let g = 0; // L count
+    let pieces = eightReptile(1);
+    for (let d = 1; d <= 3; d++) {
+      [f, g] = [6 * f + 2 * g, 2 * f + 6 * g];
+      const R = pieces.filter((p) => p.chirality === 'R').length;
+      const L = pieces.filter((p) => p.chirality === 'L').length;
+      expect(R).toBe(f);
+      expect(L).toBe(g);
+      if (d < 3) {
+        // Recurse using the same subdivider the renderer uses.
+        pieces = pieces.flatMap((p) => {
+          const [V0, V1, V2, V3] = p.verts;
+          const m = (a: Vec3, b: Vec3): Vec3 => [
+            (a[0] + b[0]) / 2,
+            (a[1] + b[1]) / 2,
+            (a[2] + b[2]) / 2,
+          ];
+          const M01 = m(V0, V1),
+            M02 = m(V0, V2),
+            M03 = m(V0, V3),
+            M12 = m(V1, V2),
+            M13 = m(V1, V3),
+            M23 = m(V2, V3);
+          return [
+            [V0, M01, M02, M03],
+            [M01, V1, M12, M13],
+            [M02, M12, V2, M23],
+            [M03, M13, M23, V3],
+            [M01, M02, M03, M13],
+            [M02, M03, M13, M23],
+            [M02, M12, M13, M23],
+            [M01, M02, M12, M13],
+          ].map((q) => tetFromPts(q as [Vec3, Vec3, Vec3, Vec3]));
+        });
+      }
+    }
   });
 });
 
