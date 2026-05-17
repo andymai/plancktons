@@ -387,11 +387,16 @@ function AdvancedControls() {
         <span>Color mode</span>
         <select
           value={color.colorMode}
-          onChange={(e) => setColor({ colorMode: e.target.value as 'chirality' | 'depth' })}
-          title="How Plancktons are colored. Chirality = red/white per R/L; depth = rainbow by placement order."
+          onChange={(e) =>
+            setColor({
+              colorMode: e.target.value as 'chirality' | 'depth' | 'coordination',
+            })
+          }
+          title="How Plancktons are colored. Chirality = red/white per R/L; depth = rainbow by placement order; coordination = grey (z=0, isolated) → red (z=4, fully interior)."
         >
           <option value="chirality">By chirality</option>
           <option value="depth">By placement order</option>
+          <option value="coordination">By coordination (z)</option>
         </select>
       </label>
       <label className="slider-row">

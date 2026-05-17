@@ -265,6 +265,20 @@ export function meanTetCoordination(a: Assembly): number {
   return (4 * a.tets.length - a.freeFaces.length) / a.tets.length;
 }
 
+/**
+ * Per-tet face coordination: for each Planckton, the number of its 4 faces
+ * that are NOT in the free-face list (i.e. glued to a neighbor). Returns an
+ * array aligned with `a.tets`. Used to color the rendered tets by their
+ * boundary-vs-interior status.
+ */
+export function tetCoordinations(a: Assembly): Uint8Array {
+  const z = new Uint8Array(a.tets.length).fill(4);
+  for (const ff of a.freeFaces) {
+    if (ff.tetIdx >= 0 && ff.tetIdx < z.length) (z[ff.tetIdx] as number)--;
+  }
+  return z;
+}
+
 export function freeFaceShapeCounts(a: Assembly): { isoceles: number; scalene: number } {
   const L = a.opts.L;
   const isoSig: [number, number, number] = [L, L, L * Math.SQRT2].sort((x, y) => x - y) as [

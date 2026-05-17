@@ -12,6 +12,7 @@ import {
   growOne,
   makeAssembly,
   partVolumeTotal,
+  tetCoordinations,
   vertexCoordination,
 } from '../lib/assembly.js';
 import { computeHull } from '../lib/hull.js';
@@ -226,7 +227,6 @@ export function GrowthScene({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => v
   }, [assembly]);
 
   const colorMode = useStore((s) => s.color.colorMode);
-  const colorByDepth = colorMode === 'depth';
   const tetCount = Math.max(1, assembly.tets.length);
   // At large N (>180), pure hue cycling makes neighbours indistinguishable
   // (360°/N < 2°). Cap the hue cycle at 270° and modulate lightness so order
@@ -236,6 +236,25 @@ export function GrowthScene({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => v
     const hue = Math.round(t * 270);
     const light = 35 + Math.round(t * 35);
     return `hsl(${hue}, 70%, ${light}%)`;
+  };
+  // Coordination heatmap: z=0 = white (isolated tet), z=4 = deep red (fully
+  // interior, all 4 faces shared). Linear interpolation between two anchors.
+  const coordinations = useMemo(
+    () => (colorMode === 'coordination' ? tetCoordinations(assembly) : null),
+    [assembly, colorMode]
+  );
+  const coordHue = (i: number): string => {
+    const z = coordinations?.[i] ?? 0;
+    // hue ramp: 0 → cool grey, 4 → warm red
+    const light = 90 - (z / 4) * 50; // 90 → 40
+    const sat = 20 + (z / 4) * 60; // 20 → 80
+    const hue = 30 - (z / 4) * 30; // 30 → 0
+    return `hsl(${hue}, ${sat}%, ${light}%)`;
+  };
+  const colorFor = (i: number): string | undefined => {
+    if (colorMode === 'depth') return depthHue(i);
+    if (colorMode === 'coordination') return coordHue(i);
+    return undefined;
   };
 
   // For camera framing: the assembly half-extent (max distance from centroid to
@@ -253,11 +272,7 @@ export function GrowthScene({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => v
       <CameraFit extent={extent} />
       <group position={center}>
         {assembly.tets.map((p, i) => (
-          <PlancktonMesh
-            key={i}
-            planckton={p}
-            colorOverride={colorByDepth ? depthHue(i) : undefined}
-          />
+          <PlancktonMesh key={i} planckton={p} colorOverride={colorFor(i)} />
         ))}
         {color.showHull && hullPoints.length > 0 && (
           <HullMesh points={hullPoints} faces={hullFaces} />
