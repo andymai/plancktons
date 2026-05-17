@@ -17,6 +17,7 @@ import {
 } from '../lib/assembly.js';
 import { computeHull } from '../lib/hull.js';
 import { gyrationDescriptors, type ShapeDescriptors } from '../lib/shape.js';
+import { steinhardtQl } from '../lib/steinhardt.js';
 import { PlancktonMesh } from './PlancktonMesh.js';
 import { HullMesh } from './HullMesh.js';
 import { GyrationEllipsoid, PrincipalAxes } from './GyrationEllipsoid.js';
@@ -52,6 +53,10 @@ export interface GrowthMetrics {
   meanVertexCoord: number; // ⟨coordination⟩
   maxVertexCoord: number;
   shape: ShapeDescriptors | null; // full descriptors for ellipsoid overlay
+  // Steinhardt bond-orientational order. ⟨Q_l⟩ over tets with ≥ 1 neighbor.
+  // FCC ≈ 0.575 (l=6); hard-sphere glass ≈ 0.40; random ≈ 0.
+  q4: number;
+  q6: number;
 }
 
 /**
@@ -158,6 +163,8 @@ export function GrowthScene({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => v
     const coord = vertexCoordination(assembly);
     const ffrac = freeFaceFraction(assembly);
     const shape = gyrationDescriptors(allV);
+    const q4 = steinhardtQl(assembly, 4).ensemble;
+    const q6 = steinhardtQl(assembly, 6).ensemble;
     const N = assembly.tets.length;
     const stalledNow = stalled && N < growth.N;
     const surfaceArea = freeSurfaceArea(assembly);
@@ -180,6 +187,8 @@ export function GrowthScene({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => v
       meanVertexCoord: coord.meanCoord,
       maxVertexCoord: coord.maxCoord,
       shape,
+      q4,
+      q6,
     };
     if (!hull) {
       return {
