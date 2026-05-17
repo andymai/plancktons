@@ -115,6 +115,13 @@ export function HUD({ metrics }: { metrics: GrowthMetrics | null }) {
             <span className="hud-label">Q₆</span>
             <span className="hud-value">{fmt(metrics.q6, 3)}</span>
           </div>
+          <div
+            className="hud-row"
+            title="Number of 3R+3L Hill cube subsets found inside the aggregate. Each such subset is a perfect cube (η = 1 locally), so this counts the random aggregate's 'crystalline domains'."
+          >
+            <span className="hud-label">embedded cubes</span>
+            <span className="hud-value">{metrics.cubeSubsets}</span>
+          </div>
           <div className="hud-divider" />
           <div className="hud-section">Topology / chirality</div>
           <div

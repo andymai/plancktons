@@ -18,6 +18,7 @@ import {
 import { computeHull } from '../lib/hull.js';
 import { gyrationDescriptors, type ShapeDescriptors } from '../lib/shape.js';
 import { steinhardtQl } from '../lib/steinhardt.js';
+import { findEmbeddedCubes } from '../lib/embeddedCubes.js';
 import { PlancktonMesh } from './PlancktonMesh.js';
 import { HullMesh } from './HullMesh.js';
 import { GyrationEllipsoid, PrincipalAxes } from './GyrationEllipsoid.js';
@@ -57,6 +58,8 @@ export interface GrowthMetrics {
   // FCC ≈ 0.575 (l=6); hard-sphere glass ≈ 0.40; random ≈ 0.
   q4: number;
   q6: number;
+  /** Count of embedded canonical 3R+3L Hill cube subsets ("crystalline domains"). */
+  cubeSubsets: number;
 }
 
 /**
@@ -165,6 +168,7 @@ export function GrowthScene({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => v
     const shape = gyrationDescriptors(allV);
     const q4 = steinhardtQl(assembly, 4).ensemble;
     const q6 = steinhardtQl(assembly, 6).ensemble;
+    const cubeSubsets = findEmbeddedCubes(assembly).canonical.length;
     const N = assembly.tets.length;
     const stalledNow = stalled && N < growth.N;
     const surfaceArea = freeSurfaceArea(assembly);
@@ -189,6 +193,7 @@ export function GrowthScene({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => v
       shape,
       q4,
       q6,
+      cubeSubsets,
     };
     if (!hull) {
       return {
