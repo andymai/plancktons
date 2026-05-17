@@ -1,5 +1,6 @@
 import { useStore } from '../lib/store.js';
 import type { Mode } from '../lib/store.js';
+import { useRadioGroup } from './useRadioGroup.js';
 
 const OPTIONS: { id: Mode; label: string; hint: string }[] = [
   {
@@ -19,9 +20,12 @@ const OPTIONS: { id: Mode; label: string; hint: string }[] = [
   },
 ];
 
+const MODE_IDS = OPTIONS.map((o) => o.id) as readonly Mode[];
+
 export function ModeSwitch() {
   const mode = useStore((s) => s.mode);
   const setMode = useStore((s) => s.setMode);
+  const getRadioProps = useRadioGroup(MODE_IDS, mode, setMode);
   return (
     <div className="mode-switch" role="radiogroup" aria-label="Disclosure mode">
       {OPTIONS.map((o) => (
@@ -33,6 +37,7 @@ export function ModeSwitch() {
           className={`mode-button ${mode === o.id ? 'active' : ''}`}
           onClick={() => setMode(o.id)}
           title={o.hint}
+          {...getRadioProps(o.id)}
         >
           {o.label}
         </button>

@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useStore, isAtLeast } from '../lib/store.js';
-import type { GrowthParams } from '../lib/store.js';
+import type { GrowthParams, SceneId } from '../lib/store.js';
 import { DraftSlider } from './DraftSlider.js';
 import { useDraftValue } from './useDraftValue.js';
 import { useWorkerRun } from './useWorkerRun.js';
 import { ProgressBar } from './ProgressBar.js';
 import { Term } from './Term.js';
+import { useRadioGroup } from './useRadioGroup.js';
 import type { MorphologyResult } from '../lib/morphology.js';
 import type { VoronoiResult } from '../lib/voronoi.js';
 import type { McRefineResult } from '../lib/mcRefine.js';
@@ -45,10 +46,13 @@ const SCENES = [
   },
 ];
 
+const SCENE_IDS = SCENES.map((s) => s.id) as readonly SceneId[];
+
 export function Controls() {
   const scene = useStore((s) => s.scene);
   const setScene = useStore((s) => s.setScene);
   const mode = useStore((s) => s.mode);
+  const getSceneRadioProps = useRadioGroup(SCENE_IDS, scene, setScene);
   return (
     <div className="controls">
       <div className="panel-header">
@@ -64,6 +68,7 @@ export function Controls() {
             className={`scene-button ${scene === s.id ? 'active' : ''}`}
             onClick={() => setScene(s.id)}
             title={`${s.tip}  (Keyboard: ${i + 1})`}
+            {...getSceneRadioProps(s.id)}
           >
             {s.label}
           </button>
@@ -137,11 +142,14 @@ function SceneControls() {
   return null;
 }
 
+const CHIRALITY_IDS = ['R', 'L'] as const;
+
 function SingleControls() {
   const chir = useStore((s) => s.singleChirality);
   const set = useStore((s) => s.setSingleChirality);
   const showAngles = useStore((s) => s.singleShowAngles);
   const setShowAngles = useStore((s) => s.setSingleShowAngles);
+  const getRadioProps = useRadioGroup(CHIRALITY_IDS, chir, set);
   return (
     <div>
       <div className="panel-title">Chirality</div>
@@ -152,6 +160,7 @@ function SingleControls() {
           aria-checked={chir === 'R'}
           className={`chir-btn ${chir === 'R' ? 'active' : ''}`}
           onClick={() => set('R')}
+          {...getRadioProps('R')}
         >
           Right (red)
         </button>
@@ -161,6 +170,7 @@ function SingleControls() {
           aria-checked={chir === 'L'}
           className={`chir-btn ${chir === 'L' ? 'active' : ''}`}
           onClick={() => set('L')}
+          {...getRadioProps('L')}
         >
           Left (white)
         </button>

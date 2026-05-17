@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../lib/store.js';
 import type { SceneId } from '../lib/store.js';
 import { GLOSSARY } from './glossary.js';
@@ -42,14 +42,46 @@ export function HelpOverlay() {
   const setOpen = useUiStore((s) => s.setHelpOpen);
   const scene = useStore((s) => s.scene);
   const [tab, setTab] = useState<Tab>('scene');
+  const dialogRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const prevFocus = document.activeElement as HTMLElement | null;
+
+    const focusables = () =>
+      Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), [tabindex]:not([tabindex="-1"]), a[href]'
+        )
+      );
+    focusables()[0]?.focus();
+
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') {
+        setOpen(false);
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const list = focusables();
+      if (list.length === 0) return;
+      const first = list[0]!;
+      const last = list[list.length - 1]!;
+      const active = document.activeElement;
+      if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
     }
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      prevFocus?.focus?.();
+    };
   }, [open, setOpen]);
 
   if (!open) return null;
@@ -57,6 +89,7 @@ export function HelpOverlay() {
   return (
     <div className="overlay-backdrop" onClick={() => setOpen(false)} role="presentation">
       <div
+        ref={dialogRef}
         className="help-overlay"
         role="dialog"
         aria-modal="true"
