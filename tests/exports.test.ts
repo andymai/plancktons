@@ -129,4 +129,30 @@ describe('URL hash round-trip', () => {
     expect(decoded?.growth?.compactBeta).toBe(3); // default
     expect(decoded?.growth?.strategy).toBe('uniform'); // default
   });
+
+  it('clamps out-of-range growth values to safe defaults', () => {
+    const bogus = btoa(
+      JSON.stringify({
+        g: { N: 99999, sd: -1, cb: 5, st: 'crazy', b: -10 },
+        ce: 17,
+        rd: 99,
+      })
+    );
+    window.history.replaceState(null, '', '/#' + bogus);
+    const decoded = decodeStateFromHash();
+    expect(decoded?.growth?.N).toBe(2000);
+    expect(decoded?.growth?.seed).toBe(0);
+    expect(decoded?.growth?.chiralityBias).toBe(1);
+    expect(decoded?.growth?.strategy).toBe('uniform');
+    expect(decoded?.growth?.compactBeta).toBe(0);
+    expect(decoded?.cubeExplode).toBe(1);
+    expect(decoded?.reptileDepth).toBe(3);
+  });
+
+  it('rejects non-numeric N (string) instead of poisoning the store', () => {
+    const bogus = btoa(JSON.stringify({ g: { N: 'abc' } }));
+    window.history.replaceState(null, '', '/#' + bogus);
+    const decoded = decodeStateFromHash();
+    expect(decoded?.growth?.N).toBe(20); // fallback default, not "abc"
+  });
 });

@@ -103,8 +103,17 @@ function downloadBlob(blob: Blob, filename: string): void {
 
 export type ShareMode = 'learn' | 'explore' | 'research';
 export type ShareScene = 'single' | 'cube' | 'reptile' | 'growth';
+export type ShareStrategy = 'uniform' | 'compact';
 const SHARE_MODES: ReadonlySet<ShareMode> = new Set(['learn', 'explore', 'research']);
 const SHARE_SCENES: ReadonlySet<ShareScene> = new Set(['single', 'cube', 'reptile', 'growth']);
+const SHARE_STRATEGIES: ReadonlySet<ShareStrategy> = new Set(['uniform', 'compact']);
+
+function numIn(v: unknown, min: number, max: number, fallback: number): number {
+  return typeof v === 'number' && Number.isFinite(v) ? Math.max(min, Math.min(max, v)) : fallback;
+}
+function intIn(v: unknown, min: number, max: number, fallback: number): number {
+  return Math.round(numIn(v, min, max, fallback));
+}
 
 interface SnapshotState {
   scene: ShareScene;
@@ -156,16 +165,25 @@ export function decodeStateFromHash(): Partial<SnapshotState> | null {
     const result: Partial<SnapshotState> = {};
     if (p.s && SHARE_SCENES.has(p.s as ShareScene)) result.scene = p.s as ShareScene;
     if (p.sc === 'R' || p.sc === 'L') result.singleChirality = p.sc;
-    if (typeof p.ce === 'number') result.cubeExplode = p.ce;
-    if (typeof p.re === 'number') result.reptileExplode = p.re;
-    if (typeof p.rd === 'number') result.reptileDepth = p.rd;
+    if (typeof p.ce === 'number' && Number.isFinite(p.ce)) {
+      result.cubeExplode = Math.max(0, Math.min(1, p.ce));
+    }
+    if (typeof p.re === 'number' && Number.isFinite(p.re)) {
+      result.reptileExplode = Math.max(0, Math.min(1, p.re));
+    }
+    if (typeof p.rd === 'number' && Number.isFinite(p.rd)) {
+      result.reptileDepth = intIn(p.rd, 1, 3, 1);
+    }
     if (p.g) {
+      const strategy: ShareStrategy = SHARE_STRATEGIES.has(p.g.st as ShareStrategy)
+        ? (p.g.st as ShareStrategy)
+        : 'uniform';
       result.growth = {
-        N: p.g.N ?? 20,
-        seed: p.g.sd ?? 1,
-        chiralityBias: p.g.cb ?? 0.5,
-        strategy: p.g.st ?? 'uniform',
-        compactBeta: p.g.b ?? 3,
+        N: intIn(p.g.N, 1, 2000, 20),
+        seed: intIn(p.g.sd, 0, Number.MAX_SAFE_INTEGER, 1),
+        chiralityBias: numIn(p.g.cb, 0, 1, 0.5),
+        strategy,
+        compactBeta: numIn(p.g.b, 0, 20, 3),
       };
     }
     if (p.m && SHARE_MODES.has(p.m as ShareMode)) {
