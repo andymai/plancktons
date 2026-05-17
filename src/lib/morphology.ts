@@ -74,7 +74,7 @@ export function morphologicalHull(
     Math.ceil((maxZ - minZ) / voxelSize) + 2 * padVoxels,
   ];
 
-  const occupied = voxelize(tets, origin, dims, voxelSize);
+  const occupied = voxelizeTets(tets, origin, dims, voxelSize);
   const closed = morphologicalClose(occupied, dims, alpha / voxelSize);
 
   let insideCount = 0;
@@ -122,7 +122,12 @@ function orient3d(a: Vec3, b: Vec3, c: Vec3, d: Vec3): number {
   return ax * (by * cz - bz * cy) - ay * (bx * cz - bz * cx) + az * (bx * cy - by * cx);
 }
 
-function voxelize(
+/**
+ * Build an occupancy indicator grid for a tet aggregate. Per-tet bbox sweep:
+ * O(K³) total across the assembly (K = linear grid res), vs O(N · K³) for
+ * testing every voxel against every tet.
+ */
+export function voxelizeTets(
   tets: ReadonlyArray<Planckton>,
   origin: Vec3,
   dims: [number, number, number],
@@ -130,9 +135,6 @@ function voxelize(
 ): Uint8Array {
   const [nx, ny, nz] = dims;
   const grid = new Uint8Array(nx * ny * nz);
-
-  // Per-tet bbox sweep: O(K³) total across the assembly (K = linear grid res),
-  // vs O(N · K³) for testing every voxel against every tet.
   for (const t of tets) {
     let tminX = Infinity;
     let tminY = Infinity;

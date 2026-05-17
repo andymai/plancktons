@@ -18,6 +18,7 @@ import {
   tetCentroid,
   type SpatialHash,
 } from './spatialHash.js';
+import { triangleKey, vertexHashInv, vertexKey } from './vertexHash.js';
 
 export interface FreeFace {
   /** Triangle in world coords */
@@ -199,30 +200,10 @@ function commitIfClear(
 /** Return the index in a.freeFaces of a face whose triangle is vertex-
  * coincident with `tri` (any vertex permutation), or -1 if none. */
 function findFreeFaceMatch(a: Assembly, tri: readonly [Vec3, Vec3, Vec3]): number {
-  const eps = 1e-6 * a.opts.L;
-  const inv = 1 / eps;
-  const qx0 = Math.round(tri[0][0] * inv);
-  const qy0 = Math.round(tri[0][1] * inv);
-  const qz0 = Math.round(tri[0][2] * inv);
-  const qx1 = Math.round(tri[1][0] * inv);
-  const qy1 = Math.round(tri[1][1] * inv);
-  const qz1 = Math.round(tri[1][2] * inv);
-  const qx2 = Math.round(tri[2][0] * inv);
-  const qy2 = Math.round(tri[2][1] * inv);
-  const qz2 = Math.round(tri[2][2] * inv);
-  const key = [`${qx0},${qy0},${qz0}`, `${qx1},${qy1},${qz1}`, `${qx2},${qy2},${qz2}`]
-    .sort()
-    .join('|');
+  const inv = vertexHashInv(a.opts.L);
+  const key = triangleKey(tri, inv);
   for (let i = 0; i < a.freeFaces.length; i++) {
-    const t = a.freeFaces[i]!.tri;
-    const k = [
-      `${Math.round(t[0][0] * inv)},${Math.round(t[0][1] * inv)},${Math.round(t[0][2] * inv)}`,
-      `${Math.round(t[1][0] * inv)},${Math.round(t[1][1] * inv)},${Math.round(t[1][2] * inv)}`,
-      `${Math.round(t[2][0] * inv)},${Math.round(t[2][1] * inv)},${Math.round(t[2][2] * inv)}`,
-    ]
-      .sort()
-      .join('|');
-    if (k === key) return i;
+    if (triangleKey(a.freeFaces[i]!.tri, inv) === key) return i;
   }
   return -1;
 }
@@ -307,12 +288,7 @@ export function rebuildFromTets(tets: ReadonlyArray<Planckton>, opts: AssemblyOp
     opts,
     spatialHash: createSpatialHash(2 * opts.L),
   };
-  const eps = 1e-6 * opts.L;
-  const inv = 1 / eps;
-  const quant = (v: Vec3): string =>
-    `${Math.round(v[0] * inv)},${Math.round(v[1] * inv)},${Math.round(v[2] * inv)}`;
-  const keyOf = (tri: readonly [Vec3, Vec3, Vec3]): string =>
-    [quant(tri[0]), quant(tri[1]), quant(tri[2])].sort().join('|');
+  const inv = vertexHashInv(opts.L);
   const counts = new Map<string, number>();
   const tetFaceKeys: string[][] = [];
   for (let i = 0; i < tets.length; i++) {
@@ -320,7 +296,7 @@ export function rebuildFromTets(tets: ReadonlyArray<Planckton>, opts: AssemblyOp
     const faces = faceTriangles(t);
     const keys: string[] = [];
     for (let f = 0; f < 4; f++) {
-      const key = keyOf(faces[f] as [Vec3, Vec3, Vec3]);
+      const key = triangleKey(faces[f] as [Vec3, Vec3, Vec3], inv);
       keys.push(key);
       counts.set(key, (counts.get(key) ?? 0) + 1);
     }
@@ -354,13 +330,11 @@ export function vertexCoordination(a: Assembly): {
   meanCoord: number;
   maxCoord: number;
 } {
-  const eps = 1e-6 * a.opts.L;
-  const inv = 1 / eps;
+  const inv = vertexHashInv(a.opts.L);
   const map = new Map<string, number>();
   for (const t of a.tets) {
     for (const v of t.verts) {
-      const key =
-        Math.round(v[0] * inv) + ',' + Math.round(v[1] * inv) + ',' + Math.round(v[2] * inv);
+      const key = vertexKey(v, inv);
       map.set(key, (map.get(key) ?? 0) + 1);
     }
   }

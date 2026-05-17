@@ -5,8 +5,6 @@ import { PACKING_REFERENCES } from '../lib/references.js';
 import { type PairCorrelation, type PairCorrelationAniso } from '../lib/paircorr.js';
 import { type KineticsResult } from '../lib/kinetics.js';
 import { type AutocorrResult } from '../lib/autocorr.js';
-import { Rng } from '../lib/rng.js';
-import { growOne, makeAssembly } from '../lib/assembly.js';
 import {
   fitAsymptotePower,
   fitExpDecay,
@@ -965,11 +963,14 @@ function KineticsPanel() {
   function run() {
     job.run({
       kind: 'kinetics',
-      N: growth.N,
-      seed: growth.seed,
-      chiralityBias: growth.chiralityBias,
-      strategy: growth.strategy,
-      compactBeta: growth.compactBeta,
+      growth: {
+        L: 1,
+        N: growth.N,
+        seed: growth.seed,
+        chiralityBias: growth.chiralityBias,
+        strategy: growth.strategy,
+        compactBeta: growth.compactBeta,
+      },
     });
   }
 
@@ -1096,28 +1097,20 @@ function AutocorrPanel() {
   const result = job.result?.autocorr ?? null;
 
   function run() {
-    const a = makeAssembly({
-      L: 1,
-      rng: new Rng(growth.seed),
-      chiralityBias: growth.chiralityBias,
-      strategy: growth.strategy,
-      compactBeta: growth.compactBeta,
-    });
-    while (a.tets.length < growth.N) {
-      if (growOne(a) !== 'grown') break;
-    }
-    const tets = a.tets.map((t) => ({
-      verts: t.verts.map((v) => [v[0], v[1], v[2]] as [number, number, number]),
-      chirality: t.chirality,
-    }));
     job.run({
       kind: 'autocorr',
-      tets,
-      L: 1,
+      growth: {
+        L: 1,
+        N: growth.N,
+        seed: growth.seed,
+        chiralityBias: growth.chiralityBias,
+        strategy: growth.strategy,
+        compactBeta: growth.compactBeta,
+      },
       voxelSize: 1 / 10,
       samples: 200_000,
       nBins: 60,
-      seed: growth.seed,
+      autocorrSeed: growth.seed,
     });
   }
 

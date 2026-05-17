@@ -89,24 +89,46 @@ export function growTrajectory(p: KineticsParams, hooks?: KineticsHooks): Kineti
     hooks?.onStep?.(step, p.N - 1, trajectory[trajectory.length - 1]!);
   }
   const etaInf = trajectory[trajectory.length - 1] ?? 0;
-  const fit = etaInf > 0 ? avramiFit(trajectory, etaInf) : null;
+  const eta0 = trajectory[0] ?? 1;
+  const fit = etaInf < eta0 ? avramiFit(trajectory, eta0, etaInf) : null;
   return { trajectory, Ns, etaInf, fit };
 }
 
-/** OLS fit to ln(−ln(1 − η/η∞)) = ln(K) + n · ln(t). Drops the first point
- *  (t=0) and any with η/η∞ ≥ 1 (1-x ≤ 0). Returns null if fewer than 3
- *  usable points remain. */
-export function avramiFit(trajectory: ReadonlyArray<number>, etaInf: number): AvramiFit | null {
+/**
+ * OLS fit on the Avrami linearization. η_C(t) DECREASES from η₀ ≈ 1 (single
+ * seed tet) toward η_∞ (asymptotic compactness) as the hull catches up with
+ * V★ growth, so the transformed-fraction analogue is
+ *
+ *   X(t) = (η₀ − η(t)) / (η₀ − η_∞)    ∈ [0, 1)
+ *
+ * which rises monotonically with t. Standard Avrami:
+ *
+ *   X(t) = 1 − exp(−K · t^n)
+ *
+ * giving the OLS-friendly linearization
+ *
+ *   ln(−ln(1 − X)) = ln(K) + n · ln(t).
+ *
+ * Drops t=0 (where X=0 and ln blows up) and any t where the numerical
+ * trajectory hasn't strictly moved (X ≤ 0 or X ≥ 1).
+ */
+export function avramiFit(
+  trajectory: ReadonlyArray<number>,
+  eta0: number,
+  etaInf: number
+): AvramiFit | null {
+  const denom = eta0 - etaInf;
+  if (denom <= 0) return null;
   const lx: number[] = [];
   const ly: number[] = [];
   for (let t = 1; t < trajectory.length; t++) {
     const eta = trajectory[t]!;
-    const u = 1 - eta / etaInf;
-    if (u <= 0) continue;
-    const logu = -Math.log(u);
-    if (logu <= 0) continue;
+    const X = (eta0 - eta) / denom;
+    if (X <= 0 || X >= 1) continue;
+    const arg = -Math.log(1 - X);
+    if (arg <= 0) continue;
     lx.push(Math.log(t));
-    ly.push(Math.log(logu));
+    ly.push(Math.log(arg));
   }
   const n = lx.length;
   if (n < 3) return null;

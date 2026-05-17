@@ -34,6 +34,7 @@
 import type { Vec3 } from './vec.js';
 import type { Assembly } from './assembly.js';
 import { faceTriangles } from './planckton.js';
+import { triangleKey, vertexHashInv } from './vertexHash.js';
 
 export interface SteinhardtResult {
   /** Q_l per tet, aligned with assembly.tets. Tets with z=0 (no neighbors) get NaN. */
@@ -92,20 +93,14 @@ export function steinhardtQl(a: Assembly, l: 4 | 6): SteinhardtResult {
 export function tetNeighbors(a: Assembly): number[][] {
   const N = a.tets.length;
   const out: number[][] = Array.from({ length: N }, () => []);
-  // Hash each face by its canonical vertex-set key. Faces hashing to the
-  // same bucket are shared (since two Plancktons can't share more than one
-  // face by the SAT non-overlap invariant).
-  const eps = 1e-6 * a.opts.L;
-  const inv = 1 / eps;
-  const quant = (v: Vec3): string =>
-    `${Math.round(v[0] * inv)},${Math.round(v[1] * inv)},${Math.round(v[2] * inv)}`;
-  const keyOf = (tri: readonly [Vec3, Vec3, Vec3]): string =>
-    [quant(tri[0]), quant(tri[1]), quant(tri[2])].sort().join('|');
+  // Two Plancktons can't share more than one face by the SAT non-overlap
+  // invariant, so a bucket of size 2 is a confirmed shared face.
+  const inv = vertexHashInv(a.opts.L);
   const seen = new Map<string, number>();
   for (let i = 0; i < N; i++) {
     const faces = faceTriangles(a.tets[i]!);
     for (let f = 0; f < 4; f++) {
-      const k = keyOf(faces[f] as [Vec3, Vec3, Vec3]);
+      const k = triangleKey(faces[f] as [Vec3, Vec3, Vec3], inv);
       const prev = seen.get(k);
       if (prev !== undefined) {
         out[i]!.push(prev);
