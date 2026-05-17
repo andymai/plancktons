@@ -126,6 +126,8 @@ function SceneControls() {
 function SingleControls() {
   const chir = useStore((s) => s.singleChirality);
   const set = useStore((s) => s.setSingleChirality);
+  const showAngles = useStore((s) => s.singleShowAngles);
+  const setShowAngles = useStore((s) => s.setSingleShowAngles);
   return (
     <div>
       <div className="panel-title">Chirality</div>
@@ -137,9 +139,21 @@ function SingleControls() {
           Left (white)
         </button>
       </div>
+      <label
+        className="checkbox-row"
+        title="Float text labels at each edge midpoint showing the dihedral angle in rational-π form (π/2, π/3, π/4). Visual proof that the Dehn invariant collapses to zero."
+      >
+        <input
+          type="checkbox"
+          checked={showAngles}
+          onChange={(e) => setShowAngles(e.target.checked)}
+        />
+        Show dihedral angles
+      </label>
       <p className="caption">
-        A Planckton (Hill tetrahedron). Four faces, two shapes: isoceles-right (1, 1, √2) and
-        scalene-right (1, √2, √3). The two chiralities are mirror images.
+        A Planckton (Hill T₁ orthoscheme). Four faces, two shapes: isoceles-right (1, 1, √2) and
+        scalene-right (1, √2, √3). The two chiralities are mirror images. All 6 dihedral angles are
+        rational multiples of π - the Dehn invariant property.
       </p>
     </div>
   );
@@ -148,6 +162,8 @@ function SingleControls() {
 function CubeControls() {
   const v = useStore((s) => s.cubeExplode);
   const set = useStore((s) => s.setCubeExplode);
+  const autoplay = useStore((s) => s.cubeAutoplay);
+  const setAutoplay = useStore((s) => s.setCubeAutoplay);
   return (
     <div>
       <div className="panel-title">Cube tiling</div>
@@ -160,8 +176,16 @@ function CubeControls() {
           step={0.01}
           value={v}
           onChange={(e) => set(parseFloat(e.target.value))}
+          disabled={autoplay}
         />
         <span className="slider-value">{v.toFixed(2)}</span>
+      </label>
+      <label
+        className="checkbox-row"
+        title="Animate the explode 0 → 1 → 0 so the 6 pieces visibly reassemble into the cube. Most visceral demonstration of scissors-congruence (Dehn invariant = 0)."
+      >
+        <input type="checkbox" checked={autoplay} onChange={(e) => setAutoplay(e.target.checked)} />
+        Auto-play scissors-congruence morph
       </label>
       <p className="caption">
         Six Plancktons - 3 R + 3 L, one per permutation of (x, y, z) - fill a cube exactly. Each has
