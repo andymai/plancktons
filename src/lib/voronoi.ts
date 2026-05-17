@@ -15,6 +15,7 @@
 // reported ⟨V_voronoi⟩ isn't biased by truncated cells.
 
 import type { Vec3 } from './vec.js';
+import { buildKdTree, nearest } from './kdtree.js';
 
 export interface VoronoiResult {
   /** Cell volume per centroid, aligned with input order. */
@@ -87,9 +88,10 @@ export function voronoiCells(
   const bounded = new Array<boolean>(N).fill(true);
   const voxelVol = voxelSize ** 3;
 
-  // For each voxel center, brute-force nearest centroid. A spatial-hash on
-  // centroids would speed this up at large N, but for N ≤ 200 the inner
-  // loop is small enough to keep this readable.
+  // Bit-identical to the prior brute-force O(N) inner loop: kd-tree.nearest
+  // returns the lowest-index on exact-tie, matching the strict-inequality
+  // `if (d2 < best)` tie-break that the inner loop used.
+  const tree = buildKdTree(centroids);
   for (let iz = 0; iz < nz; iz++) {
     const pz = origin[2] + (iz + 0.5) * voxelSize;
     const onZBoundary = iz === 0 || iz === nz - 1;
@@ -99,19 +101,7 @@ export function voronoiCells(
       for (let ix = 0; ix < nx; ix++) {
         const px = origin[0] + (ix + 0.5) * voxelSize;
         const onBoundary = onZBoundary || onYBoundary || ix === 0 || ix === nx - 1;
-        let best = Infinity;
-        let bestIdx = 0;
-        for (let k = 0; k < N; k++) {
-          const c = centroids[k]!;
-          const dx = c[0] - px;
-          const dy = c[1] - py;
-          const dz = c[2] - pz;
-          const d2 = dx * dx + dy * dy + dz * dz;
-          if (d2 < best) {
-            best = d2;
-            bestIdx = k;
-          }
-        }
+        const bestIdx = nearest(tree, [px, py, pz]);
         volumes[bestIdx]! += voxelVol;
         if (onBoundary) bounded[bestIdx] = false;
       }
