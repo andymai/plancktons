@@ -13,6 +13,7 @@ import { runOnWorker, type RunOptions, type StudyJobInput } from './studyClient.
 import type { StudyResult } from '../worker/study.worker.js';
 import type { CurvePoint, StudyParams, TrialResult } from './study.js';
 import type { GrowthStrategy } from './assembly.js';
+import { SEED_STRIDE } from './constants.js';
 
 /** Worker count: leave 1 core for the UI thread, clamp to [1, 8]. */
 export function defaultPoolSize(): number {
@@ -141,7 +142,7 @@ export async function runStudyPooled(
           kind: 'study',
           params: {
             ...params,
-            startSeed: params.startSeed + slice.start * 9973,
+            startSeed: params.startSeed + slice.start * SEED_STRIDE,
             trials: slice.count,
           },
         },
