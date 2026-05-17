@@ -6,6 +6,7 @@ import { useWorkerRun } from './useWorkerRun.js';
 import { Rng } from '../lib/rng.js';
 import { growOne, makeAssembly } from '../lib/assembly.js';
 import type { MorphologyResult } from '../lib/morphology.js';
+import type { VoronoiResult } from '../lib/voronoi.js';
 
 const SCENES = [
   {
@@ -521,6 +522,7 @@ function AdvancedControls() {
         - set to 0 to see touching faces.
       </p>
       <MorphologyPanel />
+      <VoronoiPanel />
     </div>
   );
 }
@@ -606,6 +608,89 @@ function MorphologyPanel() {
           </div>
           <div className="stats-line" style={{ color: 'var(--text-dim)' }}>
             grid {morph.dims[0]}×{morph.dims[1]}×{morph.dims[2]} @ {morph.voxelSize.toFixed(3)} L
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function VoronoiPanel() {
+  const scene = useStore((s) => s.scene);
+  const growth = useStore((s) => s.growth);
+  const job = useWorkerRun<{
+    kind: 'voronoi';
+    voronoi: VoronoiResult | null;
+    etaV: number | null;
+  }>();
+  const result = job.result ?? null;
+  if (scene !== 'growth') return null;
+
+  function run() {
+    const a = makeAssembly({
+      L: 1,
+      rng: new Rng(growth.seed),
+      chiralityBias: growth.chiralityBias,
+      strategy: growth.strategy,
+      compactBeta: growth.compactBeta,
+    });
+    while (a.tets.length < growth.N) {
+      if (growOne(a) !== 'grown') break;
+    }
+    const centroids = a.tets.map((t) => {
+      const v = t.verts;
+      return [
+        (v[0][0] + v[1][0] + v[2][0] + v[3][0]) / 4,
+        (v[0][1] + v[1][1] + v[2][1] + v[3][1]) / 4,
+        (v[0][2] + v[1][2] + v[2][2] + v[3][2]) / 4,
+      ] as [number, number, number];
+    });
+    job.run({
+      kind: 'voronoi',
+      centroids,
+      L: 1,
+      voxelSize: 1 / 8,
+      padL: 1,
+    });
+  }
+
+  return (
+    <>
+      <div className="panel-divider-small" />
+      <div className="panel-title" style={{ marginBottom: 4 }}>
+        Voronoi packing fraction η_V
+      </div>
+      <p className="caption" style={{ margin: '0 0 6px' }}>
+        Fourth η: per-tet Voronoi cell volume → η_V = V★/⟨V_voronoi⟩. The literature-standard metric
+        for random packings (Scott-Kilgour, Onoda- Liniger). Interior cells only (boundary cells are
+        clipped by the container and excluded from the mean).
+      </p>
+      <div className="research-row">
+        <button onClick={run} disabled={job.running}>
+          {job.running ? 'Computing…' : 'Compute η_V'}
+        </button>
+        {job.running && <button onClick={job.cancel}>cancel</button>}
+      </div>
+      {job.err && <div className="error-line">⚠ {job.err}</div>}
+      {result && result.voronoi && (
+        <div className="stats-block">
+          {result.etaV !== null ? (
+            <div className="stats-line">
+              <strong>η_V = {(result.etaV * 100).toFixed(1)}%</strong>
+              &nbsp;·&nbsp; ⟨V_voronoi⟩ ={' '}
+              {(result.voronoi.interiorVolume / result.voronoi.interiorCount).toFixed(3)} L³
+              &nbsp;·&nbsp; n_interior = {result.voronoi.interiorCount} /{' '}
+              {result.voronoi.volumes.length}
+            </div>
+          ) : (
+            <div className="stats-line" style={{ color: 'var(--text-dim)' }}>
+              No interior cells (assembly too small for the container padding). Grow more tets or
+              increase padding.
+            </div>
+          )}
+          <div className="stats-line" style={{ color: 'var(--text-dim)' }}>
+            grid {result.voronoi.dims[0]}×{result.voronoi.dims[1]}×{result.voronoi.dims[2]} @{' '}
+            {result.voronoi.voxelSize.toFixed(3)} L
           </div>
         </div>
       )}
