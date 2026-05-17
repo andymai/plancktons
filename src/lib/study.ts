@@ -1,12 +1,17 @@
-// Multi-trial statistical study utilities.
-//
-// Runs synchronously (UI may stutter at huge sample counts); for production we'd
-// move this into a Web Worker. For ~500 trials at N≤50 this completes in a
-// fraction of a second.
+// Runs synchronously (UI may stutter at huge sample counts); for a production
+// build this should move into a Web Worker.
 
 import { Rng } from './rng.js';
-import { growOne, makeAssembly, partVolumeTotal, freeSurfaceArea } from './assembly.js';
+import {
+  chiralityCounts,
+  growOne,
+  makeAssembly,
+  partVolumeTotal,
+  freeSurfaceArea,
+  vertexCoordination,
+} from './assembly.js';
 import { computeHull } from './hull.js';
+import { gyrationDescriptors } from './shape.js';
 import type { GrowthStrategy } from './assembly.js';
 
 export interface TrialResult {
@@ -17,6 +22,12 @@ export interface TrialResult {
   Vstar: number;
   efficiency: number;
   surface: number;
+  rg: number;
+  kappaSq: number;
+  prolateness: number;
+  meanCoord: number;
+  maxCoord: number;
+  chirR: number;
   ms: number;
 }
 
@@ -26,6 +37,7 @@ export interface StudyParams {
   startSeed: number;
   chiralityBias: number;
   strategy: GrowthStrategy;
+  compactBeta?: number;
 }
 
 export function runStudy(p: StudyParams): TrialResult[] {
@@ -38,22 +50,33 @@ export function runStudy(p: StudyParams): TrialResult[] {
       rng: new Rng(seed),
       chiralityBias: p.chiralityBias,
       strategy: p.strategy,
+      ...(p.compactBeta !== undefined ? { compactBeta: p.compactBeta } : {}),
     });
-    while (a.tets.length < p.N && growOne(a)) {
-      // empty
+    while (a.tets.length < p.N) {
+      if (growOne(a) !== 'grown') break;
     }
     const allV = a.tets.flatMap((tt) => [...tt.verts]);
     const hull = computeHull(allV);
     const ms = performance.now() - t0;
     if (!hull) continue;
+    const Vstar = partVolumeTotal(a);
+    const shape = gyrationDescriptors(allV);
+    const coord = vertexCoordination(a);
+    const chir = chiralityCounts(a);
     out.push({
       trial: t,
       N: a.tets.length,
       seed,
       V: hull.volume,
-      Vstar: partVolumeTotal(a),
-      efficiency: partVolumeTotal(a) / hull.volume,
+      Vstar,
+      efficiency: Vstar / hull.volume,
       surface: freeSurfaceArea(a),
+      rg: shape?.rg ?? NaN,
+      kappaSq: shape?.kappaSq ?? NaN,
+      prolateness: shape?.prolateness ?? NaN,
+      meanCoord: coord.meanCoord,
+      maxCoord: coord.maxCoord,
+      chirR: chir.R,
       ms,
     });
   }
@@ -73,13 +96,24 @@ export function runCurve(
   trialsPerN: number,
   startSeed: number,
   chiralityBias: number,
-  strategy: GrowthStrategy
+  strategy: GrowthStrategy,
+  compactBeta?: number
 ): CurvePoint[] {
   return Ns.map((N) => {
-    const trials = runStudy({ N, trials: trialsPerN, startSeed, chiralityBias, strategy });
+    const trials = runStudy({
+      N,
+      trials: trialsPerN,
+      startSeed,
+      chiralityBias,
+      strategy,
+      ...(compactBeta !== undefined ? { compactBeta } : {}),
+    });
+    if (trials.length === 0) {
+      return { N, meanEff: NaN, stdEff: NaN, meanV: NaN, meanVstar: NaN };
+    }
     const effs = trials.map((t) => t.efficiency);
     const mean = effs.reduce((s, x) => s + x, 0) / effs.length;
-    const variance = effs.reduce((s, x) => s + (x - mean) ** 2, 0) / Math.max(1, effs.length);
+    const variance = effs.reduce((s, x) => s + (x - mean) ** 2, 0) / effs.length;
     return {
       N,
       meanEff: mean,
@@ -91,10 +125,11 @@ export function runCurve(
 }
 
 export function trialsToCSV(trials: ReadonlyArray<TrialResult>): string {
-  const header = 'trial,N,seed,V,Vstar,efficiency,surface,ms';
+  const header =
+    'trial,N,seed,V,Vstar,efficiency,surface,rg,kappaSq,prolateness,meanCoord,maxCoord,chirR,ms';
   const rows = trials.map(
     (t) =>
-      `${t.trial},${t.N},${t.seed},${t.V},${t.Vstar},${t.efficiency},${t.surface},${t.ms}`
+      `${t.trial},${t.N},${t.seed},${t.V},${t.Vstar},${t.efficiency},${t.surface},${t.rg},${t.kappaSq},${t.prolateness},${t.meanCoord},${t.maxCoord},${t.chirR},${t.ms}`
   );
   return [header, ...rows].join('\n');
 }

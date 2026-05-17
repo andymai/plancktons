@@ -8,6 +8,25 @@ import {
 import { Rng } from '../lib/rng.js';
 import { growOne, makeAssembly } from '../lib/assembly.js';
 
+function showToast(text: string, kind: 'ok' | 'warn' = 'ok') {
+  const el = document.createElement('div');
+  el.textContent = text;
+  el.className = `toast ${kind === 'warn' ? 'toast-warn' : ''}`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1800);
+}
+
+async function copyShareLink() {
+  const url = encodeStateToHash(useStore.getState());
+  try {
+    if (!navigator.clipboard) throw new Error('Clipboard API unavailable');
+    await navigator.clipboard.writeText(url);
+    showToast('🔗 link copied!');
+  } catch {
+    window.prompt('Copy this URL:', url);
+  }
+}
+
 export function Actions() {
   const scene = useStore((s) => s.scene);
   const growth = useStore((s) => s.growth);
@@ -19,27 +38,17 @@ export function Actions() {
       rng: new Rng(growth.seed),
       chiralityBias: growth.chiralityBias,
       strategy: growth.strategy,
+      compactBeta: growth.compactBeta,
     });
-    while (a.tets.length < growth.N && growOne(a)) {
-      // empty
+    while (a.tets.length < growth.N) {
+      if (growOne(a) !== 'grown') break;
     }
     return a;
   }
 
   return (
     <div className="actions">
-      <button
-        onClick={() => {
-          const url = encodeStateToHash(useStore.getState());
-          navigator.clipboard?.writeText(url).catch(() => {});
-          const el = document.createElement('div');
-          el.textContent = '🔗 link copied!';
-          el.className = 'toast';
-          document.body.appendChild(el);
-          setTimeout(() => el.remove(), 1800);
-        }}
-        title="Copy a shareable URL with the current parameters"
-      >
+      <button onClick={() => copyShareLink()} title="Copy a shareable URL with the current parameters">
         🔗 Share link
       </button>
       <button onClick={() => takeScreenshot()} title="Save the canvas as PNG">

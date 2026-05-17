@@ -8,6 +8,7 @@ import {
   runStudy,
   trialsToCSV,
 } from '../lib/study.js';
+import { PACKING_REFERENCES } from '../lib/references.js';
 
 const DEFAULT_NS = [1, 2, 4, 6, 8, 12, 16, 20, 25, 30, 40, 50];
 
@@ -19,6 +20,7 @@ export function Research() {
       <div className="panel-title">Research mode</div>
       <Histogram />
       <Curve />
+      <ReferencesTable />
     </div>
   );
 }
@@ -29,18 +31,27 @@ function Histogram() {
   const [count, setCount] = useState(100);
   const [running, setRunning] = useState(false);
 
+  const [err, setErr] = useState<string | null>(null);
+
   function run() {
     setRunning(true);
+    setErr(null);
     setTimeout(() => {
-      const t = runStudy({
-        N: growth.N,
-        trials: count,
-        startSeed: growth.seed,
-        chiralityBias: growth.chiralityBias,
-        strategy: growth.strategy,
-      });
-      setTrials(t);
-      setRunning(false);
+      try {
+        const t = runStudy({
+          N: growth.N,
+          trials: count,
+          startSeed: growth.seed,
+          chiralityBias: growth.chiralityBias,
+          strategy: growth.strategy,
+          compactBeta: growth.compactBeta,
+        });
+        setTrials(t);
+      } catch (e) {
+        setErr(e instanceof Error ? e.message : String(e));
+      } finally {
+        setRunning(false);
+      }
     }, 0);
   }
 
@@ -93,6 +104,7 @@ function Histogram() {
           {stats.min.toFixed(3)} · max {stats.max.toFixed(3)}
         </div>
       )}
+      {err && <div className="error-line">⚠ {err}</div>}
       {histo && <HistogramBars histo={histo} />}
     </div>
   );
@@ -104,18 +116,27 @@ function Curve() {
   const [points, setPoints] = useState<CurvePoint[]>([]);
   const [running, setRunning] = useState(false);
 
+  const [err, setErr] = useState<string | null>(null);
+
   function run() {
     setRunning(true);
+    setErr(null);
     setTimeout(() => {
-      const p = runCurve(
-        DEFAULT_NS,
-        trialsPerN,
-        growth.seed,
-        growth.chiralityBias,
-        growth.strategy
-      );
-      setPoints(p);
-      setRunning(false);
+      try {
+        const p = runCurve(
+          DEFAULT_NS,
+          trialsPerN,
+          growth.seed,
+          growth.chiralityBias,
+          growth.strategy,
+          growth.compactBeta
+        );
+        setPoints(p);
+      } catch (e) {
+        setErr(e instanceof Error ? e.message : String(e));
+      } finally {
+        setRunning(false);
+      }
     }, 0);
   }
 
@@ -139,6 +160,7 @@ function Curve() {
           {running ? 'Running…' : 'Run sweep'}
         </button>
       </div>
+      {err && <div className="error-line">⚠ {err}</div>}
       {points.length > 0 && <CurvePlot points={points} />}
       {points.length > 0 && (
         <table className="curve-table">
@@ -221,21 +243,26 @@ function HistogramBars({ histo }: { histo: Histo }) {
 }
 
 function CurvePlot({ points }: { points: CurvePoint[] }) {
+  const showRefs = useStore((s) => s.color.showReferences);
   const W = 320;
-  const H = 160;
+  const H = 180;
   const pad = { l: 30, r: 6, t: 8, b: 18 };
   const maxN = Math.max(...points.map((p) => p.N));
-  const maxEff = Math.max(0.6, Math.max(...points.map((p) => p.meanEff + p.stdEff)) * 1.1);
+  const refMax = showRefs ? Math.max(...PACKING_REFERENCES.map((r) => r.density)) : 0;
+  const maxEff = Math.min(
+    1.05,
+    Math.max(0.8, Math.max(...points.map((p) => p.meanEff + p.stdEff), refMax) * 1.05)
+  );
   const x = (n: number) => pad.l + ((W - pad.l - pad.r) * n) / maxN;
   const y = (e: number) => pad.t + (H - pad.t - pad.b) * (1 - e / maxEff);
   const pathBand: string[] = [];
   points.forEach((p, i) =>
-    pathBand.push(
-      `${i === 0 ? 'M' : 'L'} ${x(p.N)} ${y(p.meanEff + p.stdEff)}`
-    )
+    pathBand.push(`${i === 0 ? 'M' : 'L'} ${x(p.N)} ${y(p.meanEff + p.stdEff)}`)
   );
-  for (let i = points.length - 1; i >= 0; i--)
-    pathBand.push(`L ${x((points[i] as CurvePoint).N)} ${y((points[i] as CurvePoint).meanEff - (points[i] as CurvePoint).stdEff)}`);
+  for (let i = points.length - 1; i >= 0; i--) {
+    const p = points[i] as CurvePoint;
+    pathBand.push(`L ${x(p.N)} ${y(p.meanEff - p.stdEff)}`);
+  }
   pathBand.push('Z');
   const pathLine: string[] = points.map(
     (p, i) => `${i === 0 ? 'M' : 'L'} ${x(p.N)} ${y(p.meanEff)}`
@@ -243,7 +270,6 @@ function CurvePlot({ points }: { points: CurvePoint[] }) {
   return (
     <svg width={W} height={H} className="plot">
       <rect x={0} y={0} width={W} height={H} fill="#222831" />
-      {/* axes */}
       {[0, 0.25, 0.5, 0.75, 1].map((e) =>
         e <= maxEff ? (
           <g key={e}>
@@ -261,6 +287,29 @@ function CurvePlot({ points }: { points: CurvePoint[] }) {
           </g>
         ) : null
       )}
+      {showRefs &&
+        PACKING_REFERENCES.filter((r) => r.density <= maxEff).map((r) => (
+          <g key={r.label}>
+            <line
+              x1={pad.l}
+              y1={y(r.density)}
+              x2={W - pad.r}
+              y2={y(r.density)}
+              stroke={r.color}
+              strokeDasharray="3 2"
+              strokeOpacity={0.7}
+            />
+            <text
+              x={W - pad.r - 4}
+              y={y(r.density) - 2}
+              fontSize={8}
+              fill={r.color}
+              textAnchor="end"
+            >
+              {r.label} {r.density.toFixed(3)}
+            </text>
+          </g>
+        ))}
       <path d={pathBand.join(' ')} fill="#5fa8e3" fillOpacity={0.25} />
       <path d={pathLine.join(' ')} stroke="#5fa8e3" fill="none" strokeWidth={2} />
       {points.map((p) => (
@@ -270,5 +319,34 @@ function CurvePlot({ points }: { points: CurvePoint[] }) {
         N = {maxN}
       </text>
     </svg>
+  );
+}
+
+function ReferencesTable() {
+  return (
+    <details className="references-details">
+      <summary>Reference packing densities</summary>
+      <table className="references-table">
+        <thead>
+          <tr>
+            <th>System</th>
+            <th>Δ</th>
+            <th>Citation</th>
+          </tr>
+        </thead>
+        <tbody>
+          {PACKING_REFERENCES.map((r) => (
+            <tr key={r.label}>
+              <td>
+                <span className="ref-swatch" style={{ background: r.color }} />
+                {r.label}
+              </td>
+              <td>{r.density.toFixed(4)}</td>
+              <td title={r.note}>{r.citation}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </details>
   );
 }

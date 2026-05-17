@@ -1,5 +1,3 @@
-// Pre-built canonical Planckton assemblies.
-
 import type { Vec3 } from './vec.js';
 import type { Planckton, Chirality } from './planckton.js';
 
@@ -8,7 +6,7 @@ const RING_IDX: ReadonlyArray<readonly [number, number, number]> = [
 ];
 
 /** Build a tetrahedron from 4 arbitrary points, auto-orienting faces outward. */
-function tetFromPts(pts: readonly [Vec3, Vec3, Vec3, Vec3]): Planckton {
+export function tetFromPts(pts: readonly [Vec3, Vec3, Vec3, Vec3]): Planckton {
   const [V0, V1, V2, V3] = pts;
   const cx = (V0[0] + V1[0] + V2[0] + V3[0]) / 4;
   const cy = (V0[1] + V1[1] + V2[1] + V3[1]) / 4;
@@ -97,12 +95,11 @@ export function eightReptile(L: number): Planckton[] {
   return pieces.map(tetFromPts);
 }
 
-/** Apply an exploded-view radial offset from the global centroid. */
 export function explode(
   pieces: ReadonlyArray<Planckton>,
   amount: number
 ): Planckton[] {
-  if (amount === 0) return pieces.map((p) => p);
+  if (amount === 0) return [...pieces];
   let cx = 0,
     cy = 0,
     cz = 0,

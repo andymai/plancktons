@@ -1,10 +1,10 @@
-// Global UI state. Kept small — heavy data (assemblies) is derived from these.
-
 import { create } from 'zustand';
 import type { GrowthStrategy } from './assembly.js';
 
 export type SceneId = 'single' | 'cube' | 'reptile' | 'growth';
 export type AnimationMode = 'instant' | 'animated' | 'step';
+
+export type ColorMode = 'chirality' | 'depth' | 'single';
 
 export interface ColorOpts {
   rightColor: string;
@@ -12,6 +12,13 @@ export interface ColorOpts {
   showHull: boolean;
   showEdges: boolean;
   edgeOpacity: number;
+  /** Shrink each tet toward its centroid by this fraction (0 = touching, 0.04 = visible gap). */
+  tetInset: number;
+  colorMode: ColorMode;
+  /** Inertia ellipsoid overlay (growth scene). */
+  showEllipsoid: boolean;
+  /** Reference-density lines on plots. */
+  showReferences: boolean;
 }
 
 export interface GrowthParams {
@@ -19,6 +26,7 @@ export interface GrowthParams {
   seed: number;
   chiralityBias: number;
   strategy: GrowthStrategy;
+  compactBeta: number;
 }
 
 interface State {
@@ -46,8 +54,9 @@ interface State {
   setAnimationMode: (m: AnimationMode) => void;
   animSpeed: number; // tets per second
   setAnimSpeed: (n: number) => void;
-  manualMode: boolean;
-  setManualMode: (b: boolean) => void;
+  /** Monotonic counter — bump to advance one tet in step mode. */
+  stepTrigger: number;
+  bumpStep: () => void;
 
   // Visual
   color: ColorOpts;
@@ -63,7 +72,14 @@ const DEFAULT_COLOR: ColorOpts = {
   leftColor: '#f5f5f0',
   showHull: false,
   showEdges: true,
-  edgeOpacity: 0.4,
+  edgeOpacity: 0.55,
+  // Default 1 % inset: visually separates pieces in canonical tilings (cube /
+  // 8-reptile) where mathematical face-sharing would otherwise z-fight. Set to
+  // 0 in advanced to see the true touching configuration.
+  tetInset: 0.012,
+  colorMode: 'chirality',
+  showEllipsoid: false,
+  showReferences: true,
 };
 
 export const useStore = create<State>((set) => ({
@@ -81,14 +97,14 @@ export const useStore = create<State>((set) => ({
   cubeExplode: 0,
   setCubeExplode: (cubeExplode) => set({ cubeExplode }),
 
-  growth: { N: 20, seed: 1, chiralityBias: 0.5, strategy: 'uniform' },
+  growth: { N: 20, seed: 1, chiralityBias: 0.5, strategy: 'uniform', compactBeta: 3 },
   setGrowth: (p) => set((s) => ({ growth: { ...s.growth, ...p } })),
   animationMode: 'instant',
   setAnimationMode: (animationMode) => set({ animationMode }),
   animSpeed: 4,
   setAnimSpeed: (animSpeed) => set({ animSpeed }),
-  manualMode: false,
-  setManualMode: (manualMode) => set({ manualMode }),
+  stepTrigger: 0,
+  bumpStep: () => set((s) => ({ stepTrigger: s.stepTrigger + 1 })),
 
   color: DEFAULT_COLOR,
   setColor: (c) => set((s) => ({ color: { ...s.color, ...c } })),

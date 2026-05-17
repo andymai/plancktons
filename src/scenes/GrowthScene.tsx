@@ -4,21 +4,28 @@ import { useStore } from '../lib/store.js';
 import { Rng } from '../lib/rng.js';
 import {
   type Assembly,
-  type FreeFace,
+  type GrowResult,
+  assemblyCentroid,
+  chiralityCounts,
+  freeFaceFraction,
   freeFaceShapeCounts,
   freeSurfaceArea,
   growOne,
   makeAssembly,
   partVolumeTotal,
+  vertexCoordination,
 } from '../lib/assembly.js';
 import { computeHull } from '../lib/hull.js';
+import { gyrationDescriptors, type ShapeDescriptors } from '../lib/shape.js';
 import { PlancktonMesh } from './PlancktonMesh.js';
 import { HullMesh } from './HullMesh.js';
+import { InertiaEllipsoid } from './InertiaEllipsoid.js';
 
 export const GROWTH_L = 1;
 
 export interface GrowthMetrics {
   N: number;
+  targetN: number;
   Vstar: number;
   V: number;
   efficiency: number;
@@ -27,13 +34,55 @@ export interface GrowthMetrics {
   freeScalene: number;
   bboxVolume: number;
   bboxSize: [number, number, number];
+  hullOk: boolean;
+  stalled: boolean;
+  // physics
+  rg: number;                       // radius of gyration
+  asphericity: number;              // b / R_g² ∈ [0, 1]
+  kappaSq: number;                  // shape anisotropy
+  prolateness: number;              // S, sign = rod (+) / disc (−)
+  chirR: number;
+  chirL: number;
+  freeFaceFrac: number;             // free faces / (4·N)
+  meanVertexCoord: number;          // ⟨coordination⟩
+  maxVertexCoord: number;
+  shape: ShapeDescriptors | null;   // full descriptors for ellipsoid overlay
 }
 
-interface ScenePayload {
-  assembly: Assembly;
-  hullPoints: ReadonlyArray<[number, number, number]>;
-  hullFaces: ReadonlyArray<readonly [number, number, number]>;
-  metrics: GrowthMetrics | null;
+function useGrownAssembly(
+  seed: number,
+  strategy: 'uniform' | 'compact',
+  chiralityBias: number,
+  compactBeta: number,
+  targetN: number
+): { assembly: Assembly; stalled: boolean } {
+  const ref = useRef<{
+    assembly: Assembly;
+    key: string;
+    stalled: boolean;
+  } | null>(null);
+  const key = `${seed}|${strategy}|${chiralityBias}|${compactBeta}`;
+  const cached = ref.current;
+  const needsReset = cached === null || cached.key !== key;
+  const assembly = needsReset
+    ? makeAssembly({
+        L: GROWTH_L,
+        rng: new Rng(seed),
+        chiralityBias,
+        strategy,
+        compactBeta,
+      })
+    : cached!.assembly;
+  let stalled = needsReset ? false : cached!.stalled;
+  while (assembly.tets.length < targetN) {
+    const r: GrowResult = growOne(assembly);
+    if (r !== 'grown') {
+      stalled = true;
+      break;
+    }
+  }
+  ref.current = { assembly, key, stalled };
+  return { assembly, stalled };
 }
 
 export function GrowthScene({
@@ -44,20 +93,27 @@ export function GrowthScene({
   const growth = useStore((s) => s.growth);
   const animationMode = useStore((s) => s.animationMode);
   const animSpeed = useStore((s) => s.animSpeed);
+  const stepTrigger = useStore((s) => s.stepTrigger);
   const color = useStore((s) => s.color);
 
-  // Step targets — for instant/animated we want N tets; for step mode the
-  // currentN state advances independently.
+  // currentN drives all three animation modes: instant tracks growth.N directly,
+  // animated ramps over time, step increments on user request.
   const [currentN, setCurrentN] = useState(growth.N);
 
-  // Reset currentN when parameters that invalidate the assembly change.
   useEffect(() => {
-    if (animationMode === 'animated') setCurrentN(1);
-    else if (animationMode === 'step') setCurrentN(1);
-    else setCurrentN(growth.N);
-  }, [growth.seed, growth.strategy, growth.chiralityBias, animationMode, growth.N]);
+    if (animationMode === 'instant') setCurrentN(growth.N);
+    else setCurrentN(1);
+  }, [animationMode, growth.seed, growth.strategy, growth.chiralityBias, growth.compactBeta]);
 
-  // Animated growth: advance currentN over time.
+  useEffect(() => {
+    if (animationMode === 'instant') setCurrentN(growth.N);
+  }, [growth.N, animationMode]);
+
+  useEffect(() => {
+    if (animationMode !== 'step') return;
+    setCurrentN((n) => Math.min(growth.N, n + 1));
+  }, [stepTrigger, animationMode, growth.N]);
+
   const accumRef = useRef(0);
   useFrame((_, delta) => {
     if (animationMode !== 'animated') return;
@@ -69,82 +125,107 @@ export function GrowthScene({
     }
   });
 
-  // Rebuild assembly whenever inputs change.
-  const payload = useMemo<ScenePayload>(() => {
-    const rng = new Rng(growth.seed);
-    const a = makeAssembly({
-      L: GROWTH_L,
-      rng,
-      chiralityBias: growth.chiralityBias,
-      strategy: growth.strategy,
-    });
-    while (a.tets.length < currentN && growOne(a)) {
-      // empty
-    }
-    const allV = a.tets.flatMap((t) => [...t.verts]);
+  const { assembly, stalled } = useGrownAssembly(
+    growth.seed,
+    growth.strategy,
+    growth.chiralityBias,
+    growth.compactBeta,
+    currentN
+  );
+
+  const { hullPoints, hullFaces, metrics } = useMemo(() => {
+    const allV = assembly.tets.flatMap((t) => [...t.verts]);
     const hull = computeHull(allV);
-    let metrics: GrowthMetrics | null = null;
-    if (hull) {
-      const fs = freeFaceShapeCounts(a);
-      metrics = {
-        N: a.tets.length,
-        Vstar: partVolumeTotal(a),
-        V: hull.volume,
-        efficiency: partVolumeTotal(a) / hull.volume,
-        surfaceArea: freeSurfaceArea(a),
-        freeIso: fs.isoceles,
-        freeScalene: fs.scalene,
-        bboxVolume: hull.bbox.volume,
-        bboxSize: [hull.bbox.size[0], hull.bbox.size[1], hull.bbox.size[2]],
+    const Vstar = partVolumeTotal(assembly);
+    const fs = freeFaceShapeCounts(assembly);
+    const chir = chiralityCounts(assembly);
+    const coord = vertexCoordination(assembly);
+    const ffrac = freeFaceFraction(assembly);
+    const shape = gyrationDescriptors(allV);
+    const N = assembly.tets.length;
+    const stalledNow = stalled && N < growth.N;
+    const surfaceArea = freeSurfaceArea(assembly);
+    const baseMetrics = {
+      N,
+      targetN: growth.N,
+      Vstar,
+      surfaceArea,
+      freeIso: fs.isoceles,
+      freeScalene: fs.scalene,
+      stalled: stalledNow,
+      rg: shape?.rg ?? NaN,
+      asphericity: shape?.asphericity ?? NaN,
+      kappaSq: shape?.kappaSq ?? NaN,
+      prolateness: shape?.prolateness ?? NaN,
+      chirR: chir.R,
+      chirL: chir.L,
+      freeFaceFrac: ffrac,
+      meanVertexCoord: coord.meanCoord,
+      maxVertexCoord: coord.maxCoord,
+      shape,
+    };
+    if (!hull) {
+      return {
+        hullPoints: [] as ReadonlyArray<[number, number, number]>,
+        hullFaces: [] as ReadonlyArray<readonly [number, number, number]>,
+        metrics: {
+          ...baseMetrics,
+          V: NaN,
+          efficiency: NaN,
+          bboxVolume: NaN,
+          bboxSize: [NaN, NaN, NaN] as [number, number, number],
+          hullOk: false,
+        } satisfies GrowthMetrics,
       };
     }
     return {
-      assembly: a,
-      hullPoints: hull?.points ?? [],
-      hullFaces: hull?.faces ?? [],
-      metrics,
+      hullPoints: hull.points,
+      hullFaces: hull.faces,
+      metrics: {
+        ...baseMetrics,
+        V: hull.volume,
+        efficiency: Vstar / hull.volume,
+        bboxVolume: hull.bbox.volume,
+        bboxSize: hull.bbox.size,
+        hullOk: true,
+      } satisfies GrowthMetrics,
     };
-  }, [growth.seed, growth.strategy, growth.chiralityBias, currentN]);
+  }, [assembly, currentN, growth.N, stalled]);
 
+  // Use a ref to detect actual value changes so we don't refire on parent
+  // re-renders that change onMetrics identity.
+  const lastReportedRef = useRef<GrowthMetrics | null>(null);
   useEffect(() => {
-    if (payload.metrics) onMetrics?.(payload.metrics);
-  }, [payload.metrics, onMetrics]);
+    if (lastReportedRef.current === metrics) return;
+    lastReportedRef.current = metrics;
+    onMetrics?.(metrics);
+  }, [metrics, onMetrics]);
 
-  // Centroid for camera framing
   const center = useMemo<[number, number, number]>(() => {
-    if (payload.assembly.tets.length === 0) return [0, 0, 0];
-    let cx = 0,
-      cy = 0,
-      cz = 0,
-      n = 0;
-    for (const t of payload.assembly.tets) {
-      for (const v of t.verts) {
-        cx += v[0];
-        cy += v[1];
-        cz += v[2];
-        n++;
-      }
-    }
-    return [-cx / n, -cy / n, -cz / n];
-  }, [payload.assembly]);
+    const c = assemblyCentroid(assembly);
+    return [-c[0], -c[1], -c[2]];
+  }, [assembly, currentN]);
+
+  const colorMode = useStore((s) => s.color.colorMode);
+  const colorByDepth = colorMode === 'depth';
+  const depthHue = (i: number) =>
+    `hsl(${Math.round((i * 360) / Math.max(1, assembly.tets.length))}, 65%, 55%)`;
 
   return (
     <group position={center}>
-      {payload.assembly.tets.map((p, i) => (
-        <PlancktonMesh key={i} planckton={p} />
+      {assembly.tets.map((p, i) => (
+        <PlancktonMesh
+          key={i}
+          planckton={p}
+          colorOverride={colorByDepth ? depthHue(i) : undefined}
+        />
       ))}
-      {color.showHull && payload.hullPoints.length > 0 && (
-        <HullMesh points={payload.hullPoints} faces={payload.hullFaces} />
+      {color.showHull && hullPoints.length > 0 && (
+        <HullMesh points={hullPoints} faces={hullFaces} />
+      )}
+      {color.showEllipsoid && metrics.shape && (
+        <InertiaEllipsoid shape={metrics.shape} />
       )}
     </group>
   );
 }
-
-/** Hook exposing the currently-rendered metrics. */
-export function useGrowthMetrics() {
-  const [m, setM] = useState<GrowthMetrics | null>(null);
-  return { metrics: m, setMetrics: setM };
-}
-
-// Re-export for parent access pattern.
-export type { FreeFace };

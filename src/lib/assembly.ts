@@ -1,8 +1,6 @@
-// Assembly model: list of Plancktons + free-face tracking + growth strategies.
-
 import type { Rng } from './rng.js';
 import type { Vec3 } from './vec.js';
-import { centroid, dot, norm, sub, unit } from './vec.js';
+import { centroid, cross, dot, norm, sub, unit } from './vec.js';
 import type { Chirality, Planckton } from './planckton.js';
 import {
   edgeSig,
@@ -31,6 +29,12 @@ export interface AssemblyOptions {
   /** 0..1 = fraction right-handed (0.5 = balanced 50/50) */
   chiralityBias: number;
   strategy: GrowthStrategy;
+  /**
+   * Inverse-temperature β for the 'compact' strategy. p(face_i) ∝ exp(β · n̂ᵢ · ĉᵢ),
+   * where n̂ᵢ is the face outward normal and ĉᵢ points from face center to
+   * assembly centroid. β=0 ⇒ uniform; β→∞ ⇒ greedy compactification.
+   */
+  compactBeta?: number;
   maxAttemptsPerStep?: number;
 }
 
@@ -49,15 +53,20 @@ export function makeAssembly(opts: AssemblyOptions): Assembly {
   return a;
 }
 
+export type GrowResult = 'grown' | 'closed' | 'jammed';
+
 /**
- * Try to attach one more Planckton. Returns true on success.
+ * Try to attach one more Planckton.
+ *   'grown'  — placed a new tet
+ *   'closed' — no free faces (assembly truly maxed out)
+ *   'jammed' — free faces exist but every candidate overlapped within maxAttempts
  */
-export function growOne(a: Assembly): boolean {
+export function growOne(a: Assembly): GrowResult {
   const { opts } = a;
   const maxAttempts = opts.maxAttemptsPerStep ?? 80;
+  if (a.freeFaces.length === 0) return 'closed';
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    if (a.freeFaces.length === 0) return false;
     const ffIdx = pickFreeFace(a);
     const ff = a.freeFaces[ffIdx];
     if (!ff) continue;
@@ -76,7 +85,6 @@ export function growOne(a: Assembly): boolean {
     const perm = perms[opts.rng.int(perms.length)] as [number, number, number];
     const newTet = matePlanckton(tmpl, tfIdx, ff.tri, perm);
 
-    // Reject overlap with any non-parent tet.
     let overlap = false;
     for (let ti = 0; ti < a.tets.length; ti++) {
       if (ti === ff.tetIdx) continue;
@@ -93,9 +101,9 @@ export function growOne(a: Assembly): boolean {
     faceTriangles(newTet).forEach((tri, fi) => {
       if (fi !== tfIdx) a.freeFaces.push({ tri, tetIdx: newIdx, faceIdx: fi });
     });
-    return true;
+    return 'grown';
   }
-  return false;
+  return 'jammed';
 }
 
 function pickFreeFace(a: Assembly): number {
@@ -103,16 +111,15 @@ function pickFreeFace(a: Assembly): number {
   if (strategy === 'uniform') return rng.int(a.freeFaces.length);
   // Compact: prefer free faces whose outward normal points TOWARD the
   // assembly centroid (i.e., faces in "concave" pockets).
+  const beta = a.opts.compactBeta ?? 3;
   const c = assemblyCentroid(a);
   const weights: number[] = a.freeFaces.map((ff) => {
     const fc = centroid(ff.tri[0], ff.tri[1], ff.tri[2]);
     const dir = unit(sub(c, fc));
-    const n = unit(
-      cross(sub(ff.tri[1], ff.tri[0]), sub(ff.tri[2], ff.tri[0]))
-    );
+    const n = unit(cross(sub(ff.tri[1], ff.tri[0]), sub(ff.tri[2], ff.tri[0])));
     // dir · normal:  +1 = normal points toward centroid (concave pocket, prefer)
     //                -1 = normal points outward (skin, deprioritize)
-    return Math.exp(3 * dot(dir, n));
+    return Math.exp(beta * dot(dir, n));
   });
   const total = weights.reduce((s, w) => s + w, 0);
   let pick = rng.next() * total;
@@ -121,10 +128,6 @@ function pickFreeFace(a: Assembly): number {
     if (pick <= 0) return i;
   }
   return weights.length - 1;
-}
-
-function cross(a: Vec3, b: Vec3): Vec3 {
-  return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 }
 
 export function assemblyCentroid(a: Assembly): Vec3 {
@@ -165,7 +168,45 @@ export function chiralityCounts(a: Assembly): { R: number; L: number } {
   return { R, L };
 }
 
-/** Triangle-shape counts among free faces (isoceles right vs scalene right). */
+/**
+ * Vertex coordination = how many tets share each spatial vertex.
+ * Quantizes vertex positions to 1e-6 · L for matching.
+ */
+export function vertexCoordination(a: Assembly): {
+  histogram: number[];
+  uniqueVertices: number;
+  meanCoord: number;
+  maxCoord: number;
+} {
+  const eps = 1e-6 * a.opts.L;
+  const inv = 1 / eps;
+  const map = new Map<string, number>();
+  for (const t of a.tets) {
+    for (const v of t.verts) {
+      const key =
+        Math.round(v[0] * inv) + ',' + Math.round(v[1] * inv) + ',' + Math.round(v[2] * inv);
+      map.set(key, (map.get(key) ?? 0) + 1);
+    }
+  }
+  const counts = Array.from(map.values());
+  const maxCoord = counts.length > 0 ? Math.max(...counts) : 0;
+  const histogram = new Array(maxCoord + 1).fill(0);
+  for (const c of counts) histogram[c]++;
+  const sum = counts.reduce((s, c) => s + c, 0);
+  return {
+    histogram,
+    uniqueVertices: map.size,
+    meanCoord: counts.length === 0 ? 0 : sum / counts.length,
+    maxCoord,
+  };
+}
+
+/** Fraction of all tet-faces that remain free (no neighbour glued). */
+export function freeFaceFraction(a: Assembly): number {
+  if (a.tets.length === 0) return 0;
+  return a.freeFaces.length / (4 * a.tets.length);
+}
+
 export function freeFaceShapeCounts(
   a: Assembly
 ): { isoceles: number; scalene: number } {

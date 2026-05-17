@@ -196,6 +196,20 @@ function GrowthControls() {
           <option value="compact">Compact (fill pockets)</option>
         </select>
       </label>
+      {growth.strategy === 'compact' && (
+        <label className="slider-row" title="Inverse temperature: 0 = uniform, large = greedy.">
+          <span>β (compactness)</span>
+          <input
+            type="range"
+            min={0}
+            max={10}
+            step={0.1}
+            value={growth.compactBeta}
+            onChange={(e) => setGrowth({ compactBeta: parseFloat(e.target.value) })}
+          />
+          <span className="slider-value">{growth.compactBeta.toFixed(1)}</span>
+        </label>
+      )}
       <label className="slider-row">
         <span>Chirality bias</span>
         <input
@@ -238,11 +252,24 @@ function GrowthControls() {
           <span className="slider-value">{animSpeed.toFixed(1)}/s</span>
         </label>
       )}
+      {animationMode === 'step' && <StepButton />}
       <p className="caption">
         Each step picks a random free face of the assembly and attaches a new
         Planckton (random chirality) with a compatible face. The "compact"
         strategy biases toward concave pockets, producing a denser shrink-wrap.
       </p>
+    </div>
+  );
+}
+
+function StepButton() {
+  const bumpStep = useStore((s) => s.bumpStep);
+  return (
+    <div className="slider-row">
+      <span>Add tet</span>
+      <button onClick={bumpStep} style={{ flex: 1 }}>
+        +1 Planckton →
+      </button>
     </div>
   );
 }
@@ -269,6 +296,18 @@ function AdvancedControls() {
           onChange={(e) => setColor({ leftColor: e.target.value })}
         />
       </label>
+      <label className="slider-row">
+        <span>Color mode</span>
+        <select
+          value={color.colorMode}
+          onChange={(e) =>
+            setColor({ colorMode: e.target.value as 'chirality' | 'depth' | 'single' })
+          }
+        >
+          <option value="chirality">Chirality (red R / white L)</option>
+          <option value="depth">Placement order (rainbow)</option>
+        </select>
+      </label>
       <label className="checkbox-row">
         <input
           type="checkbox"
@@ -280,11 +319,44 @@ function AdvancedControls() {
       <label className="checkbox-row">
         <input
           type="checkbox"
+          checked={color.showEllipsoid}
+          onChange={(e) => setColor({ showEllipsoid: e.target.checked })}
+        />
+        Show inertia ellipsoid
+      </label>
+      <label className="checkbox-row">
+        <input
+          type="checkbox"
+          checked={color.showReferences}
+          onChange={(e) => setColor({ showReferences: e.target.checked })}
+        />
+        Reference packing densities on plots
+      </label>
+      <label className="checkbox-row">
+        <input
+          type="checkbox"
           checked={color.showEdges}
           onChange={(e) => setColor({ showEdges: e.target.checked })}
         />
         Show edges
       </label>
+      <label className="slider-row">
+        <span>Tet inset</span>
+        <input
+          type="range"
+          min={0}
+          max={0.06}
+          step={0.002}
+          value={color.tetInset}
+          onChange={(e) => setColor({ tetInset: parseFloat(e.target.value) })}
+        />
+        <span className="slider-value">{(color.tetInset * 100).toFixed(1)}%</span>
+      </label>
+      <p className="caption" style={{ margin: '4px 0 0' }}>
+        Tets are mathematically face-sharing (V = N·L³/6 exactly). A small
+        rendered gap avoids z-fighting on shared faces; set to 0 to see the
+        true touching configuration.
+      </p>
     </div>
   );
 }

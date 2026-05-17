@@ -10,8 +10,12 @@ import { useStore } from './lib/store.js';
 import './App.css';
 
 function applyHashStateOnce() {
+  const hadHash = !!window.location.hash;
   const s = decodeStateFromHash();
-  if (!s) return;
+  if (!s) {
+    if (hadHash) console.warn('Share link was invalid; using defaults.');
+    return;
+  }
   const store = useStore.getState();
   if (s.scene) store.setScene(s.scene as 'single' | 'cube' | 'reptile' | 'growth');
   if (s.singleChirality) store.setSingleChirality(s.singleChirality);
@@ -24,6 +28,7 @@ function applyHashStateOnce() {
       seed: s.growth.seed,
       chiralityBias: s.growth.chiralityBias,
       strategy: s.growth.strategy as 'uniform' | 'compact',
+      compactBeta: s.growth.compactBeta,
     });
   }
   if (typeof s.advanced === 'boolean') store.setAdvanced(s.advanced);

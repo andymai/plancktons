@@ -1,5 +1,3 @@
-// Export utilities: STL, JSON, PNG screenshot, URL share state.
-
 import type { Planckton } from './planckton.js';
 import type { Assembly } from './assembly.js';
 import type { Vec3 } from './vec.js';
@@ -58,9 +56,16 @@ export function exportAssemblyJSON(a: Assembly, filename = 'plancktons.json'): v
 
 export function takeScreenshot(filename = 'plancktons.png'): void {
   const canvas = document.querySelector<HTMLCanvasElement>('canvas');
-  if (!canvas) return;
+  if (!canvas) {
+    alert('Screenshot failed: no canvas mounted.');
+    return;
+  }
   canvas.toBlob((blob) => {
-    if (blob) downloadBlob(blob, filename);
+    if (!blob) {
+      alert('Screenshot failed: browser refused to encode the canvas.');
+      return;
+    }
+    downloadBlob(blob, filename);
   }, 'image/png');
 }
 
@@ -83,7 +88,7 @@ interface SnapshotState {
   cubeExplode: number;
   reptileExplode: number;
   reptileDepth: number;
-  growth: { N: number; seed: number; chiralityBias: number; strategy: string };
+  growth: { N: number; seed: number; chiralityBias: number; strategy: string; compactBeta: number };
   advanced: boolean;
 }
 
@@ -99,6 +104,7 @@ export function encodeStateToHash(state: SnapshotState): string {
       sd: state.growth.seed,
       cb: state.growth.chiralityBias,
       st: state.growth.strategy,
+      b: state.growth.compactBeta,
     },
     a: state.advanced,
   };
@@ -119,7 +125,7 @@ export function decodeStateFromHash(): Partial<SnapshotState> | null {
       ce?: number;
       re?: number;
       rd?: number;
-      g?: { N?: number; sd?: number; cb?: number; st?: string };
+      g?: { N?: number; sd?: number; cb?: number; st?: string; b?: number };
       a?: boolean;
     };
     const result: Partial<SnapshotState> = {};
@@ -134,11 +140,13 @@ export function decodeStateFromHash(): Partial<SnapshotState> | null {
         seed: p.g.sd ?? 1,
         chiralityBias: p.g.cb ?? 0.5,
         strategy: p.g.st ?? 'uniform',
+        compactBeta: p.g.b ?? 3,
       };
     }
     if (typeof p.a === 'boolean') result.advanced = p.a;
     return result;
-  } catch {
+  } catch (err) {
+    console.warn('decodeStateFromHash: invalid hash', err);
     return null;
   }
 }

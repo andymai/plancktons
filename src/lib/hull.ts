@@ -19,12 +19,18 @@ function pointsToArray(pts: ReadonlyArray<Vec3>): Array<[number, number, number]
   return pts.map((p) => [p[0], p[1], p[2]] as [number, number, number]);
 }
 
+let hullErrorWarned = false;
+
 export function computeHull(points: ReadonlyArray<Vec3>): HullResult | null {
   if (points.length < 4) return null;
   let faces: number[][];
   try {
     faces = qh(pointsToArray(points)) as number[][];
-  } catch {
+  } catch (err) {
+    if (!hullErrorWarned) {
+      hullErrorWarned = true;
+      console.warn('computeHull: quickhull3d failed', { nPoints: points.length, err });
+    }
     return null;
   }
   // quickhull3d returns triangular faces by default.

@@ -33,7 +33,6 @@ const HILL_FACES_L: ReadonlyArray<readonly [number, number, number]> = HILL_FACE
   ([a, b, c]) => [c, b, a] as const
 );
 
-/** Build a unit Planckton at the origin. */
 export function unitPlanckton(L: number, chirality: Chirality): Planckton {
   const s = chirality === 'R' ? 1 : -1;
   return {
@@ -48,7 +47,6 @@ export function unitPlanckton(L: number, chirality: Chirality): Planckton {
   };
 }
 
-/** Get the 4 oriented triangle faces of a planckton in world coords. */
 export function faceTriangles(p: Planckton): Array<[Vec3, Vec3, Vec3]> {
   return p.faces.map(([i, j, k]) => [p.verts[i] as Vec3, p.verts[j] as Vec3, p.verts[k] as Vec3]);
 }
