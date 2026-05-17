@@ -247,23 +247,21 @@ docs/
 
 The simulation kernels for the four "planned" items in earlier revisions of
 this README have all landed (`voronoi.ts`, `morphology.ts`, `mcRefine.ts`,
-`pairCorrelationAniso`, `svgExport.ts`, `workerPool.ts`). Residuals worth
-flagging today:
+`pairCorrelationAniso`, `svgExport.ts`, `workerPool.ts`, `steinhardt.ts`,
+`autocorr.ts`). All of them are surfaced in Research mode today — the
+Morph / Voronoi / MC panels in the sidebar (`Analyses`), and the Histogram /
+η-vs-N / g(r) / Kinetics / S₂(r) / Q_l-ensemble panels in the Research
+drawer. Residuals worth flagging today:
 
-- **MC refinement / Voronoi η_V / morphological η_M not surfaced in the UI** -
-  the worker handles `mc`, `voronoi`, and `morph` job kinds and returns
-  results, but Research mode only renders Histogram, η-vs-N, g(r), kinetics,
-  and S₂(r). Wiring these into the HUD / Research view is the next obvious
-  UI pass.
-- **CLI is single-threaded** - the browser fans out study and curve jobs
+- **CLI is single-threaded** — the browser fans out study and curve jobs
   across `navigator.hardwareConcurrency − 1` Web Workers via
   `src/lib/workerPool.ts`, but `scripts/study.ts` still walks trials
   sequentially. Users who want offline parallelism shell out N processes.
-- **No two-level Ns × trials fan-out for curve sweeps** - the pool
+- **No two-level Ns × trials fan-out for curve sweeps** — the pool
   partitions Ns across workers; if Ns is shorter than the pool size, some
   cores idle. A two-level partition would help short-Ns / many-trials
   sweeps but adds CurvePoint-merge complexity.
-- **`brepjsOverlap.ts` oracle is dev-only** - the BREP-based independent
+- **`brepjsOverlap.ts` oracle is dev-only** — the BREP-based independent
   overlap check still exists as a devDep sanity script but isn't run in CI;
   drift between BREP and the SAT kernel would only surface on a manual run.
 
