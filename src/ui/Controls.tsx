@@ -1,6 +1,12 @@
+import { useState } from 'react';
 import { useStore } from '../lib/store.js';
 import { DraftSlider } from './DraftSlider.js';
 import { useDraftValue } from './useDraftValue.js';
+import { useWorkerRun } from './useWorkerRun.js';
+import { ProgressBar } from './ProgressBar.js';
+import { Rng } from '../lib/rng.js';
+import { growOne, makeAssembly } from '../lib/assembly.js';
+import type { MorphologyResult } from '../lib/morphology.js';
 
 const SCENES = [
   {
@@ -486,6 +492,94 @@ function AdvancedControls() {
         Plancktons share faces exactly in the math (V★ = N·L³/6). The render gap is purely cosmetic
         - set to 0 to see touching faces.
       </p>
+      <MorphologyPanel />
     </div>
+  );
+}
+
+function MorphologyPanel() {
+  const scene = useStore((s) => s.scene);
+  const growth = useStore((s) => s.growth);
+  const [alpha, setAlpha] = useState(0.5);
+  const [draftAlpha, setDraftAlpha] = useDraftValue(alpha);
+  const job = useWorkerRun<{ kind: 'morph'; morph: MorphologyResult | null }>();
+  const morph = job.result?.morph ?? null;
+  // V_morph is only meaningful for the growth aggregate (other scenes are
+  // canonical tilings with η_C = 1 by construction).
+  if (scene !== 'growth') return null;
+
+  function run() {
+    const a = makeAssembly({
+      L: 1,
+      rng: new Rng(growth.seed),
+      chiralityBias: growth.chiralityBias,
+      strategy: growth.strategy,
+      compactBeta: growth.compactBeta,
+    });
+    while (a.tets.length < growth.N) {
+      if (growOne(a) !== 'grown') break;
+    }
+    const tets = a.tets.map((t) => ({
+      verts: t.verts.map((v) => [v[0], v[1], v[2]] as [number, number, number]),
+      chirality: t.chirality,
+    }));
+    job.run({ kind: 'morph', tets, L: 1, voxelSize: 1 / 12, alpha });
+  }
+
+  const N = morph
+    ? // V* = N · L³/6, derived from the volume the worker returned and the
+      // current growth.N. The worker doesn't know N, so we recompute here.
+      growth.N
+    : 0;
+  const Vstar = (N * 1) / 6;
+  const etaM = morph && morph.volume > 0 ? Vstar / morph.volume : null;
+
+  return (
+    <>
+      <div className="panel-divider-small" />
+      <div className="panel-title" style={{ marginBottom: 4 }}>
+        Morphological hull η_M
+      </div>
+      <p className="caption" style={{ margin: '0 0 6px' }}>
+        Third packing fraction: η_M = V★/V_morph where V_morph is the closure of the aggregate by a
+        ball of radius α. Fills pockets &lt; 2α. Always V★ ≤ V_morph ≤ V_hull ≤ V_bbox.
+      </p>
+      <label
+        className="slider-row"
+        title="Probe-sphere radius α (units of L). Larger α fills bigger pockets. α = L is the natural choice for a Hill T₁ orthoscheme."
+      >
+        <span>α</span>
+        <DraftSlider
+          min={0.05}
+          max={2}
+          step={0.05}
+          value={alpha}
+          onCommit={setAlpha}
+          onDraftChange={setDraftAlpha}
+        />
+        <span className="slider-value">{draftAlpha.toFixed(2)} L</span>
+      </label>
+      <div className="research-row">
+        <button onClick={run} disabled={job.running}>
+          {job.running ? 'Computing…' : 'Compute V_morph'}
+        </button>
+        {job.running && <button onClick={job.cancel}>cancel</button>}
+      </div>
+      {job.progress && job.running && (
+        <ProgressBar done={job.progress.done} total={job.progress.total} label="voxels" />
+      )}
+      {job.err && <div className="error-line">⚠ {job.err}</div>}
+      {morph && etaM !== null && (
+        <div className="stats-block">
+          <div className="stats-line">
+            V_morph = {morph.volume.toFixed(3)} L³ &nbsp;·&nbsp;{' '}
+            <strong>η_M = {(etaM * 100).toFixed(1)}%</strong>
+          </div>
+          <div className="stats-line" style={{ color: 'var(--text-dim)' }}>
+            grid {morph.dims[0]}×{morph.dims[1]}×{morph.dims[2]} @ {morph.voxelSize.toFixed(3)} L
+          </div>
+        </div>
+      )}
+    </>
   );
 }

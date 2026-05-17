@@ -11,10 +11,12 @@ import {
   type TrialResult,
 } from '../lib/study.js';
 import { pairCorrelation, type PairCorrelation } from '../lib/paircorr.js';
+import { morphologicalHull, type MorphologyResult } from '../lib/morphology.js';
 import { Rng } from '../lib/rng.js';
 import { growOne, makeAssembly, type GrowthStrategy } from '../lib/assembly.js';
 import { computeHull } from '../lib/hull.js';
 import { centroid } from '../lib/vec.js';
+import type { Planckton } from '../lib/planckton.js';
 
 export type StudyJob =
   | { kind: 'study'; jobId: number; params: StudyParams }
@@ -37,6 +39,16 @@ export type StudyJob =
       strategy: GrowthStrategy;
       compactBeta: number;
       nTrials: number;
+    }
+  | {
+      kind: 'morph';
+      jobId: number;
+      // Tets pre-serialized (only verts + chirality - faces are reconstructed
+      // from the canonical Hill T₁ face table client-side if needed).
+      tets: { verts: [number, number, number][]; chirality: 'R' | 'L' }[];
+      L: number;
+      voxelSize: number;
+      alpha: number;
     };
 
 export type StudyMessage =
@@ -47,7 +59,8 @@ export type StudyMessage =
 export type StudyResult =
   | { kind: 'study'; trials: TrialResult[] }
   | { kind: 'curve'; points: CurvePoint[] }
-  | { kind: 'paircorr'; pc: PairCorrelation | null };
+  | { kind: 'paircorr'; pc: PairCorrelation | null }
+  | { kind: 'morph'; morph: MorphologyResult | null };
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
 
@@ -105,6 +118,21 @@ ctx.addEventListener('message', (event: MessageEvent<StudyJob>) => {
         kind: 'result',
         jobId: job.jobId,
         payload: { kind: 'paircorr', pc },
+      } satisfies StudyMessage);
+    } else if (job.kind === 'morph') {
+      // Reconstruct minimal Planckton objects from serialized verts. faces
+      // and other fields aren't needed by morphologicalHull (it only reads
+      // .verts) so we cast through unknown to keep the postMessage payload
+      // small.
+      const tets = job.tets as unknown as Planckton[];
+      const morph = morphologicalHull(tets, job.L, {
+        voxelSize: job.voxelSize,
+        alpha: job.alpha,
+      });
+      ctx.postMessage({
+        kind: 'result',
+        jobId: job.jobId,
+        payload: { kind: 'morph', morph },
       } satisfies StudyMessage);
     }
   } catch (err) {
