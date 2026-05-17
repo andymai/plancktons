@@ -8,7 +8,7 @@ observable.
 > T₁ (called "Planckton" in the UI) at canonical position has vertices
 > `V₀ = (0,0,0)`, `V₁ = (L,0,0)`, `V₂ = (L,L,0)`, `V₃ = (L,L,L)`. We use
 > `Vol` for tet/assembly volume, `A` for area, `r` for radius, and `Δ` for
-> packing density. We carefully distinguish two different "η" values:
+> packing density. Two distinct "η" values appear throughout:
 > `η_C = V★ / V_hull` (compactness, hull) and `η_B = V★ / V_bbox` (literature-
 > comparable bbox packing fraction). See §4.2.
 
@@ -38,9 +38,8 @@ so its edges fall naturally into three groups:
 - Two are _isoceles right triangles_ with sides `(L, L, L√2)`,
 - Two are _scalene right triangles_ with sides `(L, L√2, L√3)`.
 
-Both contain a right angle and only those edge lengths appear - a strong
-combinatorial constraint that makes face-to-face matching of two Plancktons a
-small discrete operation, easy to enumerate and execute reliably.
+Both contain a right angle and only those edge lengths appear, so face-to-face
+matching of two Plancktons reduces to a small discrete enumeration.
 
 **Dihedral angles.** All 6 dihedral angles of the Hill orthoscheme are rational
 multiples of `π`:
@@ -53,7 +52,7 @@ multiples of `π`:
 
 (Verify: `cos α(V₀V₂) = √2/2 → α = π/4`; the others follow from the orthoscheme
 structure.) Their integer combinations satisfy `2·(π/2) + 2·(π/3) + 2·(π/4) +
-… = π` modulo redistributions - this is exactly Bricard's condition for
+… = π` modulo redistributions — this is Bricard's condition for
 rectifiability.
 
 ### 1.1 Hill T₁ among tetrahedral space-fillers
@@ -62,8 +61,8 @@ Hill (1896) gave the first explicit family of space-filling tetrahedra.
 Sommerville (1923) initiated the classification of tetrahedra that tile ℝ³ by
 congruent copies; his list was later completed and extended by Goldberg
 (1974), who exhibited three infinite families of tetrahedral space-fillers.
-The Hill orthoschemes T₁, T₂, T₃ — distinguished by which axis the three
-perpendicular edges chain along — are part of this larger family; the
+The Hill orthoschemes T₁, T₂, T₃ (distinguished by which axis the three
+perpendicular edges chain along) are part of this larger family; the
 playground uses T₁ exclusively. Senechal (1981) is the standard modern survey
 of which tetrahedra tile space, with a Dehn-invariant perspective. The
 k-reptile result of Matoušek-Safernová 2010 (§3) is the most recent rigidity
@@ -71,7 +70,7 @@ statement about Hill orthoschemes specifically.
 
 **References:**
 
-- D.M.Y. Sommerville, _Space-filling tetrahedra in Euclidean space_, _Proc. Edinburgh Math. Soc._ 41:49 (1923), [doi:10.1017/S001309150007783X](https://doi.org/10.1017/S001309150007783X).
+- D.M.Y. Sommerville, _Space-filling tetrahedra in Euclidean space_, _Proc. Edinburgh Math. Soc._ 41:49 (1922), [doi:10.1017/S001309150007783X](https://doi.org/10.1017/S001309150007783X).
 - M. Goldberg, _Three infinite families of tetrahedral space-fillers_, _J. Combin. Theory_ A 16:348 (1974), [doi:10.1016/0097-3165(74)90058-2](<https://doi.org/10.1016/0097-3165(74)90058-2>).
 - M. Senechal, _Which tetrahedra fill space?_, _Math. Mag._ 54:227 (1981), [doi:10.1080/0025570X.1981.11976933](https://doi.org/10.1080/0025570X.1981.11976933).
 
@@ -240,8 +239,8 @@ Other observables:
   uniform-density expectation. Crystalline order → sharp peaks; amorphous
   → broad peaks decaying to 1.
 
-All of these are shown live in the HUD or Research panel when _Advanced
-mode_ is on.
+All of these are shown live in the HUD or Research panel in Explore or
+Research mode.
 
 ### 4.3 Empirical findings
 
@@ -288,13 +287,13 @@ parallel CLI mode (§6, `--workers`) made them tractable in seconds. The raw
 data are committed under `data/preliminary/`; each CSV carries the full
 provenance block (algorithm version, git short-sha, build time, parameters).
 
-**Q1 — chirality optimum.** η*C(c_R) is symmetric and unimodal in c_R, with
-the peak at c_R = 0.5 (balanced 50/50 R/L). Single-chirality assemblies
-(`c_R ∈ {0, 1}`) collapse to η_C ≈ 0.14 because face-shared Hill T₁'s
-require alternating chirality at the shared face — an all-one-chirality
-template starves the placement options and the aggregate degenerates into
-long chains. (`data/preliminary/q1_chir*\*.csv`, N=50, compact β=3, 500
-trials each.)
+**Q1 — chirality optimum.** `η_C(c_R)` is symmetric and unimodal in `c_R`,
+peaking at `c_R = 0.5` (balanced 50/50 R/L). Single-chirality assemblies
+(`c_R ∈ {0, 1}`) collapse to `η_C ≈ 0.14`: face-shared Hill T₁'s require
+alternating chirality at the shared face, so an all-one-chirality template
+starves the placement options and the aggregate degenerates into long
+chains. (`data/preliminary/q1_chir_*.csv`, N=50, compact β=3, 500 trials
+each.)
 
 | c_R  | ⟨η_C⟩ ± SEM         | ⟨η_B⟩ ± SEM         |
 | ---- | ------------------- | ------------------- |
@@ -304,14 +303,14 @@ trials each.)
 | 0.75 | 0.4863 ± 0.0035     | 0.2357 ± 0.0031     |
 | 1    | 0.1442 ± 0.0015     | 0.0212 ± 0.0005     |
 
-**Q2 — β saturation.** η*C is **not** monotonic in β. It rises from
-β = 0 (uniform) to a maximum at β ≈ 5 (η_C ≈ 0.609), then falls back as
-β → ∞. The drop is the geometric signature of a jamming threshold:
-extremely greedy face selection (`p ∝ exp(β·n̂·ĉ)` strongly biased toward
-the deepest pocket) over-commits to single concave sites and exhausts the
-local placement options before the rest of the surface has been considered.
-The default β = 3 in the playground is conservative; β ≈ 5 is the empirical
-sweet spot. (`data/preliminary/q2_beta*\*.csv`, N=50, c_R=0.5, 500 trials.)
+**Q2 — β saturation.** `η_C` is **not** monotonic in `β`. It rises from
+`β = 0` (uniform) to a maximum at `β ≈ 5` (`η_C ≈ 0.609`), then falls back
+as `β → ∞`. The drop is a jamming signature: extremely greedy face
+selection (`p ∝ exp(β·n̂·ĉ)` strongly biased toward the deepest pocket)
+over-commits to single concave sites and exhausts the local placement
+options before the rest of the surface has been considered. The default
+`β = 3` in the playground is conservative; `β ≈ 5` is the empirical sweet
+spot. (`data/preliminary/q2_beta_*.csv`, N=50, c_R=0.5, 500 trials.)
 
 | β   | ⟨η_C⟩ ± SEM         |
 | --- | ------------------- |
@@ -331,15 +330,15 @@ vertices**, both strategies) gives
 - uniform: **D_f = 4.43 ± 0.08** (R² = 0.999)
 
 Both are **larger than 3**, the value expected for a uniform 3D sphere
-where `R_g ∝ N^{1/3}`. The interpretation isn't "super-3D" — the
-vertex-cloud R*g is dominated at small N by the per-tet vertex spread
-(R_g ≈ 0.5 L even for one isolated Planckton), and at large N converges
-toward the bulk N^{1/3} scaling. The fit straddles that crossover, so the
+where `R_g ∝ N^{1/3}`. The interpretation isn't "super-3D": the
+vertex-cloud `R_g` is dominated at small N by the per-tet vertex spread
+(`R_g ≈ 0.5 L` even for one isolated Planckton), and at large N converges
+toward the bulk `N^{1/3}` scaling. The fit straddles that crossover, so the
 quoted `D_f` is an effective scaling exponent, not a true Hausdorff
 dimension. The qualitative finding stands: compact-strategy aggregates have
 a tighter `R_g(N)` growth than uniform, consistent with `compact` producing
-denser packings (cf. η_C(β) above and the η_C(N) curve in §4.3).
-(`data/preliminary/q3_df*{compact,uniform}.csv`.)
+denser packings (cf. `η_C(β)` above and the `η_C(N)` curve in §4.3).
+(`data/preliminary/q3_df_{compact,uniform}.csv`.)
 
 **Q4 — g(r) first peak.** The first peak of the centroid-centroid pair
 correlation lies at **r ≈ 0.633 L** (g = 2.23 at N=50, compact β=3, 100
@@ -351,7 +350,7 @@ prediction is consistent with the data.
 
 ### 4.6 Open questions
 
-The questions that remain genuinely open in our view:
+Currently unresolved:
 
 1. **Is the random Hill-T₁ asymptote `η_∞` in the literature?** To the
    author's knowledge, the random face-to-face packing density of an
@@ -434,10 +433,9 @@ meanTetCoord, chirR, ms`. Here `efficiency = η_C`, `bboxEfficiency = η_B`,
 
 Every CSV begins with a `#`-commented provenance block recording the
 algorithm version, git commit short-hash (build time, injected by Vite),
-build time, export time, and the full parameter set. This makes
-re-identification of any historical run unambiguous, even years later. JSON
-exports (`exportAssemblyJSON`) carry the same provenance object as a
-top-level field.
+build time, export time, and the full parameter set, so historical runs
+remain identifiable across rebuilds. JSON exports (`exportAssemblyJSON`)
+carry the same provenance object as a top-level field.
 
 ---
 
