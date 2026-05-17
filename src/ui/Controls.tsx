@@ -321,7 +321,7 @@ function GrowthControls() {
           value={draftN}
           onChange={(e) => {
             const n = parseInt(e.target.value, 10);
-            if (Number.isFinite(n) && n >= 1) setGrowth({ N: n });
+            if (Number.isFinite(n) && n >= 1) setGrowth({ N: Math.min(2000, n) });
           }}
           style={{ width: '4.2rem' }}
           title="Slider tops at 1000; type above for N up to 2000 (slow at extreme N)."

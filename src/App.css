@@ -317,10 +317,6 @@ input[type='range'] {
   border-color: var(--accent);
 }
 
-.term-wrap {
-  position: relative;
-  display: inline;
-}
 .term {
   display: inline;
   padding: 0;
@@ -339,7 +335,7 @@ input[type='range'] {
   color: var(--accent);
 }
 .term-popover {
-  position: absolute;
+  position: fixed;
   z-index: 50;
   min-width: 220px;
   max-width: 320px;
@@ -352,20 +348,6 @@ input[type='range'] {
   font-size: 12px;
   line-height: 1.4;
   pointer-events: none;
-}
-.term-popover-bottom {
-  top: 100%;
-  margin-top: 6px;
-}
-.term-popover-top {
-  bottom: 100%;
-  margin-bottom: 6px;
-}
-.term-popover-left {
-  left: 0;
-}
-.term-popover-right {
-  right: 0;
 }
 .term-cta {
   color: var(--text-dim);
