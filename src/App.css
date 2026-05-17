@@ -139,6 +139,22 @@ input[type='range'] {
   gap: 6px;
   align-items: center;
 }
+.svg-plot-wrap {
+  position: relative;
+  display: inline-block;
+}
+.svg-plot-download {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 10px;
+  padding: 2px 6px;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.svg-plot-wrap:hover .svg-plot-download {
+  opacity: 1;
+}
 .progress-bar {
   position: relative;
   height: 14px;

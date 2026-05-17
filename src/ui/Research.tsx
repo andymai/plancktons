@@ -13,6 +13,7 @@ import {
 } from '../lib/scaling.js';
 import { useWorkerRun } from './useWorkerRun.js';
 import { ProgressBar } from './ProgressBar.js';
+import { SvgPlot } from './SvgPlot.js';
 
 type FitModel = 'power' | 'asymptote+power' | 'exp';
 type YMetric = 'etaC' | 'etaB';
@@ -448,7 +449,7 @@ function HistogramBars({ histo }: { histo: OverlayHisto }) {
   for (const c of histo.binsB) if (c * normB > maxFrac) maxFrac = c * normB;
   if (histo.binsA) for (const c of histo.binsA) if (c * normA > maxFrac) maxFrac = c * normA;
   return (
-    <svg width={W} height={H} className="plot">
+    <SvgPlot width={W} height={H} filename="plancktons_histogram">
       <rect x={0} y={0} width={W} height={H} fill="#222831" />
       {histo.binsB.map((c, i) => {
         const x = pad.l + (i / nBins) * innerW;
@@ -493,7 +494,7 @@ function HistogramBars({ histo }: { histo: OverlayHisto }) {
       <text x={W / 2} y={H - 6} fontSize={10} fill="#aaa" textAnchor="middle">
         efficiency η
       </text>
-    </svg>
+    </SvgPlot>
   );
 }
 
@@ -602,7 +603,11 @@ function CurvePlot({
   }
 
   return (
-    <svg width={W} height={H} className="plot">
+    <SvgPlot
+      width={W}
+      height={H}
+      filename={`plancktons_curve_${yMetric}${logLog ? '_loglog' : ''}`}
+    >
       <rect x={0} y={0} width={W} height={H} fill="#222831" />
       {yTicks.map((t) => (
         <g key={t}>
@@ -673,7 +678,7 @@ function CurvePlot({
         {yAxisLabel}
         {logLog ? ' (log)' : ''}
       </text>
-    </svg>
+    </SvgPlot>
   );
 }
 
@@ -771,7 +776,7 @@ function PairCorrPlot({ pc }: { pc: PairCorrelation }) {
   const gTicks = [0, 1, 2, maxG].filter((t, i, arr) => arr.indexOf(t) === i && t <= maxG);
 
   return (
-    <svg width={W} height={H} className="plot">
+    <SvgPlot width={W} height={H} filename="plancktons_gr">
       <rect x={0} y={0} width={W} height={H} fill="#222831" />
       {gTicks.map((t) => (
         <g key={t}>
@@ -802,7 +807,7 @@ function PairCorrPlot({ pc }: { pc: PairCorrelation }) {
       >
         g(r)
       </text>
-    </svg>
+    </SvgPlot>
   );
 }
 
