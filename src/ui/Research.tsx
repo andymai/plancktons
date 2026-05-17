@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useStore } from '../lib/store.js';
 import { type CurvePoint, type TrialResult, downloadCSV, trialsToCSV } from '../lib/study.js';
 import { PACKING_REFERENCES } from '../lib/references.js';
-import { type PairCorrelation } from '../lib/paircorr.js';
+import { type PairCorrelation, type PairCorrelationAniso } from '../lib/paircorr.js';
 import {
   fitAsymptotePower,
   fitExpDecay,
@@ -751,9 +751,15 @@ function fitPredictor(model: FitModel, fits: CombinedFit): ((n: number) => numbe
 function PairCorrelationPlot() {
   const growth = useStore((s) => s.growth);
   const [nTrials, setNTrials] = useState(20);
+  const [aniso, setAniso] = useState(false);
 
-  const job = useWorkerRun<{ kind: 'paircorr'; pc: PairCorrelation | null }>();
+  const job = useWorkerRun<{
+    kind: 'paircorr';
+    pc: PairCorrelation | null;
+    pcAniso: PairCorrelationAniso | null;
+  }>();
   const pc = job.result?.pc ?? null;
+  const pcAniso = job.result?.pcAniso ?? null;
   const running = job.running;
   const err = job.err;
   const progress = job.progress;
@@ -766,6 +772,7 @@ function PairCorrelationPlot() {
       strategy: growth.strategy,
       compactBeta: growth.compactBeta,
       nTrials,
+      aniso,
     });
 
   return (
@@ -790,6 +797,14 @@ function PairCorrelationPlot() {
             title="Average g(r) across this many independent assemblies."
           />
         </label>
+        <label
+          className="checkbox-row"
+          style={{ padding: 0 }}
+          title="Also compute gPar / gPerp - g(r) split by angle to the principal gyration axis. Reveals nematic-like ordering invisible to the radial-only g(r)."
+        >
+          <input type="checkbox" checked={aniso} onChange={(e) => setAniso(e.target.checked)} />
+          anisotropic split (g∥ / g⊥)
+        </label>
         <button onClick={run} disabled={running}>
           {running ? 'Running…' : `Compute g(r) at N=${growth.N}`}
         </button>
@@ -802,30 +817,29 @@ function PairCorrelationPlot() {
       {pc === null && job.result && !running && (
         <div className="error-line">⚠ No assemblies produced ≥2 tets.</div>
       )}
-      {pc && pc.r.length > 0 && <PairCorrPlot pc={pc} />}
+      {pc && pc.r.length > 0 && <PairCorrPlot pc={pc} aniso={pcAniso} />}
     </div>
   );
 }
 
-function PairCorrPlot({ pc }: { pc: PairCorrelation }) {
+function PairCorrPlot({ pc, aniso }: { pc: PairCorrelation; aniso: PairCorrelationAniso | null }) {
   const W = 380;
   const H = 180;
   const pad = { l: 38, r: 8, t: 12, b: 28 };
   const innerW = W - pad.l - pad.r;
   const innerH = H - pad.t - pad.b;
   const maxR = pc.r[pc.r.length - 1] as number;
-  const maxG = Math.max(2, ...pc.g);
+  const maxG = Math.max(2, ...pc.g, ...(aniso?.gPar ?? []), ...(aniso?.gPerp ?? []));
   const x = (r: number) => pad.l + (innerW * r) / maxR;
   const y = (g: number) => pad.t + innerH * (1 - g / maxG);
 
-  const path = pc.r
-    .map((r, i) => `${i === 0 ? 'M' : 'L'} ${x(r)} ${y(pc.g[i] as number)}`)
-    .join(' ');
+  const path = (ys: ReadonlyArray<number>) =>
+    pc.r.map((r, i) => `${i === 0 ? 'M' : 'L'} ${x(r)} ${y(ys[i] as number)}`).join(' ');
 
   const gTicks = [0, 1, 2, maxG].filter((t, i, arr) => arr.indexOf(t) === i && t <= maxG);
 
   return (
-    <SvgPlot width={W} height={H} filename="plancktons_gr">
+    <SvgPlot width={W} height={H} filename={aniso ? 'plancktons_gr_aniso' : 'plancktons_gr'}>
       <rect x={0} y={0} width={W} height={H} fill="#222831" />
       {gTicks.map((t) => (
         <g key={t}>
@@ -842,7 +856,57 @@ function PairCorrPlot({ pc }: { pc: PairCorrelation }) {
           </text>
         </g>
       ))}
-      <path d={path} stroke="#5fa8e3" fill="none" strokeWidth={2} />
+      <path d={path(pc.g)} stroke="#5fa8e3" fill="none" strokeWidth={2} />
+      {aniso && (
+        <>
+          <path
+            d={path(aniso.gPar)}
+            stroke="#e7a44a"
+            fill="none"
+            strokeWidth={1.5}
+            strokeDasharray="6 3"
+          />
+          <path
+            d={path(aniso.gPerp)}
+            stroke="#5cd99b"
+            fill="none"
+            strokeWidth={1.5}
+            strokeDasharray="2 3"
+          />
+          {/* Legend */}
+          <g transform={`translate(${W - pad.r - 100}, ${pad.t + 4})`}>
+            <rect x={-2} y={-2} width={102} height={42} fill="#15181c" fillOpacity={0.7} rx={3} />
+            <line x1={0} y1={6} x2={14} y2={6} stroke="#5fa8e3" strokeWidth={2} />
+            <text x={18} y={9} fontSize={9} fill="#aaa">
+              g(r) all
+            </text>
+            <line
+              x1={0}
+              y1={20}
+              x2={14}
+              y2={20}
+              stroke="#e7a44a"
+              strokeWidth={1.5}
+              strokeDasharray="6 3"
+            />
+            <text x={18} y={23} fontSize={9} fill="#aaa">
+              g∥(r) parallel
+            </text>
+            <line
+              x1={0}
+              y1={34}
+              x2={14}
+              y2={34}
+              stroke="#5cd99b"
+              strokeWidth={1.5}
+              strokeDasharray="2 3"
+            />
+            <text x={18} y={37} fontSize={9} fill="#aaa">
+              g⊥(r) perp
+            </text>
+          </g>
+        </>
+      )}
       <text x={pad.l + innerW / 2} y={H - 6} fontSize={10} fill="#aaa" textAnchor="middle">
         r / L
       </text>

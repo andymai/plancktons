@@ -10,7 +10,13 @@ import {
   type StudyParams,
   type TrialResult,
 } from '../lib/study.js';
-import { pairCorrelation, type PairCorrelation } from '../lib/paircorr.js';
+import {
+  pairCorrelation,
+  pairCorrelationAniso,
+  type PairCorrelation,
+  type PairCorrelationAniso,
+} from '../lib/paircorr.js';
+import { gyrationDescriptors } from '../lib/shape.js';
 import { morphologicalHull, type MorphologyResult } from '../lib/morphology.js';
 import { Rng } from '../lib/rng.js';
 import { growOne, makeAssembly, type GrowthStrategy } from '../lib/assembly.js';
@@ -39,6 +45,8 @@ export type StudyJob =
       strategy: GrowthStrategy;
       compactBeta: number;
       nTrials: number;
+      /** If true, also compute the anisotropic split (gPar / gPerp). */
+      aniso?: boolean;
     }
   | {
       kind: 'morph';
@@ -59,7 +67,11 @@ export type StudyMessage =
 export type StudyResult =
   | { kind: 'study'; trials: TrialResult[] }
   | { kind: 'curve'; points: CurvePoint[] }
-  | { kind: 'paircorr'; pc: PairCorrelation | null }
+  | {
+      kind: 'paircorr';
+      pc: PairCorrelation | null;
+      pcAniso: PairCorrelationAniso | null;
+    }
   | { kind: 'morph'; morph: MorphologyResult | null };
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
@@ -113,11 +125,11 @@ ctx.addEventListener('message', (event: MessageEvent<StudyJob>) => {
         payload: { kind: 'curve', points },
       } satisfies StudyMessage);
     } else if (job.kind === 'paircorr') {
-      const pc = computePairCorrelationEnsemble(job);
+      const { pc, pcAniso } = computePairCorrelationEnsemble(job);
       ctx.postMessage({
         kind: 'result',
         jobId: job.jobId,
-        payload: { kind: 'paircorr', pc },
+        payload: { kind: 'paircorr', pc, pcAniso },
       } satisfies StudyMessage);
     } else if (job.kind === 'morph') {
       // Reconstruct minimal Planckton objects from serialized verts. faces
@@ -152,12 +164,18 @@ function computePairCorrelationEnsemble(job: {
   strategy: GrowthStrategy;
   compactBeta: number;
   nTrials: number;
-}): PairCorrelation | null {
+  aniso?: boolean;
+}): { pc: PairCorrelation | null; pcAniso: PairCorrelationAniso | null } {
   let accumG: number[] = [];
   let countSum: number[] = [];
   let rArr: number[] = [];
   let totalRho = 0;
   let used = 0;
+  // Aniso accumulators (only filled if job.aniso).
+  let accumPar: number[] = [];
+  let accumPerp: number[] = [];
+  let countParSum: number[] = [];
+  let countPerpSum: number[] = [];
   for (let t = 0; t < job.nTrials; t++) {
     const seed = job.seed + t * 9973;
     const a = makeAssembly({
@@ -190,6 +208,29 @@ function computePairCorrelationEnsemble(job: {
       }
     }
     totalRho += single.rhoBulk;
+    if (job.aniso) {
+      // Principal axis from the gyration tensor's largest eigenvalue. We
+      // compute it on the centroid cloud (not the vertex cloud) so the axis
+      // tracks the aggregate's overall elongation, not its vertex spread.
+      const shape = gyrationDescriptors(cents);
+      if (shape) {
+        const axis = shape.axes[0];
+        const aniso = pairCorrelationAniso(cents, axis, hull.volume, rMax, 60);
+        if (accumPar.length === 0) {
+          accumPar = [...aniso.gPar];
+          accumPerp = [...aniso.gPerp];
+          countParSum = [...aniso.countsPar];
+          countPerpSum = [...aniso.countsPerp];
+        } else {
+          for (let k = 0; k < accumPar.length; k++) {
+            accumPar[k]! += aniso.gPar[k] ?? 0;
+            accumPerp[k]! += aniso.gPerp[k] ?? 0;
+            countParSum[k]! += aniso.countsPar[k] ?? 0;
+            countPerpSum[k]! += aniso.countsPerp[k] ?? 0;
+          }
+        }
+      }
+    }
     used++;
     ctx.postMessage({
       kind: 'progress',
@@ -198,11 +239,23 @@ function computePairCorrelationEnsemble(job: {
       total: job.nTrials,
     } satisfies StudyMessage);
   }
-  if (used === 0) return null;
-  return {
+  if (used === 0) return { pc: null, pcAniso: null };
+  const pc: PairCorrelation = {
     r: rArr,
     g: accumG.map((v) => v / used),
     counts: countSum,
     rhoBulk: totalRho / used,
   };
+  const pcAniso: PairCorrelationAniso | null =
+    job.aniso && accumPar.length > 0
+      ? {
+          r: rArr,
+          gPar: accumPar.map((v) => v / used),
+          gPerp: accumPerp.map((v) => v / used),
+          countsPar: countParSum,
+          countsPerp: countPerpSum,
+          rhoBulk: totalRho / used,
+        }
+      : null;
+  return { pc, pcAniso };
 }
