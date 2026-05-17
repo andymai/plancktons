@@ -22,6 +22,7 @@ import { etaVFromVoronoi, voronoiCells, type VoronoiResult } from '../lib/vorono
 import { runMcRefine, type McRefineResult } from '../lib/mcRefine.js';
 import { growTrajectory, type KineticsResult } from '../lib/kinetics.js';
 import { autocorrelationS2, type AutocorrResult } from '../lib/autocorr.js';
+import { steinhardtQl, type SteinhardtResult } from '../lib/steinhardt.js';
 import { Rng } from '../lib/rng.js';
 import { growOne, makeAssembly, type GrowthStrategy } from '../lib/assembly.js';
 import { SEED_STRIDE } from '../lib/constants.js';
@@ -87,6 +88,18 @@ export type StudyJob =
       samples: number;
       nBins: number;
       autocorrSeed: number;
+    }
+  | {
+      kind: 'steinhardt';
+      jobId: number;
+      N: number;
+      seed: number;
+      chiralityBias: number;
+      strategy: GrowthStrategy;
+      compactBeta: number;
+      nTrials: number;
+      /** Histogram bins for ⟨Q_l⟩ across trials. Default 20. */
+      nBins?: number;
     };
 
 /**
@@ -120,7 +133,18 @@ export type StudyResult =
   | { kind: 'voronoi'; voronoi: VoronoiResult | null; etaV: number | null }
   | { kind: 'mc'; mc: McRefineResult }
   | { kind: 'kinetics'; kinetics: KineticsResult }
-  | { kind: 'autocorr'; autocorr: AutocorrResult | null };
+  | { kind: 'autocorr'; autocorr: AutocorrResult | null }
+  | {
+      kind: 'steinhardt';
+      /** Per-trial ⟨Q_4⟩ ensemble values (trials with no neighbors omitted). */
+      q4PerTrial: number[];
+      /** Per-trial ⟨Q_6⟩ ensemble values. */
+      q6PerTrial: number[];
+      /** Per-tet Q_6 distribution from the representative (first) assembly. */
+      q6PerTet: number[];
+      /** Trials that produced ≥1 valid contributing tet. */
+      contributingTrials: number;
+    };
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
 
@@ -220,6 +244,33 @@ const handlers: JobHandlers = {
       seed: job.autocorrSeed,
     });
     return { kind: 'autocorr', autocorr };
+  },
+  steinhardt: (job, progress) => {
+    const q4PerTrial: number[] = [];
+    const q6PerTrial: number[] = [];
+    let q6PerTet: number[] = [];
+    let contributingTrials = 0;
+    for (let t = 0; t < job.nTrials; t++) {
+      const seed = job.seed + t * SEED_STRIDE;
+      const a = makeAssembly({
+        L: 1,
+        rng: new Rng(seed),
+        chiralityBias: job.chiralityBias,
+        strategy: job.strategy,
+        compactBeta: job.compactBeta,
+      });
+      while (a.tets.length < job.N) {
+        if (growOne(a) !== 'grown') break;
+      }
+      const q4: SteinhardtResult = steinhardtQl(a, 4);
+      const q6: SteinhardtResult = steinhardtQl(a, 6);
+      if (q4.contributing > 0) q4PerTrial.push(q4.ensemble);
+      if (q6.contributing > 0) q6PerTrial.push(q6.ensemble);
+      if (q4.contributing > 0 || q6.contributing > 0) contributingTrials++;
+      if (t === 0) q6PerTet = q6.perTet.filter((v) => Number.isFinite(v));
+      progress(t + 1, job.nTrials);
+    }
+    return { kind: 'steinhardt', q4PerTrial, q6PerTrial, q6PerTet, contributingTrials };
   },
 };
 

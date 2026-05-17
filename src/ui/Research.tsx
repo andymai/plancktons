@@ -4,6 +4,7 @@ import { Curve } from './research/Curve.js';
 import { PairCorrelationPlot } from './research/PairCorrelationPlot.js';
 import { KineticsPanel } from './research/KineticsPanel.js';
 import { AutocorrPanel } from './research/AutocorrPanel.js';
+import { SteinhardtPanel } from './research/SteinhardtPanel.js';
 import { ReferencesTable } from './research/ReferencesTable.js';
 
 export function Research() {
@@ -17,6 +18,7 @@ export function Research() {
       <PairCorrelationPlot />
       <KineticsPanel />
       <AutocorrPanel />
+      <SteinhardtPanel />
       <ReferencesTable />
     </div>
   );
