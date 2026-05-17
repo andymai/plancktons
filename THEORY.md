@@ -154,9 +154,12 @@ For an assembly of `N` Plancktons with vertex set `{r_α}`:
 * **Gyration tensor**  `Σ_ij = (1/N_v) Σ_α (r_α − r_cm)_i (r_α − r_cm)_j`.
   Eigenvalues `λ₁ ≥ λ₂ ≥ λ₃` give:
   * `R_g² = tr Σ` (radius of gyration),
-  * `b = λ₁ − (λ₂+λ₃)/2`, `c = λ₂ − λ₃` (acylindricity),
-  * `κ² = (b² + ¾c²) / (tr Σ)² ∈ [0,1]`: shape anisotropy (Rudnick–Gaspari),
-  * `S = (3λ₁−tr)(3λ₂−tr)(3λ₃−tr) / (tr)³ ∈ [-¼, 2]`: prolateness.
+  * `b = λ₁ − (λ₂+λ₃)/2` (asphericity, length²; HUD shows it as `b`),
+  * `c = λ₂ − λ₃` (acylindricity, length²),
+  * `κ² = (b² + ¾c²) / (tr Σ)² ∈ [0,1]`: relative shape anisotropy
+    (Rudnick–Gaspari / Theodorou–Suter normalization),
+  * `S = (3λ₁−tr)(3λ₂−tr)(3λ₃−tr) / (tr)³ ∈ [-¼, 2]`: prolateness (sign
+    distinguishes prolate `+` from oblate `−`).
 * **Vertex coordination histogram**: for each spatial vertex (`L·10⁻⁶`
   quantization), the number of tets meeting there. Telltale of internal
   topology — e.g., in the 6-cube tiling the diagonal endpoints `(0,0,0)` and

@@ -27,13 +27,23 @@ export interface ShapeDescriptors {
   axes: [Vec3, Vec3, Vec3];
   /** Radius of gyration  R_g = √(λ₁+λ₂+λ₃). */
   rg: number;
-  /** Asphericity  κ² ∈ [0, 1].  0 = isotropic (sphere); 1 = rod-like. */
+  /**
+   * Rudnick–Gaspari asphericity  b = λ₁ − ½(λ₂+λ₃).
+   * Has units of length²; 0 for spherical, up to (3/2)·R_g² for a perfect rod.
+   */
   asphericity: number;
-  /** Acylindricity  c² = λ₂ − λ₃ ≥ 0. */
+  /** Acylindricity  c = λ₂ − λ₃ ≥ 0  (units of length²). */
   acylindricity: number;
-  /** Relative shape anisotropy  κ² ∈ [0, 1]  (Theodorou-Suter convention). */
+  /**
+   * Relative shape anisotropy  κ² = (b² + ¾c²) / (tr Σ)² ∈ [0, 1].
+   * 0 = isotropic (sphere-like); 1 = rod-like (all mass on one axis).
+   * (Theodorou–Suter / Rudnick–Gaspari normalization.)
+   */
   kappaSq: number;
-  /** Prolateness parameter S (sign indicates rod-like vs disc-like). */
+  /**
+   * Prolateness parameter  S = (3λ₁−tr)(3λ₂−tr)(3λ₃−tr) / (tr)³ ∈ [−¼, 2].
+   * S > 0 prolate (rod-like); S < 0 oblate (disc-like); 0 spherical.
+   */
   prolateness: number;
 }
 
@@ -160,9 +170,9 @@ export function gyrationDescriptors(points: ReadonlyArray<Vec3>): ShapeDescripto
     lambdas: [l1, l2, l3],
     axes: vectors,
     rg,
-    asphericity: b / tr, // dimensionless ∈ [0, 1]
-    acylindricity: c,
-    kappaSq,
+    asphericity: b,       // literature b (length²) — not yet normalized
+    acylindricity: c,     // literature c (length²)
+    kappaSq,              // dimensionless ∈ [0, 1]
     prolateness,
   };
 }

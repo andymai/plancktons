@@ -4,7 +4,6 @@ import { useStore } from '../lib/store.js';
 import { Rng } from '../lib/rng.js';
 import {
   type Assembly,
-  type GrowResult,
   assemblyCentroid,
   chiralityCounts,
   freeFaceFraction,
@@ -19,7 +18,7 @@ import { computeHull } from '../lib/hull.js';
 import { gyrationDescriptors, type ShapeDescriptors } from '../lib/shape.js';
 import { PlancktonMesh } from './PlancktonMesh.js';
 import { HullMesh } from './HullMesh.js';
-import { InertiaEllipsoid } from './InertiaEllipsoid.js';
+import { InertiaEllipsoid, PrincipalAxes } from './InertiaEllipsoid.js';
 
 export const GROWTH_L = 1;
 
@@ -38,8 +37,9 @@ export interface GrowthMetrics {
   stalled: boolean;
   // physics
   rg: number;                       // radius of gyration
-  asphericity: number;              // b / R_g² ∈ [0, 1]
-  kappaSq: number;                  // shape anisotropy
+  asphericity: number;              // Rudnick–Gaspari b = λ₁ − ½(λ₂+λ₃), length²
+  acylindricity: number;            // c = λ₂ − λ₃, length²
+  kappaSq: number;                  // shape anisotropy ∈ [0, 1]
   prolateness: number;              // S, sign = rod (+) / disc (−)
   chirR: number;
   chirL: number;
@@ -49,6 +49,11 @@ export interface GrowthMetrics {
   shape: ShapeDescriptors | null;   // full descriptors for ellipsoid overlay
 }
 
+/**
+ * The base assembly is rebuilt only when the simulation parameters change;
+ * advancing currentN within that family extends the same assembly in place.
+ * Returns a fresh wrapper object each time so React notices the change.
+ */
 function useGrownAssembly(
   seed: number,
   strategy: 'uniform' | 'compact',
@@ -56,33 +61,27 @@ function useGrownAssembly(
   compactBeta: number,
   targetN: number
 ): { assembly: Assembly; stalled: boolean } {
-  const ref = useRef<{
-    assembly: Assembly;
-    key: string;
-    stalled: boolean;
-  } | null>(null);
-  const key = `${seed}|${strategy}|${chiralityBias}|${compactBeta}`;
-  const cached = ref.current;
-  const needsReset = cached === null || cached.key !== key;
-  const assembly = needsReset
-    ? makeAssembly({
+  const baseAssembly = useMemo(
+    () =>
+      makeAssembly({
         L: GROWTH_L,
         rng: new Rng(seed),
         chiralityBias,
         strategy,
         compactBeta,
-      })
-    : cached!.assembly;
-  let stalled = needsReset ? false : cached!.stalled;
-  while (assembly.tets.length < targetN) {
-    const r: GrowResult = growOne(assembly);
-    if (r !== 'grown') {
-      stalled = true;
-      break;
+      }),
+    [seed, strategy, chiralityBias, compactBeta]
+  );
+  return useMemo(() => {
+    let stalled = false;
+    while (baseAssembly.tets.length < targetN) {
+      if (growOne(baseAssembly) !== 'grown') {
+        stalled = true;
+        break;
+      }
     }
-  }
-  ref.current = { assembly, key, stalled };
-  return { assembly, stalled };
+    return { assembly: baseAssembly, stalled };
+  }, [baseAssembly, targetN]);
 }
 
 export function GrowthScene({
@@ -96,13 +95,10 @@ export function GrowthScene({
   const stepTrigger = useStore((s) => s.stepTrigger);
   const color = useStore((s) => s.color);
 
-  // currentN drives all three animation modes: instant tracks growth.N directly,
-  // animated ramps over time, step increments on user request.
   const [currentN, setCurrentN] = useState(growth.N);
 
   useEffect(() => {
-    if (animationMode === 'instant') setCurrentN(growth.N);
-    else setCurrentN(1);
+    setCurrentN(animationMode === 'instant' ? growth.N : 1);
   }, [animationMode, growth.seed, growth.strategy, growth.chiralityBias, growth.compactBeta]);
 
   useEffect(() => {
@@ -155,6 +151,7 @@ export function GrowthScene({
       stalled: stalledNow,
       rg: shape?.rg ?? NaN,
       asphericity: shape?.asphericity ?? NaN,
+      acylindricity: shape?.acylindricity ?? NaN,
       kappaSq: shape?.kappaSq ?? NaN,
       prolateness: shape?.prolateness ?? NaN,
       chirR: chir.R,
@@ -190,10 +187,8 @@ export function GrowthScene({
         hullOk: true,
       } satisfies GrowthMetrics,
     };
-  }, [assembly, currentN, growth.N, stalled]);
+  }, [assembly, growth.N, stalled]);
 
-  // Use a ref to detect actual value changes so we don't refire on parent
-  // re-renders that change onMetrics identity.
   const lastReportedRef = useRef<GrowthMetrics | null>(null);
   useEffect(() => {
     if (lastReportedRef.current === metrics) return;
@@ -204,7 +199,7 @@ export function GrowthScene({
   const center = useMemo<[number, number, number]>(() => {
     const c = assemblyCentroid(assembly);
     return [-c[0], -c[1], -c[2]];
-  }, [assembly, currentN]);
+  }, [assembly]);
 
   const colorMode = useStore((s) => s.color.colorMode);
   const colorByDepth = colorMode === 'depth';
@@ -224,7 +219,10 @@ export function GrowthScene({
         <HullMesh points={hullPoints} faces={hullFaces} />
       )}
       {color.showEllipsoid && metrics.shape && (
-        <InertiaEllipsoid shape={metrics.shape} />
+        <>
+          <InertiaEllipsoid shape={metrics.shape} />
+          <PrincipalAxes shape={metrics.shape} />
+        </>
       )}
     </group>
   );

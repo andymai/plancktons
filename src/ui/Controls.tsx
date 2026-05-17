@@ -300,9 +300,7 @@ function AdvancedControls() {
         <span>Color mode</span>
         <select
           value={color.colorMode}
-          onChange={(e) =>
-            setColor({ colorMode: e.target.value as 'chirality' | 'depth' | 'single' })
-          }
+          onChange={(e) => setColor({ colorMode: e.target.value as 'chirality' | 'depth' })}
         >
           <option value="chirality">Chirality (red R / white L)</option>
           <option value="depth">Placement order (rainbow)</option>

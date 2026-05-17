@@ -2,12 +2,10 @@ import { useMemo } from 'react';
 import * as THREE from 'three';
 import type { ShapeDescriptors } from '../lib/shape.js';
 
-/**
- * Translucent inertia ellipsoid for visualizing assembly anisotropy. Axes
- * aligned with the gyration-tensor eigenvectors, scaled by √λᵢ · scaleFactor.
- * scaleFactor = √5 makes the ellipsoid match a uniform-density solid ellipsoid
- * with the same gyration tensor (since for a solid ellipsoid Iᵢ = a_i²/5).
- */
+const UNIT_SPHERE = new THREE.SphereGeometry(1, 32, 24);
+
+// scaleFactor = √5: for a uniform solid ellipsoid, Iᵢ = aᵢ²/5, so
+// aᵢ = √(5 λᵢ) makes the visual ellipsoid match the gyration tensor exactly.
 export function InertiaEllipsoid({
   shape,
   scaleFactor = Math.sqrt(5),
@@ -19,24 +17,21 @@ export function InertiaEllipsoid({
   color?: string;
   opacity?: number;
 }) {
-  const { matrix, geometry } = useMemo(() => {
+  const matrix = useMemo(() => {
     const [l1, l2, l3] = shape.lambdas;
     const a = Math.sqrt(Math.max(0, l1)) * scaleFactor;
     const b = Math.sqrt(Math.max(0, l2)) * scaleFactor;
     const c = Math.sqrt(Math.max(0, l3)) * scaleFactor;
-    const geom = new THREE.SphereGeometry(1, 32, 24);
-    // Rotation matrix from eigenvectors (columns), translation from COM.
     const e = shape.axes;
-    const m = new THREE.Matrix4().set(
+    return new THREE.Matrix4().set(
       e[0][0] * a, e[1][0] * b, e[2][0] * c, shape.com[0],
       e[0][1] * a, e[1][1] * b, e[2][1] * c, shape.com[1],
       e[0][2] * a, e[1][2] * b, e[2][2] * c, shape.com[2],
       0, 0, 0, 1
     );
-    return { matrix: m, geometry: geom };
   }, [shape, scaleFactor]);
   return (
-    <mesh matrixAutoUpdate={false} matrix={matrix} geometry={geometry}>
+    <mesh matrixAutoUpdate={false} matrix={matrix} geometry={UNIT_SPHERE}>
       <meshStandardMaterial
         color={color}
         transparent

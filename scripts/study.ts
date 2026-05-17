@@ -77,10 +77,16 @@ function parseArgs(argv: string[]): Args {
         a.startSeed = parseInt(need(), 10);
         i++;
         break;
-      case '--strategy':
-        a.strategy = need() as 'uniform' | 'compact';
+      case '--strategy': {
+        const v2 = need();
+        if (v2 !== 'uniform' && v2 !== 'compact') {
+          console.error(`--strategy must be 'uniform' or 'compact', got '${v2}'`);
+          process.exit(1);
+        }
+        a.strategy = v2;
         i++;
         break;
+      }
       case '--chirality':
       case '--cb':
         a.chirality = parseFloat(need());
@@ -92,10 +98,16 @@ function parseArgs(argv: string[]): Args {
         i++;
         break;
       case '--format':
-      case '--fmt':
-        a.format = need() as 'csv' | 'jsonl';
+      case '--fmt': {
+        const v2 = need();
+        if (v2 !== 'csv' && v2 !== 'jsonl') {
+          console.error(`--format must be 'csv' or 'jsonl', got '${v2}'`);
+          process.exit(1);
+        }
+        a.format = v2;
         i++;
         break;
+      }
       case '--out':
       case '-o':
         a.out = need();

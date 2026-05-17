@@ -288,7 +288,7 @@ function CurvePlot({ points }: { points: CurvePoint[] }) {
         ) : null
       )}
       {showRefs &&
-        PACKING_REFERENCES.filter((r) => r.density <= maxEff).map((r) => (
+        PACKING_REFERENCES.filter((r) => r.density <= maxEff).map((r, ri) => (
           <g key={r.label}>
             <line
               x1={pad.l}
@@ -300,11 +300,11 @@ function CurvePlot({ points }: { points: CurvePoint[] }) {
               strokeOpacity={0.7}
             />
             <text
-              x={W - pad.r - 4}
+              x={ri % 2 === 0 ? W - pad.r - 4 : pad.l + 4}
               y={y(r.density) - 2}
               fontSize={8}
               fill={r.color}
-              textAnchor="end"
+              textAnchor={ri % 2 === 0 ? 'end' : 'start'}
             >
               {r.label} {r.density.toFixed(3)}
             </text>

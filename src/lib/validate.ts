@@ -30,10 +30,7 @@ export function findOverlaps(assembly: Assembly, edgeLen: number): OverlapReport
   return out;
 }
 
-/**
- * Side test: where does B's centroid sit relative to face F (with outward normal n)?
- * Returns the signed distance (positive = on +n side, negative = on -n side).
- */
+/** Signed distance from point to the plane of faceTri (positive = outward-normal side). */
 export function sideOfFace(
   faceTri: readonly [readonly [number, number, number], readonly [number, number, number], readonly [number, number, number]],
   point: readonly [number, number, number]

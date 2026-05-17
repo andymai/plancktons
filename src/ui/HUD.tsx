@@ -49,11 +49,22 @@ export function HUD({ metrics }: { metrics: GrowthMetrics | null }) {
             <span className="hud-label">R_g</span>
             <span className="hud-value">{fmt(metrics.rg, 3)}</span>
           </div>
-          <div className="hud-row" title="Anisotropy: 0 = isotropic, 1 = rod-like">
+          <div
+            className="hud-row"
+            title="Rudnick–Gaspari asphericity b = λ₁ − ½(λ₂+λ₃), units of length²"
+          >
+            <span className="hud-label">b (asphericity)</span>
+            <span className="hud-value">{fmt(metrics.asphericity, 3)}</span>
+          </div>
+          <div className="hud-row" title="c = λ₂ − λ₃, units of length²">
+            <span className="hud-label">c (acylindricity)</span>
+            <span className="hud-value">{fmt(metrics.acylindricity, 3)}</span>
+          </div>
+          <div className="hud-row" title="Relative shape anisotropy ∈ [0,1]: 0 isotropic, 1 rod-like">
             <span className="hud-label">κ² (anisotropy)</span>
             <span className="hud-value">{fmt(metrics.kappaSq, 3)}</span>
           </div>
-          <div className="hud-row" title="Prolateness S: > 0 rod-like, < 0 disc-like">
+          <div className="hud-row" title="Prolateness S ∈ [−¼, 2]: > 0 rod-like, < 0 disc-like">
             <span className="hud-label">S (prolateness)</span>
             <span className="hud-value">{fmt(metrics.prolateness, 3)}</span>
           </div>

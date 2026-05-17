@@ -1,6 +1,3 @@
-// Runs synchronously (UI may stutter at huge sample counts); for a production
-// build this should move into a Web Worker.
-
 import { Rng } from './rng.js';
 import {
   chiralityCounts,

@@ -4,7 +4,7 @@ import type { GrowthStrategy } from './assembly.js';
 export type SceneId = 'single' | 'cube' | 'reptile' | 'growth';
 export type AnimationMode = 'instant' | 'animated' | 'step';
 
-export type ColorMode = 'chirality' | 'depth' | 'single';
+export type ColorMode = 'chirality' | 'depth';
 
 export interface ColorOpts {
   rightColor: string;

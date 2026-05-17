@@ -164,7 +164,7 @@ export function freeSurfaceArea(a: Assembly): number {
 export function chiralityCounts(a: Assembly): { R: number; L: number } {
   let R = 0;
   let L = 0;
-  for (const t of a.tets) (t.chirality === 'R' ? R++ : L++);
+  for (const t of a.tets) if (t.chirality === 'R') R++; else L++;
   return { R, L };
 }
 
