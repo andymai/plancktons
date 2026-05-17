@@ -49,27 +49,36 @@ export function getTemplate(chirality: 'R' | 'L'): Solid {
   return templates[chirality];
 }
 
-/** Build the rigid transform that maps the L=1 canonical Hill T (of given
- * chirality) onto the world-space vertices `verts`. The first 3 input vertices
- * pin the rotation + translation; the 4th is implied by chirality. */
+/**
+ * Build the rigid transform that maps the L=1 canonical Hill T (of given
+ * chirality) onto the world-space vertices `verts`.
+ *
+ * The canonical R tet has V0=(0,0,0), V1=(1,0,0), V2=(1,1,0), V3=(1,1,1):
+ *   canonical edges e1 = V1−V0 = (1,0,0), e2 = V2−V1 = (0,1,0), e3 = V3−V2 = (0,0,1).
+ * The canonical L tet mirrors x: V1=(−1,0,0), …, so canonical e1 = (−1,0,0)
+ * but e2 and e3 are unchanged.
+ *
+ * The rotation R must map canonical e1, e2, e3 onto the world edges
+ *   E1 = V1−V0, E2 = V2−V1, E3 = V3−V2.
+ * Since canonical_e1 = (s, 0, 0) with s = ±1, column 0 of R is R·(1,0,0) =
+ * E1 / s. Columns 1 and 2 are E2 and E3 directly. Translation = V0.
+ *
+ * For a same-chirality assembly this produces det = +1 (a proper rotation);
+ * the s in the denominator is essential and was previously wrong.
+ */
 export function rigidMatrixFromVerts(
   verts: readonly [Vec3, Vec3, Vec3, Vec3],
   chirality: 'R' | 'L'
 ): Matrix4x4 {
-  // Canonical edges from V0:
   const s = chirality === 'R' ? 1 : -1;
-  // sU = (s, 0, 0)  sV = (s, 1, 0) − (s,0,0) = (0,1,0)  sW = (s,1,1) − (s,1,0) = (0,0,1)
-  // Target frame at V0:
   const [V0, V1, V2, V3] = verts;
-  const u: Vec3 = [(V1[0] - V0[0]) / s, (V1[1] - V0[1]) / s, (V1[2] - V0[2]) / s];
-  const v: Vec3 = [V2[0] - V1[0], V2[1] - V1[1], V2[2] - V1[2]];
-  const w: Vec3 = [V3[0] - V2[0], V3[1] - V2[1], V3[2] - V2[2]];
-  // World = R · canonical + t.  R maps (1,0,0)→u·s, (0,1,0)→v, (0,0,1)→w.
-  // So column 0 = u·s, column 1 = v, column 2 = w.  Translation = V0.
+  const c0: Vec3 = [(V1[0] - V0[0]) / s, (V1[1] - V0[1]) / s, (V1[2] - V0[2]) / s];
+  const c1: Vec3 = [V2[0] - V1[0], V2[1] - V1[1], V2[2] - V1[2]];
+  const c2: Vec3 = [V3[0] - V2[0], V3[1] - V2[1], V3[2] - V2[2]];
   return [
-    [s * u[0], v[0], w[0], V0[0]],
-    [s * u[1], v[1], w[1], V0[1]],
-    [s * u[2], v[2], w[2], V0[2]],
+    [c0[0], c1[0], c2[0], V0[0]],
+    [c0[1], c1[1], c2[1], V0[1]],
+    [c0[2], c1[2], c2[2], V0[2]],
     [0, 0, 0, 1],
   ];
 }

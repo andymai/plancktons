@@ -159,45 +159,6 @@ export function matePlanckton(
 // Overlap detection (vertex + centroid + edge-face)
 // ---------------------------------------------------------------------------
 
-function pointStrictlyIn(p: Vec3, t: readonly [Vec3, Vec3, Vec3, Vec3], margin: number): boolean {
-  const v0 = sub(t[1], t[0]);
-  const v1 = sub(t[2], t[0]);
-  const v2 = sub(t[3], t[0]);
-  const denom = dot(v0, cross(v1, v2));
-  if (Math.abs(denom) < 1e-12) return false;
-  const r = sub(p, t[0]);
-  const c1 = dot(r, cross(v1, v2)) / denom;
-  const c2 = dot(v0, cross(r, v2)) / denom;
-  const c3 = dot(v0, cross(v1, r)) / denom;
-  const c0 = 1 - c1 - c2 - c3;
-  return c0 > margin && c1 > margin && c2 > margin && c3 > margin;
-}
-
-function segPlaneHit(p0: Vec3, p1: Vec3, fa: Vec3, fb: Vec3, fc: Vec3): Vec3 | null {
-  const n = cross(sub(fb, fa), sub(fc, fa));
-  const denom = dot(n, sub(p1, p0));
-  if (Math.abs(denom) < 1e-12) return null;
-  const t = dot(n, sub(fa, p0)) / denom;
-  if (t <= 1e-6 || t >= 1 - 1e-6) return null;
-  return [p0[0] + t * (p1[0] - p0[0]), p0[1] + t * (p1[1] - p0[1]), p0[2] + t * (p1[2] - p0[2])];
-}
-
-function pointInTri(p: Vec3, a: Vec3, b: Vec3, c: Vec3, margin: number): boolean {
-  const v0 = sub(c, a);
-  const v1 = sub(b, a);
-  const v2 = sub(p, a);
-  const d00 = dot(v0, v0);
-  const d01 = dot(v0, v1);
-  const d02 = dot(v0, v2);
-  const d11 = dot(v1, v1);
-  const d12 = dot(v1, v2);
-  const denom = d00 * d11 - d01 * d01;
-  if (Math.abs(denom) < 1e-15) return false;
-  const u = (d11 * d02 - d01 * d12) / denom;
-  const v = (d00 * d12 - d01 * d02) / denom;
-  return u > margin && v > margin && u + v < 1 - margin;
-}
-
 const TET_EDGES: ReadonlyArray<readonly [number, number]> = [
   [0, 1],
   [0, 2],
@@ -213,42 +174,74 @@ const TET_FACES: ReadonlyArray<readonly [number, number, number]> = [
   [0, 2, 1],
 ];
 
+/**
+ * Project the 4 tet vertices onto axis `axis` and return [min, max] interval.
+ */
+function projectTet(t: readonly [Vec3, Vec3, Vec3, Vec3], axis: Vec3): [number, number] {
+  let min = Infinity;
+  let max = -Infinity;
+  for (const v of t) {
+    const p = v[0] * axis[0] + v[1] * axis[1] + v[2] * axis[2];
+    if (p < min) min = p;
+    if (p > max) max = p;
+  }
+  return [min, max];
+}
+
+/**
+ * Two tets `A` and `B` overlap iff their open interiors share volume.
+ *
+ * Uses the **Separating Axis Theorem**: two convex polyhedra are disjoint iff
+ * there exists an axis on which their projections do not overlap. For two
+ * tetrahedra, the candidate axes are:
+ *   - 4 face normals of A
+ *   - 4 face normals of B
+ *   - 6 × 6 = 36 cross products of (edge of A) × (edge of B)
+ *
+ * Total: 44 axes. If any axis separates them (intervals disjoint with margin),
+ * the tets do NOT overlap. Otherwise they do.
+ *
+ * The margin is `edgeLen · 1e-4` — large enough to tolerate floating-point
+ * error in the rigid transform pipeline (~10⁻¹⁴ · L), small enough that
+ * legitimate face/edge/vertex contact does NOT count as overlap. This is the
+ * mathematically rigorous test; the earlier vertex/edge-face test was unsound
+ * for two tets sharing a face with apexes on the same side.
+ */
 export function tetsOverlap(
   A: readonly [Vec3, Vec3, Vec3, Vec3],
   B: readonly [Vec3, Vec3, Vec3, Vec3],
   edgeLen: number
 ): boolean {
-  const margin = edgeLen * 1e-3;
-  if (pointStrictlyIn(centroid(A[0], A[1], A[2], A[3]), B, margin)) return true;
-  if (pointStrictlyIn(centroid(B[0], B[1], B[2], B[3]), A, margin)) return true;
-  for (const v of A) if (pointStrictlyIn(v, B, margin)) return true;
-  for (const v of B) if (pointStrictlyIn(v, A, margin)) return true;
-  const triMargin = 1e-3;
-  for (const [i, j] of TET_EDGES) {
-    for (const [fi, fj, fk] of TET_FACES) {
-      const hit = segPlaneHit(
-        A[i] as Vec3,
-        A[j] as Vec3,
-        B[fi] as Vec3,
-        B[fj] as Vec3,
-        B[fk] as Vec3
-      );
-      if (hit && pointInTri(hit, B[fi] as Vec3, B[fj] as Vec3, B[fk] as Vec3, triMargin))
-        return true;
+  const margin = edgeLen * 1e-4;
+
+  // Face normals (4 per tet).
+  for (const t of [A, B]) {
+    for (const [i, j, k] of TET_FACES) {
+      const n = cross(sub(t[j] as Vec3, t[i] as Vec3), sub(t[k] as Vec3, t[i] as Vec3));
+      const len = Math.sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+      if (len < 1e-15) continue;
+      const axis: Vec3 = [n[0] / len, n[1] / len, n[2] / len];
+      const [aMin, aMax] = projectTet(A, axis);
+      const [bMin, bMax] = projectTet(B, axis);
+      if (aMax < bMin + margin || bMax < aMin + margin) return false;
     }
   }
-  for (const [i, j] of TET_EDGES) {
-    for (const [fi, fj, fk] of TET_FACES) {
-      const hit = segPlaneHit(
-        B[i] as Vec3,
-        B[j] as Vec3,
-        A[fi] as Vec3,
-        A[fj] as Vec3,
-        A[fk] as Vec3
-      );
-      if (hit && pointInTri(hit, A[fi] as Vec3, A[fj] as Vec3, A[fk] as Vec3, triMargin))
-        return true;
+
+  // 36 edge-edge cross products.
+  for (const [ai, aj] of TET_EDGES) {
+    const ea = sub(A[aj] as Vec3, A[ai] as Vec3);
+    for (const [bi, bj] of TET_EDGES) {
+      const eb = sub(B[bj] as Vec3, B[bi] as Vec3);
+      const n = cross(ea, eb);
+      const len = Math.sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+      if (len < 1e-12) continue; // parallel edges — useless axis
+      const axis: Vec3 = [n[0] / len, n[1] / len, n[2] / len];
+      const [aMin, aMax] = projectTet(A, axis);
+      const [bMin, bMax] = projectTet(B, axis);
+      if (aMax < bMin + margin || bMax < aMin + margin) return false;
     }
   }
-  return false;
+
+  // No separating axis found → overlap.
+  return true;
 }
