@@ -10,6 +10,7 @@
 
 import type { Vec3 } from './vec.js';
 import type { Assembly } from './assembly.js';
+import { VERTEX_HASH_EPS_REL, vertexHashInv, vertexKey } from './vertexHash.js';
 
 export interface EmbeddedCube {
   /** The two endpoints of the shared space diagonal. */
@@ -32,15 +33,13 @@ export interface EmbeddedCubesResult {
 
 export function findEmbeddedCubes(a: Assembly): EmbeddedCubesResult {
   const groups = new Map<string, number[]>();
-  // Each Hill T₁ has exactly one edge of length L√3 (the "space diagonal").
-  // It connects the right-angle vertex to the apex. Identify by edge-length
-  // comparison and hash on the canonical (sorted) vertex pair.
+  // Each Hill T₁ has exactly one edge of length L√3 (the "space diagonal"):
+  // the edge from the right-angle vertex to the apex. We identify the diagonal
+  // by edge length and group tets sharing the same canonical endpoint pair.
   const target = a.opts.L * Math.sqrt(3);
-  const eps = 1e-6 * a.opts.L;
+  const eps = VERTEX_HASH_EPS_REL * a.opts.L;
   const tol = 1e-3 * a.opts.L;
-  const inv = 1 / eps;
-  const quant = (v: Vec3): string =>
-    `${Math.round(v[0] * inv)},${Math.round(v[1] * inv)},${Math.round(v[2] * inv)}`;
+  const inv = vertexHashInv(a.opts.L);
   for (let i = 0; i < a.tets.length; i++) {
     const v = a.tets[i]!.verts;
     for (let p = 0; p < 4; p++) {
@@ -50,7 +49,7 @@ export function findEmbeddedCubes(a: Assembly): EmbeddedCubesResult {
         const dz = v[q][2] - v[p][2];
         const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
         if (Math.abs(d - target) < tol) {
-          const key = [quant(v[p]), quant(v[q])].sort().join('|');
+          const key = [vertexKey(v[p], inv), vertexKey(v[q], inv)].sort().join('|');
           const bucket = groups.get(key);
           if (bucket) bucket.push(i);
           else groups.set(key, [i]);
@@ -61,7 +60,6 @@ export function findEmbeddedCubes(a: Assembly): EmbeddedCubesResult {
   const result: EmbeddedCube[] = [];
   for (const [key, indices] of groups) {
     if (indices.length < 6) continue;
-    // Recover the diagonal endpoints from the key.
     const parts = key.split('|');
     const endpoints = parts.map((p) => {
       const [x, y, z] = p.split(',').map(Number);
@@ -96,20 +94,15 @@ export function findEmbeddedCubes(a: Assembly): EmbeddedCubesResult {
 }
 
 /** Verify the 6 tets' vertex set spans exactly 8 distinct points lying at
- * the corners of a unit cube. The 8 corners differ pairwise by axis-aligned
- * displacements of L, L√2, or L√3 (the cube's three edge classes); summing
- * coordinate sets and checking spans is the simplest robust test. */
+ * the corners of a unit cube. */
 function hasEightCubeCorners(tetVerts: ReadonlyArray<readonly Vec3[]>, L: number): boolean {
-  const eps = 1e-6 * L;
-  const inv = 1 / eps;
+  const eps = VERTEX_HASH_EPS_REL * L;
+  const inv = vertexHashInv(L);
   const keys = new Set<string>();
   for (const verts of tetVerts) {
-    for (const v of verts) {
-      keys.add(`${Math.round(v[0] * inv)},${Math.round(v[1] * inv)},${Math.round(v[2] * inv)}`);
-    }
+    for (const v of verts) keys.add(vertexKey(v, inv));
   }
   if (keys.size !== 8) return false;
-  // Bbox of those 8 points.
   const pts = Array.from(keys).map((k) => k.split(',').map((s) => parseInt(s, 10) * eps) as Vec3);
   let minX = Infinity;
   let minY = Infinity;
@@ -125,12 +118,10 @@ function hasEightCubeCorners(tetVerts: ReadonlyArray<readonly Vec3[]>, L: number
     if (p[2] < minZ) minZ = p[2];
     if (p[2] > maxZ) maxZ = p[2];
   }
-  // All three axes should span exactly L.
   const tol = 1e-3 * L;
   if (Math.abs(maxX - minX - L) > tol) return false;
   if (Math.abs(maxY - minY - L) > tol) return false;
   if (Math.abs(maxZ - minZ - L) > tol) return false;
-  // Every point should be at a corner of the bbox.
   const cornerKeys = new Set<string>();
   for (let dx = 0; dx < 2; dx++)
     for (let dy = 0; dy < 2; dy++)
@@ -138,7 +129,7 @@ function hasEightCubeCorners(tetVerts: ReadonlyArray<readonly Vec3[]>, L: number
         const x = dx === 0 ? minX : maxX;
         const y = dy === 0 ? minY : maxY;
         const z = dz === 0 ? minZ : maxZ;
-        cornerKeys.add(`${Math.round(x * inv)},${Math.round(y * inv)},${Math.round(z * inv)}`);
+        cornerKeys.add(vertexKey([x, y, z], inv));
       }
   for (const k of keys) {
     if (!cornerKeys.has(k)) return false;

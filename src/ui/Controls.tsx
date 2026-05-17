@@ -3,12 +3,31 @@ import { useStore } from '../lib/store.js';
 import { DraftSlider } from './DraftSlider.js';
 import { useDraftValue } from './useDraftValue.js';
 import { useWorkerRun } from './useWorkerRun.js';
-import { Rng } from '../lib/rng.js';
-import { growOne, makeAssembly } from '../lib/assembly.js';
 import { ProgressBar } from './ProgressBar.js';
 import type { MorphologyResult } from '../lib/morphology.js';
 import type { VoronoiResult } from '../lib/voronoi.js';
 import type { McRefineResult } from '../lib/mcRefine.js';
+import type { GrowthJob } from '../worker/study.worker.js';
+
+interface GrowthState {
+  N: number;
+  seed: number;
+  chiralityBias: number;
+  strategy: 'uniform' | 'compact';
+  compactBeta: number;
+}
+
+/** Bundle the growth-state slice every analysis panel sends to the worker. */
+function growthJob(g: GrowthState): GrowthJob {
+  return {
+    L: 1,
+    N: g.N,
+    seed: g.seed,
+    chiralityBias: g.chiralityBias,
+    strategy: g.strategy,
+    compactBeta: g.compactBeta,
+  };
+}
 
 const SCENES = [
   {
@@ -556,29 +575,12 @@ function MorphologyPanel() {
   if (scene !== 'growth') return null;
 
   function run() {
-    const a = makeAssembly({
-      L: 1,
-      rng: new Rng(growth.seed),
-      chiralityBias: growth.chiralityBias,
-      strategy: growth.strategy,
-      compactBeta: growth.compactBeta,
-    });
-    while (a.tets.length < growth.N) {
-      if (growOne(a) !== 'grown') break;
-    }
-    const tets = a.tets.map((t) => ({
-      verts: t.verts.map((v) => [v[0], v[1], v[2]] as [number, number, number]),
-      chirality: t.chirality,
-    }));
-    job.run({ kind: 'morph', tets, L: 1, voxelSize: 1 / 12, alpha });
+    job.run({ kind: 'morph', growth: growthJob(growth), voxelSize: 1 / 12, alpha });
   }
 
-  const N = morph
-    ? // V* = N · L³/6, derived from the volume the worker returned and the
-      // current growth.N. The worker doesn't know N, so we recompute here.
-      growth.N
-    : 0;
-  const Vstar = (N * 1) / 6;
+  // Worker returns V_morph but not N, so recompute V* = N·L³/6 here from the
+  // current growth.N.
+  const Vstar = morph ? growth.N / 6 : 0;
   const etaM = morph && morph.volume > 0 ? Vstar / morph.volume : null;
 
   return (
@@ -640,31 +642,7 @@ function VoronoiPanel() {
   if (scene !== 'growth') return null;
 
   function run() {
-    const a = makeAssembly({
-      L: 1,
-      rng: new Rng(growth.seed),
-      chiralityBias: growth.chiralityBias,
-      strategy: growth.strategy,
-      compactBeta: growth.compactBeta,
-    });
-    while (a.tets.length < growth.N) {
-      if (growOne(a) !== 'grown') break;
-    }
-    const centroids = a.tets.map((t) => {
-      const v = t.verts;
-      return [
-        (v[0][0] + v[1][0] + v[2][0] + v[3][0]) / 4,
-        (v[0][1] + v[1][1] + v[2][1] + v[3][1]) / 4,
-        (v[0][2] + v[1][2] + v[2][2] + v[3][2]) / 4,
-      ] as [number, number, number];
-    });
-    job.run({
-      kind: 'voronoi',
-      centroids,
-      L: 1,
-      voxelSize: 1 / 8,
-      padL: 1,
-    });
+    job.run({ kind: 'voronoi', growth: growthJob(growth), voxelSize: 1 / 8, padL: 1 });
   }
 
   return (
@@ -721,27 +699,9 @@ function McRefinePanel() {
   if (scene !== 'growth') return null;
 
   function run() {
-    const a = makeAssembly({
-      L: 1,
-      rng: new Rng(growth.seed),
-      chiralityBias: growth.chiralityBias,
-      strategy: growth.strategy,
-      compactBeta: growth.compactBeta,
-    });
-    while (a.tets.length < growth.N) {
-      if (growOne(a) !== 'grown') break;
-    }
-    const tets = a.tets.map((t) => ({
-      verts: t.verts.map((v) => [v[0], v[1], v[2]] as [number, number, number]),
-      chirality: t.chirality,
-    }));
     job.run({
       kind: 'mc',
-      tets,
-      L: 1,
-      chiralityBias: growth.chiralityBias,
-      strategy: growth.strategy,
-      compactBeta: growth.compactBeta,
+      growth: growthJob(growth),
       steps,
       temperature,
       mcSeed: growth.seed + 1,

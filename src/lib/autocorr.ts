@@ -17,9 +17,9 @@
 // Cost is O(samples), independent of voxel count, so we can use many samples
 // (10^5) for smooth curves.
 
-import type { Vec3 } from './vec.js';
 import type { Planckton } from './planckton.js';
 import { Rng } from './rng.js';
+import { voxelizeTets } from './morphology.js';
 
 export interface AutocorrResult {
   /** Bin centers in units of L. */
@@ -51,8 +51,6 @@ export interface AutocorrOptions {
   seed?: number;
 }
 
-import { pointInTet } from './morphology.js';
-
 /**
  * S₂(r) via Monte Carlo pair sampling on the voxelized aggregate.
  */
@@ -68,7 +66,6 @@ export function autocorrelationS2(
   const nBins = opts.nBins ?? 60;
   const seed = opts.seed ?? 1;
 
-  // bbox of all vertices.
   let minX = Infinity;
   let minY = Infinity;
   let minZ = Infinity;
@@ -94,64 +91,24 @@ export function autocorrelationS2(
   const rMax = opts.rMax ?? Math.sqrt(sx * sx + sy * sy + sz * sz);
   const dr = rMax / nBins;
 
-  // Voxelize: occupancy indicator. Uses the same point-in-tet test as
-  // morphology.ts (re-exported for that purpose).
   const nx = Math.max(1, Math.ceil(sx / voxelSize));
   const ny = Math.max(1, Math.ceil(sy / voxelSize));
   const nz = Math.max(1, Math.ceil(sz / voxelSize));
-  const indicator = new Uint8Array(nx * ny * nz);
-  for (const t of tets) {
-    let tminX = Infinity,
-      tminY = Infinity,
-      tminZ = Infinity,
-      tmaxX = -Infinity,
-      tmaxY = -Infinity,
-      tmaxZ = -Infinity;
-    for (const v of t.verts) {
-      if (v[0] < tminX) tminX = v[0];
-      if (v[0] > tmaxX) tmaxX = v[0];
-      if (v[1] < tminY) tminY = v[1];
-      if (v[1] > tmaxY) tmaxY = v[1];
-      if (v[2] < tminZ) tminZ = v[2];
-      if (v[2] > tmaxZ) tmaxZ = v[2];
-    }
-    const ix0 = Math.max(0, Math.floor((tminX - ox) / voxelSize));
-    const ix1 = Math.min(nx - 1, Math.ceil((tmaxX - ox) / voxelSize));
-    const iy0 = Math.max(0, Math.floor((tminY - oy) / voxelSize));
-    const iy1 = Math.min(ny - 1, Math.ceil((tmaxY - oy) / voxelSize));
-    const iz0 = Math.max(0, Math.floor((tminZ - oz) / voxelSize));
-    const iz1 = Math.min(nz - 1, Math.ceil((tmaxZ - oz) / voxelSize));
-    for (let iz = iz0; iz <= iz1; iz++) {
-      const pz = oz + (iz + 0.5) * voxelSize;
-      for (let iy = iy0; iy <= iy1; iy++) {
-        const py = oy + (iy + 0.5) * voxelSize;
-        for (let ix = ix0; ix <= ix1; ix++) {
-          const idx = ix + nx * (iy + ny * iz);
-          if (indicator[idx]) continue;
-          const px = ox + (ix + 0.5) * voxelSize;
-          if (pointInTet([px, py, pz] as Vec3, t)) indicator[idx] = 1;
-        }
-      }
-    }
-  }
+  const indicator = voxelizeTets(tets, [ox, oy, oz], [nx, ny, nz], voxelSize);
 
-  // φ = inside_count / total.
   let insideCount = 0;
   for (let i = 0; i < indicator.length; i++) if (indicator[i]) insideCount++;
   const phi = insideCount / indicator.length;
 
-  // Sample voxel pairs uniformly in the bbox. For each pair, bin by distance
-  // and accumulate the both-inside indicator product.
   const numerator = new Float64Array(nBins);
   const denominator = new Float64Array(nBins);
   const rng = new Rng(seed);
-  // Use the voxel-index sampler (uniform over the grid) so the indicator
-  // lookups are O(1) and we don't have to interpolate.
+  // Sampling directly on voxel indices (uniform over the grid) makes the
+  // indicator lookups O(1) and avoids interpolation.
   for (let s = 0; s < samples; s++) {
     const i1 = (rng.int(nx) + nx * (rng.int(ny) + ny * rng.int(nz))) | 0;
     const i2 = (rng.int(nx) + nx * (rng.int(ny) + ny * rng.int(nz))) | 0;
     if (i1 === i2) continue;
-    // Decompose linear voxel indices back to (x, y, z) for the distance.
     const v1z = Math.floor(i1 / (nx * ny));
     const v1y = Math.floor((i1 - v1z * nx * ny) / nx);
     const v1x = i1 - v1z * nx * ny - v1y * nx;
