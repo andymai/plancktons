@@ -55,8 +55,16 @@ export function tetFromPts(pts: readonly [Vec3, Vec3, Vec3, Vec3]): Planckton {
   return { verts: pts, faces, chirality };
 }
 
-/** The 6-piece cube tiling. Each piece walks a different permutation of (x,y,z). */
-export function cubeTiling(L: number): Planckton[] {
+/**
+ * Classical 6-piece cube dissection along the main diagonal (0,0,0)–(L,L,L).
+ * Each piece walks a different permutation of (x,y,z); even perms give R,
+ * odd perms give L, so the breakdown is exactly 3R + 3L.
+ *
+ * This is a valid geometric tiling but is NOT realizable from a single Hill
+ * T₁ decomposition (which produces 6+2, not 3+3). See `cubeHTRight` /
+ * `cubeHTLeft` for the HT-realizable cubes.
+ */
+export function cubeGeometric(L: number): Planckton[] {
   const e: [Vec3, Vec3, Vec3] = [
     [L, 0, 0],
     [0, L, 0],
@@ -77,6 +85,66 @@ export function cubeTiling(L: number): Planckton[] {
     const V3: Vec3 = [V2[0] + e[c][0], V2[1] + e[c][1], V2[2] + e[c][2]];
     return tetFromPts([V0, V1, V2, V3]);
   });
+}
+
+/** Back-compat alias. Prefer `cubeGeometric` for new code. */
+export const cubeTiling = cubeGeometric;
+
+/**
+ * Three Hill orthoschemes tiling the y<z half-prism of the unit cube, with
+ * chirality 1R + 2L. Each tet's vertex list is in Hill-path order so
+ * tetFromPts recovers the geometric chirality.
+ */
+function halfPrismYltZ(L: number): Planckton[] {
+  const V000: Vec3 = [0, 0, 0];
+  const VL00: Vec3 = [L, 0, 0];
+  const V00L: Vec3 = [0, 0, L];
+  const VL0L: Vec3 = [L, 0, L];
+  const V0LL: Vec3 = [0, L, L];
+  const VLLL: Vec3 = [L, L, L];
+  return [
+    tetFromPts([V000, VL00, VL0L, VLLL]), // edges x, z, y → L
+    tetFromPts([V000, V00L, VL0L, VLLL]), // edges z, x, y → R
+    tetFromPts([V000, V00L, V0LL, VLLL]), // edges z, y, x → L
+  ];
+}
+
+/**
+ * Orientation-preserving 180° rotation around the line (t, L/2, L/2). Maps
+ * (x, y, z) → (x, L−y, L−z). Swaps the y<z prism with the y>z prism while
+ * fixing the cube [0,L]³. det = +1, so chirality is preserved on each piece.
+ */
+function rot180YZ(p: Planckton, L: number): Planckton {
+  const newVerts = p.verts.map((v) => [v[0], L - v[1], L - v[2]] as Vec3) as [
+    Vec3,
+    Vec3,
+    Vec3,
+    Vec3,
+  ];
+  return tetFromPts(newVerts);
+}
+
+/** Reflection through x = L/2. det = −1, so chirality flips on every piece. */
+function mirrorX(p: Planckton, L: number): Planckton {
+  const newVerts = p.verts.map((v) => [L - v[0], v[1], v[2]] as Vec3) as [Vec3, Vec3, Vec3, Vec3];
+  return tetFromPts(newVerts);
+}
+
+/**
+ * HT-realizable cube with majority-L chirality (2R + 4L). Built as two copies
+ * of the 1R+2L half-prism, joined by an orientation-preserving rotation.
+ * This is the cube that physical Plancktons drawn from a single L-parent HT
+ * decomposition can assemble.
+ */
+export function cubeHTLeft(L: number): Planckton[] {
+  const lower = halfPrismYltZ(L);
+  const upper = lower.map((p) => rot180YZ(p, L));
+  return [...lower, ...upper];
+}
+
+/** Mirror of `cubeHTLeft`: 4R + 2L, from an R-parent HT decomposition. */
+export function cubeHTRight(L: number): Planckton[] {
+  return cubeHTLeft(L).map((p) => mirrorX(p, L));
 }
 
 /** The 8-reptile: 8 unit Plancktons tile a doubled Planckton. */

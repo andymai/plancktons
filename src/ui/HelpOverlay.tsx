@@ -14,8 +14,8 @@ const SCENE_PRIMER: Record<SceneId, { title: string; body: string }> = {
     body: 'You are looking at one Hill T₁ orthoscheme — a right-tetrahedron. Toggle "Show dihedral angles" to label each edge with its rational-π angle (π/2, π/3, π/4). Their sum, weighted by edge length, is the Dehn invariant — and it collapses to zero.',
   },
   cube: {
-    title: 'Cube tiling',
-    body: 'Six Plancktons (3 right-handed, 3 left-handed) tile a cube exactly — the η = 1 reference. The "Explode" slider pulls the pieces apart; auto-play animates the dissection so you can see scissors-congruence in motion.',
+    title: 'Three cubes, one shape',
+    body: 'A cube can be dissected into 6 Hill orthoschemes in more than one way. The middle cube (3 R · 3 L) is the classical main-diagonal dissection — pure scissors-congruence, but NOT realizable from a single HT decomposition. The flanking cubes (2 R · 4 L and 4 R · 2 L) are what physical Plancktons drawn from one HT decomposition can build: a "mostly-L" half-prism doubled gives 2 R · 4 L; the mirror gives 4 R · 2 L. Each HT cube = 2 × (1 R + 2 L half-prism). Explode slider pulls all three apart in unison.',
   },
   reptile: {
     title: '8-reptile dissection',

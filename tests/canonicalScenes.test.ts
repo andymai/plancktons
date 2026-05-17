@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { cubeTiling, eightReptile, explode, tetFromPts } from '../src/lib/canonicalScenes.js';
+import {
+  cubeGeometric,
+  cubeHTLeft,
+  cubeHTRight,
+  cubeTiling,
+  eightReptile,
+  explode,
+  tetFromPts,
+} from '../src/lib/canonicalScenes.js';
 import { tetVolume } from '../src/lib/planckton.js';
 import type { Vec3 } from '../src/lib/vec.js';
 
@@ -21,6 +29,76 @@ describe('cubeTiling', () => {
     const L = pieces.filter((p) => p.chirality === 'L').length;
     expect(R).toBe(3);
     expect(L).toBe(3);
+  });
+});
+
+describe('cubeTiling is a back-compat alias for cubeGeometric', () => {
+  it('exports the same function reference', () => {
+    expect(cubeTiling).toBe(cubeGeometric);
+  });
+});
+
+// Helper: the 8 corners of a [0,L]³ cube, as a sorted string set.
+function cubeCornersKey(L: number): string {
+  const keys: string[] = [];
+  for (const x of [0, L])
+    for (const y of [0, L]) for (const z of [0, L]) keys.push(`${x},${y},${z}`);
+  return keys.sort().join('|');
+}
+function vertexUnionKey(pieces: ReadonlyArray<{ verts: ReadonlyArray<Vec3> }>): string {
+  const keys = new Set<string>();
+  for (const p of pieces) for (const v of p.verts) keys.add(`${v[0]},${v[1]},${v[2]}`);
+  return [...keys].sort().join('|');
+}
+
+describe('cubeHTLeft (2R + 4L, HT-realizable)', () => {
+  it('produces 6 tets of equal volume summing to L³', () => {
+    const pieces = cubeHTLeft(1);
+    expect(pieces).toHaveLength(6);
+    for (const p of pieces) expect(tetVolume(p.verts)).toBeCloseTo(1 / 6, 10);
+    const sum = pieces.reduce((s, p) => s + tetVolume(p.verts), 0);
+    expect(sum).toBeCloseTo(1, 10);
+  });
+
+  it('chirality split is 2 R + 4 L', () => {
+    const pieces = cubeHTLeft(1);
+    expect(pieces.filter((p) => p.chirality === 'R')).toHaveLength(2);
+    expect(pieces.filter((p) => p.chirality === 'L')).toHaveLength(4);
+  });
+
+  it('vertex union equals the 8 cube corners', () => {
+    for (const L of [0.5, 1, 3]) {
+      expect(vertexUnionKey(cubeHTLeft(L))).toBe(cubeCornersKey(L));
+    }
+  });
+});
+
+describe('cubeHTRight (4R + 2L, mirror of cubeHTLeft)', () => {
+  it('produces 6 tets of equal volume summing to L³', () => {
+    const pieces = cubeHTRight(1);
+    expect(pieces).toHaveLength(6);
+    for (const p of pieces) expect(tetVolume(p.verts)).toBeCloseTo(1 / 6, 10);
+  });
+
+  it('chirality split is 4 R + 2 L', () => {
+    const pieces = cubeHTRight(1);
+    expect(pieces.filter((p) => p.chirality === 'R')).toHaveLength(4);
+    expect(pieces.filter((p) => p.chirality === 'L')).toHaveLength(2);
+  });
+
+  it('vertex union equals the 8 cube corners', () => {
+    expect(vertexUnionKey(cubeHTRight(1))).toBe(cubeCornersKey(1));
+  });
+
+  it('is the x ↔ L−x mirror of cubeHTLeft (chirality counts swap)', () => {
+    const left = cubeHTLeft(1);
+    const right = cubeHTRight(1);
+    expect(right.filter((p) => p.chirality === 'R').length).toBe(
+      left.filter((p) => p.chirality === 'L').length
+    );
+    expect(right.filter((p) => p.chirality === 'L').length).toBe(
+      left.filter((p) => p.chirality === 'R').length
+    );
   });
 });
 

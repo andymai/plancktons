@@ -13,7 +13,7 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
   hillT1: {
     shortLabel: 'Hill T₁',
     short: "Hill's 1896 orthoscheme: 6 tile a cube exactly; all dihedrals are rational π.",
-    body: 'M. J. M. Hill (1896) gave three families of tetrahedra that tile space, of which T₁ is the simplest: six congruent copies tile a unit cube exactly (3 right-handed + 3 left-handed). Hill T₁ is the canonical tetrahedron with the Dehn invariant equal to zero.',
+    body: 'M. J. M. Hill (1896) gave three families of tetrahedra that tile space, of which T₁ is the simplest: six congruent copies tile a unit cube exactly. Multiple chirality breakdowns are possible — the classical main-diagonal dissection gives 3 R + 3 L, while the HT-realizable cube (assembled from halves of a single Matoušek decomposition) gives 4 R + 2 L or its mirror 2 R + 4 L. Hill T₁ is the canonical tetrahedron with Dehn invariant zero.',
   },
   etaC: {
     shortLabel: 'η_C',
@@ -48,8 +48,8 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
   },
   chirality: {
     shortLabel: 'chirality',
-    short: 'Right (R) and Left (L) Plancktons are mirror images. The cube tiling forces 3 R + 3 L.',
-    body: 'A Planckton and its mirror image are not congruent under rotation alone — they are enantiomers. The 6-piece cube tiling requires exactly 3 R + 3 L (one per permutation of the (x,y,z) axes). The chirality bias slider sets the probability of drawing R vs L during growth.',
+    short: 'Right (R) and Left (L) Plancktons are mirror images. HT decompositions are 6+2.',
+    body: "A Planckton and its mirror image are not congruent under rotation alone — they are enantiomers. The Matoušek decomposition of one Hill T₁ tetrahedron into 8 sub-tets is always 6 + 2 in chirality (six of the parent's handedness, two of the opposite). The 6-piece cube has multiple chirality breakdowns: the classical 3 R + 3 L dissection along the main diagonal, plus the HT-realizable 4 R + 2 L and 2 R + 4 L cubes that can be assembled from physical Plancktons. The chirality bias slider sets the probability of drawing R vs L during growth.",
   },
   avrami: {
     shortLabel: 'Avrami',
