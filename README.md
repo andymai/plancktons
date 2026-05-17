@@ -1,8 +1,8 @@
 # Plancktons
 
 Interactive 3D study of **Hill T₁ orthoschemes** ("Plancktons") and their
-random face-to-face assemblies. A research-grade playground in the browser,
-plus a headless CLI for batch runs.
+random face-to-face assemblies. Browser playground plus a headless CLI for
+batch runs.
 
 **Live:** <https://andymai.github.io/plancktons/>
 
@@ -83,7 +83,7 @@ Both strategies use a two-phase placement:
 
 ## Disclosure modes
 
-A three-position switch in the topbar — **Learn / Explore / Research** — controls how much UI is exposed:
+A three-position switch in the topbar (**Learn / Explore / Research**) controls how much UI is exposed:
 
 - **Learn** (default) — scene picker, essential growth parameters (N, seed, strategy), basic metrics tile (N, η_C, η_B, free surface). Inline dotted-underlined terms open a glossary popover; the `?` button opens a full help overlay with scene-aware primer + concepts + glossary tabs.
 - **Explore** — adds the Display panel (colors, hull, gyration ellipsoid, edge outlines, render gap) and the advanced metrics sections (gyration / shape, bond-orientational order, topology / chirality, bounding box).
@@ -249,20 +249,12 @@ docs/
 
 ## Known gaps
 
-The simulation kernels for the four "planned" items in earlier revisions of
-this README have all landed (`voronoi.ts`, `morphology.ts`, `mcRefine.ts`,
-`pairCorrelationAniso`, `svgExport.ts`, `workerPool.ts`, `steinhardt.ts`,
-`autocorr.ts`). All of them are surfaced in Research mode today — the
-Morph / Voronoi / MC panels in the sidebar (`Analyses`), and the Histogram /
-η-vs-N / g(r) / Kinetics / S₂(r) / Q_l-ensemble panels in the Research
-drawer. Residuals worth flagging today:
-
-- **No two-level Ns × trials fan-out for curve sweeps** — the browser pool
+- **No two-level Ns × trials fan-out for curve sweeps.** The browser pool
   partitions Ns across workers; if Ns is shorter than the pool size, some
   cores idle. A two-level partition would help short-Ns / many-trials
-  sweeps but adds CurvePoint-merge complexity. (CLI uses
-  `node:worker_threads` and fans out trials within a single N — see
-  `scripts/study.ts --workers`.)
+  sweeps but adds CurvePoint-merge complexity. The CLI sidesteps this by
+  fanning trials within a single N across `node:worker_threads` (see
+  `scripts/study.ts --workers`).
 
 ## References
 
