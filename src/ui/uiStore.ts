@@ -4,10 +4,6 @@ interface UiState {
   helpOpen: boolean;
   setHelpOpen: (b: boolean) => void;
 
-  collapsedSections: Record<string, boolean>;
-  toggleSection: (id: string) => void;
-  setSectionCollapsed: (id: string, collapsed: boolean) => void;
-
   metricsHidden: boolean;
   toggleMetricsHidden: () => void;
 
@@ -47,14 +43,6 @@ function defaultMetricsHidden(): boolean {
 export const useUiStore = create<UiState>((set) => ({
   helpOpen: false,
   setHelpOpen: (helpOpen) => set({ helpOpen }),
-
-  collapsedSections: {},
-  toggleSection: (id) =>
-    set((s) => ({
-      collapsedSections: { ...s.collapsedSections, [id]: !s.collapsedSections[id] },
-    })),
-  setSectionCollapsed: (id, collapsed) =>
-    set((s) => ({ collapsedSections: { ...s.collapsedSections, [id]: collapsed } })),
 
   metricsHidden: defaultMetricsHidden(),
   toggleMetricsHidden: () =>
