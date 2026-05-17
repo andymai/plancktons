@@ -19,6 +19,7 @@ export default defineConfig({
         'src/lib/exports.ts', // DOM-bound (downloads, screenshot, URL)
         'src/lib/mesh.ts', // THREE.BufferGeometry — visual only
         'src/lib/references.ts', // pure data table
+        'src/lib/brepjsKernel.ts', // brepjs OC WASM init — requires browser
         'src/lib/__*__.ts', // legacy tsx-runnable sanity scripts
       ],
       thresholds: {
