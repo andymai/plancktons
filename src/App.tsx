@@ -47,8 +47,18 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <div className="title">
-          <span className="title-main">Plancktons</span>
-          <span className="title-sub">Planckton packing - a Hill-tetrahedra study</span>
+          <span
+            className="title-main"
+            title="Plancktons - colloquial name for Hill orthoschemes, the right-tetrahedra that tile space."
+          >
+            Plancktons
+          </span>
+          <span
+            className="title-sub"
+            title="Interactive study of random aggregation and packing density for Hill T₁ orthoschemes."
+          >
+            Planckton packing - a Hill-tetrahedra study
+          </span>
         </div>
         <Actions />
       </header>

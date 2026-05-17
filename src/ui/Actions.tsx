@@ -48,6 +48,16 @@ export function Actions() {
 
   return (
     <div className="actions">
+      <a
+        href="https://github.com/andymai/plancktons"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="action-link"
+        title="View source on GitHub"
+        aria-label="GitHub repository"
+      >
+        GitHub
+      </a>
       <button
         onClick={() => copyShareLink()}
         title="Copy a shareable URL with the current parameters"

@@ -137,6 +137,22 @@ input[type='range'] {
 .actions {
   display: flex;
   gap: 6px;
+  align-items: center;
+}
+.action-link {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  color: var(--text);
+  text-decoration: none;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
+}
+.action-link:hover {
+  background: #313845;
+  border-color: #4a525f;
 }
 
 .toast {

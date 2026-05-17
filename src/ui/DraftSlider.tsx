@@ -1,9 +1,10 @@
 import { useState } from 'react';
 
 /**
- * Number slider whose value is held locally while the user drags. The
- * `onCommit` callback fires on pointerup / change-after-release, not on every
- * intermediate value. Eliminates per-frame rebuilds while dragging.
+ * Number slider whose value is held locally while the user drags. `onCommit`
+ * fires on pointerup / change-after-release (cheap), `onDraftChange` fires on
+ * every intermediate change so parents can show the live value next to the
+ * slider without triggering expensive recomputation.
  *
  * Visually identical to a native range input.
  */
@@ -13,6 +14,7 @@ export function DraftSlider({
   max,
   step,
   onCommit,
+  onDraftChange,
   title,
   ariaLabel,
 }: {
@@ -21,13 +23,12 @@ export function DraftSlider({
   max: number;
   step: number;
   onCommit: (v: number) => void;
+  onDraftChange?: (v: number) => void;
   title?: string;
   ariaLabel?: string;
 }) {
   const [draft, setDraft] = useState(value);
   const [prevValue, setPrevValue] = useState(value);
-  // Render-time sync: when the upstream value changes (URL hash, reset, etc.),
-  // pull it into the local draft. Official React pattern for derived state.
   if (prevValue !== value) {
     setPrevValue(value);
     setDraft(value);
@@ -42,7 +43,11 @@ export function DraftSlider({
       value={draft}
       title={title}
       aria-label={ariaLabel}
-      onChange={(e) => setDraft(parseFloat(e.target.value))}
+      onChange={(e) => {
+        const v = parseFloat(e.target.value);
+        setDraft(v);
+        onDraftChange?.(v);
+      }}
       onMouseUp={() => onCommit(draft)}
       onTouchEnd={() => onCommit(draft)}
       onKeyUp={() => onCommit(draft)}

@@ -1,11 +1,28 @@
 import { useStore } from '../lib/store.js';
 import { DraftSlider } from './DraftSlider.js';
+import { useDraftValue } from './useDraftValue.js';
 
 const SCENES = [
-  { id: 'single' as const, label: 'Single Planckton' },
-  { id: 'cube' as const, label: 'Cube tiling (6 pieces)' },
-  { id: 'reptile' as const, label: '8-reptile dissection' },
-  { id: 'growth' as const, label: 'Random face-to-face growth' },
+  {
+    id: 'single' as const,
+    label: 'Single Planckton',
+    tip: 'One Hill orthoscheme - inspect its edges, faces, and rational-π dihedral angles.',
+  },
+  {
+    id: 'cube' as const,
+    label: 'Cube tiling (6 pieces)',
+    tip: 'Six Plancktons (3 R + 3 L) tile a unit cube exactly. The η = 1 reference case.',
+  },
+  {
+    id: 'reptile' as const,
+    label: '8-reptile dissection',
+    tip: 'Matoušek-Safernová m³ self-similar dissection: every Planckton splits into 8 copies of itself.',
+  },
+  {
+    id: 'growth' as const,
+    label: 'Random face-to-face growth',
+    tip: 'Random sequential adsorption on the face graph. The aggregate density study this app is built around.',
+  },
 ];
 
 export function Controls() {
@@ -32,7 +49,7 @@ export function Controls() {
             key={s.id}
             className={`scene-button ${scene === s.id ? 'active' : ''}`}
             onClick={() => setScene(s.id)}
-            title={`Keyboard: ${i + 1}`}
+            title={`${s.tip}  (Keyboard: ${i + 1})`}
           >
             {s.label}
           </button>
@@ -198,6 +215,9 @@ function GrowthControls() {
   const setAnimationMode = useStore((s) => s.setAnimationMode);
   const animSpeed = useStore((s) => s.animSpeed);
   const setAnimSpeed = useStore((s) => s.setAnimSpeed);
+  const [draftN, setDraftN] = useDraftValue(growth.N);
+  const [draftBeta, setDraftBeta] = useDraftValue(growth.compactBeta);
+  const [draftChir, setDraftChir] = useDraftValue(growth.chiralityBias);
   return (
     <div>
       <div className="panel-title">Random face-to-face growth</div>
@@ -212,13 +232,14 @@ function GrowthControls() {
           step={1}
           value={Math.min(500, growth.N)}
           onCommit={(v) => setGrowth({ N: v })}
+          onDraftChange={setDraftN}
         />
         <input
           type="number"
           min={1}
           max={2000}
           step={1}
-          value={growth.N}
+          value={draftN}
           onChange={(e) => {
             const n = parseInt(e.target.value, 10);
             if (Number.isFinite(n) && n >= 1) setGrowth({ N: n });
@@ -275,8 +296,9 @@ function GrowthControls() {
             step={0.2}
             value={growth.compactBeta}
             onCommit={(v) => setGrowth({ compactBeta: v })}
+            onDraftChange={setDraftBeta}
           />
-          <span className="slider-value">{growth.compactBeta.toFixed(1)}</span>
+          <span className="slider-value">{draftBeta.toFixed(1)}</span>
         </label>
       )}
       <label
@@ -290,10 +312,10 @@ function GrowthControls() {
           step={0.01}
           value={growth.chiralityBias}
           onCommit={(v) => setGrowth({ chiralityBias: v })}
+          onDraftChange={setDraftChir}
         />
         <span className="slider-value">
-          {(growth.chiralityBias * 100).toFixed(0)} :{' '}
-          {((1 - growth.chiralityBias) * 100).toFixed(0)}
+          {(draftChir * 100).toFixed(0)} : {((1 - draftChir) * 100).toFixed(0)}
         </span>
       </label>
       <div className="panel-divider-small" />
