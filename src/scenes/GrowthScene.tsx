@@ -203,7 +203,10 @@ export function GrowthScene({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => v
         hullOk: true,
       } satisfies GrowthMetrics,
     };
-  }, [assembly, growth.N, stalled]);
+    // Include currentN: assembly is mutated in place during growth (same ref,
+    // extended .tets array), so React's Object.is dep check on `assembly` alone
+    // misses content updates and freezes hull/ellipsoid at the first N's state.
+  }, [assembly, currentN, growth.N, stalled]);
 
   const lastReportedRef = useRef<GrowthMetrics | null>(null);
   useEffect(() => {
