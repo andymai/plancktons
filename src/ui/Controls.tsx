@@ -113,7 +113,7 @@ function ReptileControls() {
   const setExp = useStore((s) => s.setReptileExplode);
   const depth = useStore((s) => s.reptileDepth);
   const setDepth = useStore((s) => s.setReptileDepth);
-  const count = depth === 1 ? 8 : 64;
+  const count = 8 ** depth;
   return (
     <div>
       <div className="panel-title">8-reptile dissection</div>
@@ -129,12 +129,12 @@ function ReptileControls() {
         />
         <span className="slider-value">{exp.toFixed(2)}</span>
       </label>
-      <label className="slider-row">
+      <label className="slider-row" title="Recursion depth of the m³ dissection. 8^depth pieces.">
         <span>Depth</span>
         <input
           type="range"
           min={1}
-          max={2}
+          max={3}
           step={1}
           value={depth}
           onChange={(e) => setDepth(parseInt(e.target.value, 10))}
@@ -144,9 +144,10 @@ function ReptileControls() {
         </span>
       </label>
       <p className="caption">
-        Doubling a Planckton gives 8× the volume — so 8 unit Plancktons tile a 2× Planckton.
-        Recursing once more gives 64 sub-Plancktons. This is the m³-reptile family Matoušek proved
-        is the only one for tetrahedra.
+        Doubling a Planckton gives 8× the volume — so 8 unit Plancktons tile a
+        2× Planckton (depth 1). Recursing gives 64 (depth 2) or 512 (depth 3)
+        sub-Plancktons. This is the m³-reptile family Matoušek proved is the
+        only one for tetrahedra.
       </p>
     </div>
   );
@@ -162,27 +163,42 @@ function GrowthControls() {
   return (
     <div>
       <div className="panel-title">Random growth</div>
-      <label className="slider-row">
+      <label className="slider-row" title="Target number of Plancktons. Random face-to-face growth typically jams between N≈100 and N≈500 depending on strategy.">
         <span>N (target tets)</span>
         <input
           type="range"
           min={1}
-          max={120}
+          max={500}
           step={1}
           value={growth.N}
           onChange={(e) => setGrowth({ N: parseInt(e.target.value, 10) })}
         />
-        <span className="slider-value">{growth.N}</span>
+        <input
+          type="number"
+          min={1}
+          max={2000}
+          step={1}
+          value={growth.N}
+          onChange={(e) => {
+            const n = parseInt(e.target.value, 10);
+            if (Number.isFinite(n) && n >= 1) setGrowth({ N: n });
+          }}
+          style={{ width: '4.2rem' }}
+        />
       </label>
-      <label className="slider-row">
+      <label className="slider-row" title="Deterministic PRNG seed. Re-running with the same seed reproduces the exact same assembly.">
         <span>Seed</span>
         <input
           type="number"
+          min={0}
           value={growth.seed}
           onChange={(e) => setGrowth({ seed: parseInt(e.target.value, 10) || 1 })}
-          style={{ width: '5rem' }}
+          style={{ width: '5.5rem' }}
         />
-        <button onClick={() => setGrowth({ seed: Math.floor(Math.random() * 1e6) })}>
+        <button
+          onClick={() => setGrowth({ seed: Math.floor(Math.random() * 1e6) })}
+          title="Random seed"
+        >
           🎲
         </button>
       </label>
@@ -197,13 +213,16 @@ function GrowthControls() {
         </select>
       </label>
       {growth.strategy === 'compact' && (
-        <label className="slider-row" title="Inverse temperature: 0 = uniform, large = greedy.">
+        <label
+          className="slider-row"
+          title="Inverse temperature in p(face) ∝ exp(β·n̂·ĉ). β=0 recovers uniform; β≳15 saturates to greedy 'always fill the deepest pocket'."
+        >
           <span>β (compactness)</span>
           <input
             type="range"
             min={0}
-            max={10}
-            step={0.1}
+            max={20}
+            step={0.2}
             value={growth.compactBeta}
             onChange={(e) => setGrowth({ compactBeta: parseFloat(e.target.value) })}
           />
@@ -338,6 +357,20 @@ function AdvancedControls() {
         />
         Show edges
       </label>
+      {color.showEdges && (
+        <label className="slider-row">
+          <span>Edge opacity</span>
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.05}
+            value={color.edgeOpacity}
+            onChange={(e) => setColor({ edgeOpacity: parseFloat(e.target.value) })}
+          />
+          <span className="slider-value">{color.edgeOpacity.toFixed(2)}</span>
+        </label>
+      )}
       <label className="slider-row">
         <span>Tet inset</span>
         <input

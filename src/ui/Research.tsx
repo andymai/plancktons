@@ -76,10 +76,11 @@ function Histogram() {
             type="number"
             value={count}
             min={10}
-            max={2000}
+            max={10000}
             step={10}
             onChange={(e) => setCount(parseInt(e.target.value, 10) || 100)}
             style={{ width: '5rem' }}
+            title="Number of independent trials at the current N. 10000+ trials are fine; main-thread compute will block briefly."
           />
         </label>
         <button onClick={run} disabled={running}>
@@ -150,10 +151,11 @@ function Curve() {
             type="number"
             value={trialsPerN}
             min={3}
-            max={200}
+            max={1000}
             step={1}
             onChange={(e) => setTrialsPerN(parseInt(e.target.value, 10) || 15)}
             style={{ width: '5rem' }}
+            title="Trials per N value in the sweep. Total work is trialsPerN × |Ns|."
           />
         </label>
         <button onClick={run} disabled={running}>

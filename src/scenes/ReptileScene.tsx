@@ -7,37 +7,41 @@ import { PlancktonMesh } from './PlancktonMesh.js';
 
 export const REPTILE_L = 0.5;
 
-/** Apply the 8-reptile dissection `depth` times. depth=1 → 8 pieces, depth=2 → 64. */
+const mid = (a: Vec3, b: Vec3): Vec3 => [
+  (a[0] + b[0]) / 2,
+  (a[1] + b[1]) / 2,
+  (a[2] + b[2]) / 2,
+];
+
+/** Split one tetrahedron into 8 sub-tets via midpoint subdivision (corners + octahedron diagonal). */
+function subdivideOne(verts: readonly [Vec3, Vec3, Vec3, Vec3]): Planckton[] {
+  const [V0, V1, V2, V3] = verts;
+  const M01 = mid(V0, V1);
+  const M02 = mid(V0, V2);
+  const M03 = mid(V0, V3);
+  const M12 = mid(V1, V2);
+  const M13 = mid(V1, V3);
+  const M23 = mid(V2, V3);
+  const inner: ReadonlyArray<[Vec3, Vec3, Vec3, Vec3]> = [
+    [V0, M01, M02, M03],
+    [M01, V1, M12, M13],
+    [M02, M12, V2, M23],
+    [M03, M13, M23, V3],
+    [M02, M13, M01, M03],
+    [M02, M13, M03, M23],
+    [M02, M13, M23, M12],
+    [M02, M13, M12, M01],
+  ];
+  return inner.map(tetFromPts);
+}
+
+/** Apply the 8-reptile dissection `depth` times. depth=k → 8^k pieces. */
 function recursiveReptile(L: number, depth: number): Planckton[] {
-  const parents = eightReptile(L);
-  if (depth <= 1) return parents;
-  const out: Planckton[] = [];
-  for (const parent of parents) {
-    const [V0, V1, V2, V3] = parent.verts;
-    const mid = (a: Vec3, b: Vec3): Vec3 => [
-      (a[0] + b[0]) / 2,
-      (a[1] + b[1]) / 2,
-      (a[2] + b[2]) / 2,
-    ];
-    const M01 = mid(V0, V1);
-    const M02 = mid(V0, V2);
-    const M03 = mid(V0, V3);
-    const M12 = mid(V1, V2);
-    const M13 = mid(V1, V3);
-    const M23 = mid(V2, V3);
-    const inner: ReadonlyArray<[Vec3, Vec3, Vec3, Vec3]> = [
-      [V0, M01, M02, M03],
-      [M01, V1, M12, M13],
-      [M02, M12, V2, M23],
-      [M03, M13, M23, V3],
-      [M02, M13, M01, M03],
-      [M02, M13, M03, M23],
-      [M02, M13, M23, M12],
-      [M02, M13, M12, M01],
-    ];
-    for (const quad of inner) out.push(tetFromPts(quad));
+  let pieces = eightReptile(L);
+  for (let d = 1; d < depth; d++) {
+    pieces = pieces.flatMap((p) => subdivideOne(p.verts));
   }
-  return out;
+  return pieces;
 }
 
 export function ReptileScene() {
