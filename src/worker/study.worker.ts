@@ -142,6 +142,15 @@ function computePairCorrelationEnsemble(job: {
   nTrials: number;
   aniso?: boolean;
 }): { pc: PairCorrelation | null; pcAniso: PairCorrelationAniso | null } {
+  // Fixed rMax across all trials so the bin edges are identical and trial-
+  // level g(r) values stack correctly into the ensemble average. A varying
+  // rMax (per-trial bbox-based) would shift bin centres between trials and
+  // average values from different r-ranges into the same accumulator slot.
+  // Scale rMax with the expected cluster radius: R_g ∼ N^(1/3) · L for a
+  // compact 3D aggregate, so 2·N^(1/3)·L covers diameter with a safety margin
+  // at typical compact-strategy aggregates. Clamped to [2L, 12L] for sanity.
+  const rMax = Math.max(2, Math.min(12, 2 * Math.cbrt(job.N)));
+  const nBins = 60;
   let accumG: number[] = [];
   let countSum: number[] = [];
   let rArr: number[] = [];
@@ -168,9 +177,7 @@ function computePairCorrelationEnsemble(job: {
     const hull = computeHull(allV);
     if (!hull) continue;
     const cents = a.tets.map((tt) => centroid(tt.verts[0], tt.verts[1], tt.verts[2], tt.verts[3]));
-    const bsize = hull.bbox.size;
-    const rMax = 0.6 * Math.sqrt(bsize[0] ** 2 + bsize[1] ** 2 + bsize[2] ** 2);
-    const single = pairCorrelation(cents, hull.volume, rMax, 60);
+    const single = pairCorrelation(cents, hull.volume, rMax, nBins);
     if (single.r.length === 0) continue;
     if (accumG.length === 0) {
       accumG = [...single.g];
@@ -189,7 +196,7 @@ function computePairCorrelationEnsemble(job: {
       const shape = gyrationDescriptors(cents);
       if (shape) {
         const axis = shape.axes[0];
-        const aniso = pairCorrelationAniso(cents, axis, hull.volume, rMax, 60);
+        const aniso = pairCorrelationAniso(cents, axis, hull.volume, rMax, nBins);
         if (accumPar.length === 0) {
           accumPar = [...aniso.gPar];
           accumPerp = [...aniso.gPerp];

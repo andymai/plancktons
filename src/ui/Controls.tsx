@@ -3,7 +3,6 @@ import { useStore } from '../lib/store.js';
 import { DraftSlider } from './DraftSlider.js';
 import { useDraftValue } from './useDraftValue.js';
 import { useWorkerRun } from './useWorkerRun.js';
-import { ProgressBar } from './ProgressBar.js';
 import { Rng } from '../lib/rng.js';
 import { growOne, makeAssembly } from '../lib/assembly.js';
 import type { MorphologyResult } from '../lib/morphology.js';
@@ -598,9 +597,6 @@ function MorphologyPanel() {
         </button>
         {job.running && <button onClick={job.cancel}>cancel</button>}
       </div>
-      {job.progress && job.running && (
-        <ProgressBar done={job.progress.done} total={job.progress.total} label="voxels" />
-      )}
       {job.err && <div className="error-line">⚠ {job.err}</div>}
       {morph && etaM !== null && (
         <div className="stats-block">
