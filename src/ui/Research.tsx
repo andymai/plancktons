@@ -129,8 +129,8 @@ function Histogram() {
   const currentLabel = paramLabel(growth);
 
   return (
-    <div className="research-section">
-      <div className="research-title">Efficiency histogram (N={growth.N})</div>
+    <details className="research-section collapsible" open>
+      <summary className="research-title">Efficiency histogram (N={growth.N})</summary>
       <div className="research-row">
         <label>
           Trials:&nbsp;
@@ -201,7 +201,7 @@ function Histogram() {
       )}
       {err && <div className="error-line">⚠ {err}</div>}
       {histo && <HistogramBars histo={histo} />}
-    </div>
+    </details>
   );
 }
 
@@ -271,8 +271,8 @@ function Curve() {
   const { power, asym, exp } = fits;
 
   return (
-    <div className="research-section">
-      <div className="research-title">η vs N (current strategy)</div>
+    <details className="research-section collapsible" open>
+      <summary className="research-title">η vs N (current strategy)</summary>
       <div className="research-row">
         <label>
           Trials/N:&nbsp;
@@ -441,7 +441,7 @@ function Curve() {
           </tbody>
         </table>
       )}
-    </div>
+    </details>
   );
 }
 
@@ -807,13 +807,13 @@ function PairCorrelationPlot() {
     });
 
   return (
-    <div className="research-section">
-      <div
+    <details className="research-section collapsible">
+      <summary
         className="research-title"
         title="g(r) = local density at distance r normalized by bulk density. Random uniform → 1; periodic crystal → sharp peaks; amorphous → broad peaks decaying to 1."
       >
         Pair correlation g(r) (tet centroids)
-      </div>
+      </summary>
       <div className="research-row">
         <label>
           Trials:&nbsp;
@@ -849,7 +849,7 @@ function PairCorrelationPlot() {
         <div className="error-line">⚠ No assemblies produced ≥2 tets.</div>
       )}
       {pc && pc.r.length > 0 && <PairCorrPlot pc={pc} aniso={pcAniso} />}
-    </div>
+    </details>
   );
 }
 
@@ -975,13 +975,13 @@ function KineticsPanel() {
   }
 
   return (
-    <div className="research-section">
-      <div
+    <details className="research-section collapsible">
+      <summary
         className="research-title"
         title="Avrami-KJMA kinetics: η_C(t) = η_∞ · (1 − exp(−K·t^n)). n=1 surface-limited, n=3 bulk-nucleation, n=4 increasing-nucleation."
       >
         Growth kinetics (Avrami)
-      </div>
+      </summary>
       <div className="research-row">
         <button onClick={run} disabled={job.running}>
           {job.running ? 'Running…' : `Run to N=${growth.N}`}
@@ -1021,7 +1021,7 @@ function KineticsPanel() {
           )}
         </>
       )}
-    </div>
+    </details>
   );
 }
 
@@ -1115,13 +1115,13 @@ function AutocorrPanel() {
   }
 
   return (
-    <div className="research-section">
-      <div
+    <details className="research-section collapsible">
+      <summary
         className="research-title"
         title="S₂(r) = P(two random points distance r apart are both inside the aggregate). S₂(0) = φ (volume fraction); S₂(∞) = φ² (statistically independent). The drop from φ to φ² happens at the correlation length — typical feature size of the cluster."
       >
         Two-point autocorrelation S₂(r)
-      </div>
+      </summary>
       <div className="research-row">
         <button onClick={run} disabled={job.running}>
           {job.running ? 'Computing…' : `Compute S₂(r) at N=${growth.N}`}
@@ -1138,7 +1138,7 @@ function AutocorrPanel() {
           </div>
         </>
       )}
-    </div>
+    </details>
   );
 }
 

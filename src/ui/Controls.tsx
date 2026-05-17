@@ -85,6 +85,12 @@ export function Controls() {
           <DisplayControls />
         </>
       )}
+      {isAtLeast(mode, 'research') && (
+        <>
+          <div className="panel-divider" />
+          <AnalysesControls />
+        </>
+      )}
       <ShortcutsHint />
     </div>
   );
@@ -430,7 +436,6 @@ function StepButton() {
 }
 
 function DisplayControls() {
-  const mode = useStore((s) => s.mode);
   const color = useStore((s) => s.color);
   const setColor = useStore((s) => s.setColor);
   return (
@@ -550,13 +555,17 @@ function DisplayControls() {
         Plancktons share faces exactly in the math (V★ = N·L³/6). The render gap is purely cosmetic
         - set to 0 to see touching faces.
       </p>
-      {isAtLeast(mode, 'research') && (
-        <>
-          <MorphologyPanel />
-          <VoronoiPanel />
-          <McRefinePanel />
-        </>
-      )}
+    </div>
+  );
+}
+
+function AnalysesControls() {
+  return (
+    <div>
+      <div className="panel-title">Analyses</div>
+      <MorphologyPanel />
+      <VoronoiPanel />
+      <McRefinePanel />
     </div>
   );
 }

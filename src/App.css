@@ -717,6 +717,30 @@ input[type='range'] {
   color: var(--text-dim);
   margin-bottom: 8px;
 }
+details.collapsible > summary {
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+details.collapsible > summary::-webkit-details-marker {
+  display: none;
+}
+details.collapsible > summary::before {
+  content: '▸';
+  color: var(--text-dim);
+  font-size: 10px;
+  transition: transform 120ms ease;
+  display: inline-block;
+}
+details.collapsible[open] > summary::before {
+  transform: rotate(90deg);
+}
+details.collapsible[open] > summary {
+  margin-bottom: 8px;
+}
 .research-row {
   display: flex;
   gap: 8px;
