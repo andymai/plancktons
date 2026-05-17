@@ -202,6 +202,8 @@ function ReptileControls() {
   const setExp = useStore((s) => s.setReptileExplode);
   const depth = useStore((s) => s.reptileDepth);
   const setDepth = useStore((s) => s.setReptileDepth);
+  const autoplay = useStore((s) => s.reptileAutoplay);
+  const setAutoplay = useStore((s) => s.setReptileAutoplay);
   const count = 8 ** depth;
   return (
     <div>
@@ -215,8 +217,16 @@ function ReptileControls() {
           step={0.01}
           value={exp}
           onChange={(e) => setExp(parseFloat(e.target.value))}
+          disabled={autoplay}
         />
         <span className="slider-value">{exp.toFixed(2)}</span>
+      </label>
+      <label
+        className="checkbox-row"
+        title="Animate explode 0 → 1 → 0 so the 8^depth sub-Plancktons visibly reassemble into the parent. Direct demonstration of m³-reptile self-similarity."
+      >
+        <input type="checkbox" checked={autoplay} onChange={(e) => setAutoplay(e.target.checked)} />
+        Auto-play reptile dissection
       </label>
       <label className="slider-row" title="Recursion depth of the m³ dissection. 8^depth pieces.">
         <span>Depth</span>
