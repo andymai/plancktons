@@ -19,11 +19,6 @@ export interface ColorOpts {
   showEllipsoid: boolean;
   /** Reference-density lines on plots. */
   showReferences: boolean;
-  /** Render the assembly as a single brepjs-fused solid (no internal shared
-   * faces). Async; loads OpenCascade WASM on first toggle. Slower per frame
-   * (~50 ms per tet for fuseAll) but visually unambiguous — no z-fighting,
-   * no perceived overlap. Recommended N ≤ 50. */
-  useFusedMesh: boolean;
 }
 
 export interface GrowthParams {
@@ -85,7 +80,6 @@ const DEFAULT_COLOR: ColorOpts = {
   colorMode: 'chirality',
   showEllipsoid: false,
   showReferences: true,
-  useFusedMesh: false,
 };
 
 export const useStore = create<State>((set) => ({

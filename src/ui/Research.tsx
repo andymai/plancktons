@@ -244,11 +244,16 @@ function Curve() {
       {points.length > 0 && (
         <CurvePlot points={points} logLog={logLog} showFit={showFit} fit={fit} />
       )}
-      {fit && showFit && points.length > 0 && (
+      {fit && showFit && logLog && points.length > 0 && (
         <div className="stats-line">
           1 − η ≈ A · N<sup>α</sup> &nbsp;·&nbsp; α = {fit.alpha.toFixed(3)} &nbsp;·&nbsp; A ={' '}
           {Math.exp(fit.intercept).toFixed(3)} &nbsp;·&nbsp; R² = {fit.r2.toFixed(4)} (n=
           {fit.n})
+        </div>
+      )}
+      {fit && showFit && !logLog && points.length > 0 && (
+        <div className="stats-line" style={{ fontStyle: 'italic' }}>
+          (enable log–log to see the power-law fit)
         </div>
       )}
       {points.length > 0 && (
@@ -325,14 +330,17 @@ function HistogramBars({ histo }: { histo: OverlayHisto }) {
   const W = 380;
   const H = 140;
   const pad = { l: 4, r: 4, t: 6, b: 22 };
-  const maxCount = Math.max(...histo.binsB, ...(histo.binsA ?? [0]));
   const nBins = histo.binsB.length;
   const innerW = W - pad.l - pad.r;
   const innerH = H - pad.t - pad.b;
-  // Normalize per-series so distributions are comparable.
+  // Normalize per-series so distributions are comparable when trial counts differ.
   const normB = histo.totalB > 0 ? 1 / histo.totalB : 0;
   const normA = histo.totalA > 0 ? 1 / histo.totalA : 0;
-  const maxFrac = Math.max(maxCount * Math.max(normA, normB), 1e-9);
+  // maxFrac is the max of normalized fractions across BOTH series, not
+  // raw-count × max-norm (which was wrong when totalA and totalB differ).
+  let maxFrac = 1e-9;
+  for (const c of histo.binsB) if (c * normB > maxFrac) maxFrac = c * normB;
+  if (histo.binsA) for (const c of histo.binsA) if (c * normA > maxFrac) maxFrac = c * normA;
   return (
     <svg width={W} height={H} className="plot">
       <rect x={0} y={0} width={W} height={H} fill="#222831" />

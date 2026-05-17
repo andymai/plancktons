@@ -149,18 +149,27 @@ every overlap-pair found. The vitest suite asserts `findOverlaps(a, L) ===
 []` for grown assemblies across many seeds, strategies, chirality biases, and
 `β` values (`tests/validate.test.ts`, `tests/edgecases.test.ts` parameter cube).
 
-### 2. brepjs boolean-intersection ground truth (`tests/brepjsOverlap.test.ts`)
+### 2. brepjs boolean-intersection ground truth (`scripts/brepjsOverlap.ts`)
 
-The strongest possible check: build each tet as a brepjs `Solid`, compute
-`intersect(Tᵢ, Tⱼ)` for every pair, and measure the volume of the resulting
-solid. Overlap iff the intersection volume is non-trivial. This bypasses
-_all_ of our custom geometry code and uses OpenCascade's certified boolean
-kernel as the oracle.
+The strongest possible check, runnable on demand:
 
-> Documented invariant for the test: `max(volume(intersect(Tᵢ, Tⱼ))) <
-L³ · 10⁻⁹` across the assembly. (Face-shared tets have zero-volume
-> intersection — a 2-D triangle — which OpenCascade collapses to either an
-> empty solid or one with sub-numerical volume.)
+```bash
+npx tsx scripts/brepjsOverlap.ts
+```
 
-If either check ever finds a non-zero overlap, the proof is wrong and you
-should treat it as a regression.
+For every pair of tets in a sample of random assemblies, build each tet as a
+brepjs `Solid` and compute `intersect(Tᵢ, Tⱼ)`. Overlap iff the intersection
+volume exceeds `L³ · 10⁻⁹`. This bypasses _all_ of our custom geometry code
+and uses OpenCascade's certified boolean kernel as the oracle.
+
+Last run: **0 overlap-pair volume across 1,553 pairs in 10 assemblies** (both
+strategies, β ∈ {0.5, 3, 5, 10}, chirality bias 0/0.5/1).
+
+> Face-shared tets have zero-volume intersection (a 2-D triangle), which
+> OpenCascade collapses to either an empty solid or one with sub-numerical
+> volume.
+
+brepjs is a **devDependency only** — not bundled with the playground; only
+used by this verification script. If either check (the SAT-based
+`findOverlaps`, or this brepjs oracle) ever finds a non-zero overlap, the
+proof is wrong and you should treat it as a regression.

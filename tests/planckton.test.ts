@@ -152,6 +152,35 @@ describe('tetsOverlap', () => {
     expect(tetsOverlap(A, B, 1)).toBe(false);
   });
 
+  it('regression: detects "shared face, apexes on same side" — the SAT bug class', () => {
+    // Two tets sharing 3 vertices forming a triangle at x=1, both apexes at x=0.
+    // The pre-SAT vertex-in-tet + edge-face test missed this; SAT catches it
+    // via the edge-edge cross-product axes.
+    const A: [
+      [number, number, number],
+      [number, number, number],
+      [number, number, number],
+      [number, number, number],
+    ] = [
+      [0, 0, 0],
+      [1, 0, 0],
+      [1, 1, 0],
+      [1, 1, 1],
+    ];
+    const B: [
+      [number, number, number],
+      [number, number, number],
+      [number, number, number],
+      [number, number, number],
+    ] = [
+      [0, 1, 1],
+      [1, 1, 1],
+      [1, 1, 0],
+      [1, 0, 0],
+    ];
+    expect(tetsOverlap(A, B, 1)).toBe(true);
+  });
+
   it('returns true when a vertex is deep inside another tet', () => {
     const A = unitPlanckton(1, 'R').verts;
     const B: [

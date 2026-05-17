@@ -156,7 +156,7 @@ export function matePlanckton(
 }
 
 // ---------------------------------------------------------------------------
-// Overlap detection (vertex + centroid + edge-face)
+// Overlap detection (SAT — Separating Axis Theorem)
 // ---------------------------------------------------------------------------
 
 const TET_EDGES: ReadonlyArray<readonly [number, number]> = [

@@ -20,7 +20,6 @@ import { PlancktonMesh } from './PlancktonMesh.js';
 import { HullMesh } from './HullMesh.js';
 import { InertiaEllipsoid, PrincipalAxes } from './InertiaEllipsoid.js';
 import { CameraFit } from './CameraFit.js';
-import { FusedMesh } from './FusedMesh.js';
 
 export const GROWTH_L = 1;
 
@@ -233,17 +232,13 @@ export function GrowthScene({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => v
     <>
       <CameraFit extent={extent} />
       <group position={center}>
-        {color.useFusedMesh ? (
-          <FusedMesh tets={assembly.tets} />
-        ) : (
-          assembly.tets.map((p, i) => (
-            <PlancktonMesh
-              key={i}
-              planckton={p}
-              colorOverride={colorByDepth ? depthHue(i) : undefined}
-            />
-          ))
-        )}
+        {assembly.tets.map((p, i) => (
+          <PlancktonMesh
+            key={i}
+            planckton={p}
+            colorOverride={colorByDepth ? depthHue(i) : undefined}
+          />
+        ))}
         {color.showHull && hullPoints.length > 0 && (
           <HullMesh points={hullPoints} faces={hullFaces} />
         )}

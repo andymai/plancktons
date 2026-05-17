@@ -18,7 +18,6 @@ const ocMod = (await import('brepjs-opencascade')) as unknown as {
 };
 const opencascade = ocMod.default;
 import {
-  applyMatrix,
   initFromOC,
   intersect,
   isEmpty,
@@ -26,14 +25,28 @@ import {
   polyhedron,
   unwrap,
   validSolid,
-  type Solid,
   type ValidSolid,
 } from 'brepjs';
 
 import { growOne, makeAssembly } from '../src/lib/assembly.js';
 import { Rng } from '../src/lib/rng.js';
-import { rigidMatrixFromVerts } from '../src/lib/brepjsKernel.js';
 import type { Planckton } from '../src/lib/planckton.js';
+import type { Vec3 } from '../src/lib/vec.js';
+
+/**
+ * Build a brepjs polyhedron directly from a Planckton's world-space verts +
+ * face indices. brepjs is used here only for the boolean-intersection oracle;
+ * the runtime app no longer depends on it.
+ */
+function plancktonToVertsAndFaces(p: Planckton): {
+  verts: Vec3[];
+  faces: [number, number, number][];
+} {
+  return {
+    verts: [...p.verts],
+    faces: p.faces.map(([a, b, c]) => [a, b, c] as [number, number, number]),
+  };
+}
 
 const L = 1;
 // Broader sample: same math used regardless of the playground's brepjs render
@@ -60,48 +73,15 @@ const SAMPLES: ReadonlyArray<{
   { strategy: 'compact', N: 30, seed: 23, beta: 5 },
 ];
 
-const HILL_FACES_R = [
-  [0, 2, 1],
-  [1, 2, 3],
-  [0, 3, 2],
-  [0, 1, 3],
-] as const;
-const HILL_FACES_L = HILL_FACES_R.map(([a, b, c]) => [c, b, a] as const);
-
 async function main() {
   process.stderr.write('Initializing brepjs (OpenCascade WASM)…\n');
   const oc = await opencascade();
   initFromOC(oc as never);
   process.stderr.write('done.\n');
 
-  const templateR = unwrap(
-    polyhedron(
-      [
-        [0, 0, 0],
-        [L, 0, 0],
-        [L, L, 0],
-        [L, L, L],
-      ],
-      HILL_FACES_R as readonly (readonly [number, number, number])[]
-    )
-  );
-  const templateL = unwrap(
-    polyhedron(
-      [
-        [0, 0, 0],
-        [-L, 0, 0],
-        [-L, L, 0],
-        [-L, L, L],
-      ],
-      HILL_FACES_L as readonly (readonly [number, number, number])[]
-    )
-  );
-  const templates = { R: templateR, L: templateL };
-
   function toSolid(p: Planckton): ValidSolid {
-    const tmpl: Solid = templates[p.chirality];
-    const m = rigidMatrixFromVerts(p.verts, p.chirality);
-    return unwrap(validSolid(unwrap(applyMatrix(tmpl, m))));
+    const { verts, faces } = plancktonToVertsAndFaces(p);
+    return unwrap(validSolid(unwrap(polyhedron(verts, faces))));
   }
 
   let worstOverall = 0;

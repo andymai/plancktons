@@ -353,17 +353,6 @@ function AdvancedControls() {
         />
         Reference packing densities on plots
       </label>
-      <label
-        className="checkbox-row"
-        title="Render the assembly as a single brepjs-fused solid. Internal shared faces disappear — visually unambiguous. Async (loads ~5 MB WASM on first toggle); slower at large N."
-      >
-        <input
-          type="checkbox"
-          checked={color.useFusedMesh}
-          onChange={(e) => setColor({ useFusedMesh: e.target.checked })}
-        />
-        Use fused brepjs solid (rigorous)
-      </label>
       <label className="checkbox-row">
         <input
           type="checkbox"

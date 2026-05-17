@@ -172,13 +172,16 @@ All of these are shown live in the HUD when _Advanced mode_ is on.
 
 ### 4.3 Suggested measurements (empirical)
 
-The author's small N≤50 sweeps (see `scripts/study.ts`) show:
+After the SAT overlap fix (which correctly rejects placements the earlier
+loose test was wrongly accepting), measured large-N means:
 
-| Strategy         | `η_∞` (large-N mean) | comment                     |
-| ---------------- | -------------------- | --------------------------- |
-| uniform          | `≈ 0.25`             | branchy, fractal-like piles |
-| compact, `β = 3` | `≈ 0.34`             | rounder piles               |
-| compact, `β → ∞` | not yet measured     | greedy upper bound          |
+| Strategy          | `η_∞` (mean, N=30, 50 trials) | comment                                   |
+| ----------------- | ----------------------------- | ----------------------------------------- |
+| uniform           | `≈ 0.22`                      | branchy, fractal-like piles               |
+| compact, `β = 3`  | `≈ 0.30`                      | rounder piles                             |
+| compact, `β = 10` | jams early (N ≈ 5–15)         | greedy regime is over-constrained for RSA |
+
+Re-measure with `npx tsx scripts/study.ts --sweep-N 20,30,40,50 --trials 50`.
 
 Open questions you can explore with this tool:
 
@@ -260,10 +263,13 @@ kappaSq, prolateness, meanCoord, maxCoord, chirR, ms`.
   inter-tet length scale, which can be substantially smaller than the hull.
   Alpha-shape support is a planned extension; until then `V_hull ≥ V_α ≥ V★`
   and `η_hull ≤ η_α ≤ 1`.
-- **Numerical tolerance.** Overlap is tested with a margin of `L · 10⁻³` for
-  vertex-in-tet, `10⁻³` for triangle-barycentric. The math has been validated
-  to 0 violations across 350 random assemblies in `src/lib/__overlap_test__.ts`.
-- **Visual gap.** The default "Tet inset" of `1.2 %` shrinks rendered tets
+- **Overlap detection.** Two tets are tested via the Separating Axis Theorem
+  (44 candidate axes: 4 + 4 face normals + 6 × 6 edge-edge cross products).
+  Margin `L · 10⁻⁴`, ten orders of magnitude above the FP error bound. See
+  `docs/PROOF.md` for the full proof. Verified by brepjs's certified
+  OpenCascade intersect kernel (`scripts/brepjsOverlap.ts`): 0 overlap-pair
+  volume across 1,553 pairs in 10 random assemblies.
+- **Visual gap.** The default "Tet inset" of `2.5 %` shrinks rendered tets
   toward their centroids so shared faces don't z-fight on the GPU; the
   _measured_ geometry uses the original (touching) vertices. Set inset to 0
   to see the true touching configuration.
