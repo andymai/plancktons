@@ -236,8 +236,9 @@ Other observables:
   tet. `z = (4N − F_free) / N`. For a perfect tiling `⟨z⟩ = 4`; for any
   finite aggregate with surface `⟨z⟩ < 4`.
 - **Vertex coordination histogram**: for each spatial vertex (`L·10⁻⁶`
-  quantization), the number of tets meeting there. In the 6-cube tiling the
-  diagonal endpoints `(0,0,0)` and `(L,L,L)` both have coordination 6.
+  quantization), the number of tets meeting there. In the geometric 6-cube
+  tiling (Appendix B.1) the diagonal endpoints `(0,0,0)` and `(L,L,L)` both
+  have coordination 6.
 - **Free-face fraction** `f_F = |free faces| / (4N) = 1 − ⟨z⟩/4`.
 - **Fractal dimension `D_f`** from `R_g ∼ N^{1/D_f}`. `D_f → 3` for compact
   3D growth; `D_f < 3` for surface-dominated / fractal aggregates.
@@ -374,8 +375,9 @@ Currently unresolved:
    aggregate" that does not appear to be characterized. The §4.6 numbers
    below are the first values we are aware of.
 2. **Coordination of the m³-reptile recursion.** At depth `n`, are interior
-   vertex coordinations bounded, or do they grow with `n`? The 6-cube tiling
-   has coordination 6 at the two diagonal endpoints; the 8-reptile descends
+   vertex coordinations bounded, or do they grow with `n`? The geometric
+   6-cube tiling has coordination 6 at the two diagonal endpoints; the
+   8-reptile descends
    the recursion once; no closed-form answer is currently known.
 3. **MC-refined η_∞ vs. one-shot growth.** How much of the 1 − η_C ≈ 0.47
    "vacuum" at N = 200 is true jamming versus local-minimum stickiness?
@@ -488,17 +490,30 @@ dissection are:
 - **4 corner pieces** (each a translate of the unit Hill T):
   `(W₀, M₀₁, M₀₂, M₀₃)`, `(M₀₁, W₁, M₁₂, M₁₃)`,
   `(M₀₂, M₁₂, W₂, M₂₃)`, `(M₀₃, M₁₃, M₂₃, W₃)`.
-- **4 octahedron pieces** (sharing the diagonal `M₀₂ ↔ M₁₃`, the only
-  octahedron diagonal whose length `L√2` equals a Hill T edge length):
-  `(M₀₂, M₁₃, M₀₁, M₀₃)`, `(M₀₂, M₁₃, M₀₃, M₂₃)`,
-  `(M₀₂, M₁₃, M₂₃, M₁₂)`, `(M₀₂, M₁₃, M₁₂, M₀₁)`.
+- **4 octahedron pieces** sharing the diagonal `M₀₂ ↔ M₁₃` (the only
+  octahedron diagonal whose length `L√2` equals a Hill T edge length). Each
+  is listed below in Hill-path order — three consecutive orthogonal edges of
+  length `L/2` — so the determinant trick used in `tetFromPts` recovers the
+  correct geometric chirality:
+  `(M₀₁, M₀₂, M₀₃, M₁₃)`, `(M₀₂, M₀₃, M₁₃, M₂₃)`,
+  `(M₀₂, M₁₂, M₁₃, M₂₃)`, `(M₀₁, M₀₂, M₁₂, M₁₃)`.
 
 Each has volume `L³/6`; their sum is `8·L³/6 = (2L)³/6` - the parent's volume.
-Their chiralities split 6R + 2L (or 2R + 6L, depending on which orientation of
-the parent is taken as canonical), giving the chiral balance condition that
+With parent chirality `C` (the path `W₀ → W₁ → W₂ → W₃` here gives `C = R`),
+the children split exactly **6C + 2(¬C)** — four corners inherit `C`, the
+first two octahedron paths above have edge triples that are cyclic perms of
+`(a, b, c)` and inherit `C`, the last two are transpositions and flip to
+`¬C`. This 6+2 chiral balance is the load-bearing condition that
 distinguishes Hill orthoschemes from generic space-filling tetrahedra.
 
-## Appendix B. The 6-cube tiling, explicitly
+## Appendix B. The 6-cube tilings, explicitly
+
+A cube admits more than one dissection into 6 congruent Hill T₁ orthoschemes.
+The Cube scene renders three side by side. All three have total volume
+`6 · (L³/6) = L³`; they differ in chirality breakdown and in which physical
+Plancktons can assemble them.
+
+### B.1. Geometric (3R + 3L)
 
 For each permutation `(a, b, c)` of `(0, 1, 2)`, walk one unit-step along axis
 `eₐ`, then `eᵦ`, then `e_c`, starting from the origin:
@@ -509,10 +524,38 @@ For each permutation `(a, b, c)` of `(0, 1, 2)`, walk one unit-step along axis
 
 The 6 permutations give 3 right-handed (even permutations) and 3 left-handed
 (odd permutations) Plancktons, all 6 sharing the space diagonal `(0,0,0) ↔
-(L,L,L)`. They tile the unit cube exactly:
+(L,L,L)`. This is the geometric content of Hill's 1896 paper.
 
-```
-   Σ_{6 perms} Vol(Planckton) = 6 · (L³ / 6) = L³.
-```
+### B.2. HT-realizable left (2R + 4L) and its mirror right (4R + 2L)
 
-This is the geometric content of Hill's 1896 paper.
+Cut the cube by the plane `y = z`. Each half is a triangular prism of volume
+`L³/2`, tiled by 3 Hill orthoschemes:
+
+- **Lower half** (`y < z`), in Hill-path order, chirality **1R + 2L**:
+  `((0,0,0), (L,0,0), (L,0,L), (L,L,L))` — edges `(x, z, y)`, L
+  `((0,0,0), (0,0,L), (L,0,L), (L,L,L))` — edges `(z, x, y)`, R
+  `((0,0,0), (0,0,L), (0,L,L), (L,L,L))` — edges `(z, y, x)`, L
+
+- **Upper half** (`y > z`) is obtained by the orientation-preserving 180°
+  rotation around the line `(t, L/2, L/2)`:
+  ```
+  R(x, y, z) = (x, L − y, L − z),    det R = +1.
+  ```
+  R fixes the cube `[0,L]³` setwise but swaps the two prisms. Because R is in
+  SO(3), it preserves chirality on every piece, so applying it to the lower
+  half yields another 1R + 2L tiling — this time of the `y > z` prism.
+
+Joining the two halves gives the **HT-realizable left** cube at 2R + 4L.
+Reflecting through `x = L/2` (det = −1, flips every chirality) gives the
+**HT-realizable right** mirror at 4R + 2L.
+
+### Why "HT-realizable"
+
+Appendix A shows that the 8-reptile of a single Hill T₁ tetrahedron always
+produces 6 children of one handedness and 2 of the other. A 4+2 (or 2+4)
+cube can be built from the 6 children of an HT decomposition (4 of the
+majority handedness as corners + 2 mixed-handedness octahedron pieces re-cut
+into half-prisms); a 3+3 cube cannot, because it requires 3 of each, and
+no single Matoušek decomposition supplies that ratio. The B.1 cube exists as
+a pure geometric scissors-congruence object; only the B.2 cubes are
+assemblable from a bag of physical Plancktons drawn from one parent HT.

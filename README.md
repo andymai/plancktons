@@ -42,8 +42,10 @@ left-handed in the default color scheme).
 
 1. **Single Planckton inspector** - chiral pair side by side, toggle
    handedness, dihedral angles in rational π form.
-2. **6-piece cube tiling** - six Plancktons (3 R + 3 L) tile a unit cube
-   exactly. Explode slider. η = 1.
+2. **Cube triptych** - three 6-piece dissections side by side: the classical
+   geometric (3R+3L) main-diagonal cube and the two HT-realizable mirrors
+   (4R+2L, 2R+4L) buildable from one Matoušek decomposition. Synchronized
+   explode slider. η = 1 each.
 3. **8-reptile dissection** - eight unit Plancktons tile a doubled
    Planckton; recurse to 64 sub-Plancktons. η = 1 at every depth.
 4. **Random face-to-face growth** - face-restricted cluster aggregation
