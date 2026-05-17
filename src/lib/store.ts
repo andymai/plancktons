@@ -73,10 +73,11 @@ const DEFAULT_COLOR: ColorOpts = {
   showHull: false,
   showEdges: true,
   edgeOpacity: 0.55,
-  // 2.5 % inset: visually separates pieces in canonical tilings and random
-  // growth where mathematical face-sharing would otherwise z-fight. Set to 0
-  // in advanced to see the true touching configuration.
-  tetInset: 0.025,
+  // 0.5 % inset: just enough to disambiguate shared faces from one direction
+  // of the camera. The material also has polygonOffset enabled (a depth-only
+  // GPU nudge), so this inset is belt-and-suspenders rather than the primary
+  // defense. Set to 0 in advanced for the true mathematical touching config.
+  tetInset: 0.005,
   colorMode: 'chirality',
   showEllipsoid: false,
   showReferences: true,

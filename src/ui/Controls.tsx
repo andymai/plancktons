@@ -476,7 +476,7 @@ function AdvancedControls() {
           type="range"
           min={0}
           max={0.06}
-          step={0.002}
+          step={0.001}
           value={color.tetInset}
           onChange={(e) => setColor({ tetInset: parseFloat(e.target.value) })}
         />
