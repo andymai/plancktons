@@ -18,6 +18,7 @@ import {
 } from '../lib/paircorr.js';
 import { gyrationDescriptors } from '../lib/shape.js';
 import { morphologicalHull, type MorphologyResult } from '../lib/morphology.js';
+import { etaVFromVoronoi, voronoiCells, type VoronoiResult } from '../lib/voronoi.js';
 import { Rng } from '../lib/rng.js';
 import { growOne, makeAssembly, type GrowthStrategy } from '../lib/assembly.js';
 import { computeHull } from '../lib/hull.js';
@@ -57,6 +58,15 @@ export type StudyJob =
       L: number;
       voxelSize: number;
       alpha: number;
+    }
+  | {
+      kind: 'voronoi';
+      jobId: number;
+      /** Pre-computed tet centroids; worker doesn't need vertex data here. */
+      centroids: [number, number, number][];
+      L: number;
+      voxelSize: number;
+      padL: number;
     };
 
 export type StudyMessage =
@@ -72,7 +82,8 @@ export type StudyResult =
       pc: PairCorrelation | null;
       pcAniso: PairCorrelationAniso | null;
     }
-  | { kind: 'morph'; morph: MorphologyResult | null };
+  | { kind: 'morph'; morph: MorphologyResult | null }
+  | { kind: 'voronoi'; voronoi: VoronoiResult | null; etaV: number | null };
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
 
@@ -122,6 +133,13 @@ ctx.addEventListener('message', (event: MessageEvent<StudyJob>) => {
         alpha: job.alpha,
       });
       postResult(job.jobId, { kind: 'morph', morph });
+    } else if (job.kind === 'voronoi') {
+      const voronoi = voronoiCells(job.centroids, job.L, {
+        voxelSize: job.voxelSize,
+        padL: job.padL,
+      });
+      const etaV = voronoi ? etaVFromVoronoi(voronoi, job.L) : null;
+      postResult(job.jobId, { kind: 'voronoi', voronoi, etaV });
     }
   } catch (err) {
     ctx.postMessage({
