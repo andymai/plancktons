@@ -21,6 +21,7 @@ import { morphologicalHull, type MorphologyResult } from '../lib/morphology.js';
 import { etaVFromVoronoi, voronoiCells, type VoronoiResult } from '../lib/voronoi.js';
 import { rebuildFromTets } from '../lib/assembly.js';
 import { runMcRefine, type McRefineResult } from '../lib/mcRefine.js';
+import { growTrajectory, type KineticsResult } from '../lib/kinetics.js';
 import { Rng } from '../lib/rng.js';
 import { growOne, makeAssembly, type GrowthStrategy } from '../lib/assembly.js';
 import { computeHull } from '../lib/hull.js';
@@ -83,6 +84,15 @@ export type StudyJob =
       steps: number;
       temperature: number;
       mcSeed: number;
+    }
+  | {
+      kind: 'kinetics';
+      jobId: number;
+      N: number;
+      seed: number;
+      chiralityBias: number;
+      strategy: GrowthStrategy;
+      compactBeta: number;
     };
 
 export type StudyMessage =
@@ -100,7 +110,8 @@ export type StudyResult =
     }
   | { kind: 'morph'; morph: MorphologyResult | null }
   | { kind: 'voronoi'; voronoi: VoronoiResult | null; etaV: number | null }
-  | { kind: 'mc'; mc: McRefineResult };
+  | { kind: 'mc'; mc: McRefineResult }
+  | { kind: 'kinetics'; kinetics: KineticsResult };
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
 
@@ -177,6 +188,21 @@ ctx.addEventListener('message', (event: MessageEvent<StudyJob>) => {
         }
       );
       postResult(job.jobId, { kind: 'mc', mc });
+    } else if (job.kind === 'kinetics') {
+      const kinetics = growTrajectory(
+        {
+          L: 1,
+          N: job.N,
+          seed: job.seed,
+          chiralityBias: job.chiralityBias,
+          strategy: job.strategy,
+          compactBeta: job.compactBeta,
+        },
+        {
+          onStep: (done, total) => postProgress(job.jobId, done, total),
+        }
+      );
+      postResult(job.jobId, { kind: 'kinetics', kinetics });
     }
   } catch (err) {
     ctx.postMessage({
