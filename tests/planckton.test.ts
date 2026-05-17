@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   edgeSig,
+  faceCenter,
   faceNormal,
   faceTriangles,
   matchPerms,
@@ -196,5 +197,18 @@ describe('tetsOverlap', () => {
     ];
     // vertex (0.5, 0.5, 0.3) is inside A → overlap detected
     expect(tetsOverlap(A, B, 1)).toBe(true);
+  });
+});
+
+describe('faceCenter', () => {
+  it('returns the arithmetic centroid of a triangle', () => {
+    const c = faceCenter([
+      [0, 0, 0],
+      [3, 0, 0],
+      [0, 3, 0],
+    ]);
+    expect(c[0]).toBeCloseTo(1, 12);
+    expect(c[1]).toBeCloseTo(1, 12);
+    expect(c[2]).toBeCloseTo(0, 12);
   });
 });

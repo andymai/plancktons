@@ -7,6 +7,14 @@ describe('voronoiCells', () => {
     expect(voronoiCells([], 1)).toBe(null);
   });
 
+  it('applies default voxelSize=L/8 and padL=L when opts omitted', () => {
+    const pts: Vec3[] = [[0, 0, 0]];
+    const v = voronoiCells(pts, 1);
+    expect(v).not.toBe(null);
+    // Defaults: padL=1 → bbox is 2³=8.
+    expect(v!.totalVolume).toBeCloseTo(8, 1);
+  });
+
   it('single centroid owns the entire padded bbox', () => {
     const pts: Vec3[] = [[0.5, 0.5, 0.5]];
     const v = voronoiCells(pts, 1, { voxelSize: 0.1, padL: 1 });

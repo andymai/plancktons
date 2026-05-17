@@ -163,6 +163,22 @@ describe('pairCorrelationAniso', () => {
     expect(Math.abs(meanPar - meanPerp) / Math.max(meanPar, meanPerp)).toBeLessThan(0.5);
   });
 
+  it('falls back to unit length when axis is the zero vector', () => {
+    // axis=(0,0,0) → len=0 → defensive `|| 1` fallback at line 94 keeps the
+    // computation from emitting NaN; the result is the same shape as a normal
+    // call (the projected magnitudes just collapse to 0 for every pair).
+    const pts: Vec3[] = [
+      [0, 0, 0],
+      [1, 0, 0],
+      [0, 1, 0],
+    ];
+    const pc = pairCorrelationAniso(pts, [0, 0, 0], 100, 3, 6);
+    expect(pc.countsPar).toHaveLength(6);
+    expect(pc.countsPerp).toHaveLength(6);
+    for (const c of pc.countsPar) expect(Number.isFinite(c)).toBe(true);
+    for (const c of pc.countsPerp) expect(Number.isFinite(c)).toBe(true);
+  });
+
   it('normalizes axis defensively (un-normalized input works)', () => {
     const pts: Vec3[] = [
       [0, 0, 0],

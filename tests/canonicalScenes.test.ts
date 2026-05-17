@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cubeTiling, eightReptile, tetFromPts } from '../src/lib/canonicalScenes.js';
+import { cubeTiling, eightReptile, explode, tetFromPts } from '../src/lib/canonicalScenes.js';
 import { tetVolume } from '../src/lib/planckton.js';
 import type { Vec3 } from '../src/lib/vec.js';
 
@@ -77,6 +77,58 @@ describe('recursive midpoint subdivision (depth 2, 3)', () => {
     pieces = pieces.flatMap(subdivide).flatMap(subdivide);
     expect(pieces).toHaveLength(512);
     for (const p of pieces) expect(tetVolume(p)).toBeCloseTo(1 / 384, 10);
+  });
+});
+
+describe('explode', () => {
+  it('amount=0 returns a shallow copy without mutating verts', () => {
+    const pieces = cubeTiling(1);
+    const out = explode(pieces, 0);
+    expect(out).not.toBe(pieces);
+    expect(out).toHaveLength(pieces.length);
+    for (let i = 0; i < pieces.length; i++) {
+      expect(out[i]!.verts).toEqual(pieces[i]!.verts);
+    }
+  });
+
+  it('preserves tet volume (rigid translation only)', () => {
+    const pieces = cubeTiling(1);
+    const out = explode(pieces, 0.5);
+    for (let i = 0; i < pieces.length; i++) {
+      expect(tetVolume(out[i]!.verts)).toBeCloseTo(tetVolume(pieces[i]!.verts), 10);
+    }
+  });
+
+  it('moves each piece outward by exactly `amount` from the global centroid', () => {
+    const pieces = cubeTiling(1);
+    // Global centroid of unit cube tiling is (0.5, 0.5, 0.5).
+    const out = explode(pieces, 0.7);
+    for (let i = 0; i < pieces.length; i++) {
+      const before = pieces[i]!.verts;
+      const after = out[i]!.verts;
+      // All four verts of a single piece must translate by the same delta.
+      const dx0 = after[0][0] - before[0][0];
+      const dy0 = after[0][1] - before[0][1];
+      const dz0 = after[0][2] - before[0][2];
+      for (let k = 1; k < 4; k++) {
+        expect(after[k][0] - before[k][0]).toBeCloseTo(dx0, 10);
+        expect(after[k][1] - before[k][1]).toBeCloseTo(dy0, 10);
+        expect(after[k][2] - before[k][2]).toBeCloseTo(dz0, 10);
+      }
+      // The translation magnitude must equal `amount`.
+      expect(Math.hypot(dx0, dy0, dz0)).toBeCloseTo(0.7, 10);
+    }
+  });
+
+  it('handles a single piece centered at origin (degenerate dir → fallback)', () => {
+    // When a piece's centroid coincides with the global centroid, len=0 and
+    // the code falls back to len=1, producing a zero offset.
+    const single = cubeTiling(1).slice(0, 1);
+    const out = explode(single, 5);
+    // Single piece: piece centroid == global centroid → offset is (0,0,0).
+    for (let k = 0; k < 4; k++) {
+      expect(out[0]!.verts[k]).toEqual(single[0]!.verts[k]);
+    }
   });
 });
 

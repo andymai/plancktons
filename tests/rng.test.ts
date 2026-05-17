@@ -42,4 +42,18 @@ describe('Rng', () => {
     const r = new Rng(0);
     expect(r.seed).toBe(1);
   });
+
+  it('pick returns an element of a non-empty array', () => {
+    const r = new Rng(42);
+    const arr = ['a', 'b', 'c', 'd'];
+    for (let i = 0; i < 20; i++) expect(arr).toContain(r.pick(arr));
+  });
+
+  it('pick distribution covers every index over many calls (deterministic)', () => {
+    const r = new Rng(7);
+    const arr = [0, 1, 2, 3];
+    const seen = new Set<number>();
+    for (let i = 0; i < 200; i++) seen.add(r.pick(arr));
+    expect(seen.size).toBe(4);
+  });
 });
