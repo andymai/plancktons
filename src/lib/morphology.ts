@@ -93,7 +93,7 @@ export function morphologicalHull(
  * four sub-determinants (replacing one vertex with p) has the same sign as the
  * tet's own orientation. Includes the boundary.
  */
-function pointInTet(p: Vec3, t: Planckton): boolean {
+export function pointInTet(p: Vec3, t: Planckton): boolean {
   const v0 = t.verts[0];
   const v1 = t.verts[1];
   const v2 = t.verts[2];
