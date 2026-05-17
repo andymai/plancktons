@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { runOnWorker, type RunOptions, type StudyJobInput } from '../lib/studyClient.js';
 import type { StudyResult } from '../worker/study.worker.js';
+import { runCurvePooled, runStudyPooled } from '../lib/workerPool.js';
 
 export interface WorkerRunState<R> {
   running: boolean;
@@ -10,8 +11,12 @@ export interface WorkerRunState<R> {
 }
 
 /**
- * Runs one study job on a Web worker, tracking running/progress/error state.
- * A new run() aborts any in-flight job.
+ * Runs one study job, tracking running/progress/error state. A new run()
+ * aborts any in-flight job.
+ *
+ * `study` and `curve` jobs fan out across the worker pool (one worker per
+ * core, minus one for the UI); other job kinds run on a single worker as
+ * before. Aborting either path terminate()s the underlying workers.
  */
 export function useWorkerRun<R extends StudyResult>() {
   const [state, setState] = useState<WorkerRunState<R>>({
@@ -27,14 +32,12 @@ export function useWorkerRun<R extends StudyResult>() {
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     setState({ running: true, err: null, progress: null, result: null });
+    const onProgress = (done: number, total: number) => {
+      opts?.onProgress?.(done, total);
+      setState((s) => ({ ...s, progress: { done, total } }));
+    };
     try {
-      const result = await runOnWorker<R>(job, {
-        signal: ctrl.signal,
-        onProgress: (done, total) => {
-          opts?.onProgress?.(done, total);
-          setState((s) => ({ ...s, progress: { done, total } }));
-        },
-      });
+      const result = await dispatch<R>(job, ctrl.signal, onProgress);
       if (ctrl.signal.aborted) return;
       setState({ running: false, err: null, progress: null, result });
     } catch (e) {
@@ -51,4 +54,30 @@ export function useWorkerRun<R extends StudyResult>() {
   const cancel = useCallback(() => abortRef.current?.abort(), []);
 
   return { ...state, run, cancel };
+}
+
+async function dispatch<R extends StudyResult>(
+  job: StudyJobInput,
+  signal: AbortSignal,
+  onProgress: (done: number, total: number) => void
+): Promise<R> {
+  if (job.kind === 'study') {
+    const trials = await runStudyPooled(job.params, { signal, onProgress });
+    return { kind: 'study', trials } as unknown as R;
+  }
+  if (job.kind === 'curve') {
+    const points = await runCurvePooled(
+      {
+        Ns: job.Ns,
+        trialsPerN: job.trialsPerN,
+        startSeed: job.startSeed,
+        chiralityBias: job.chiralityBias,
+        strategy: job.strategy,
+        ...(job.compactBeta !== undefined ? { compactBeta: job.compactBeta } : {}),
+      },
+      { signal, onProgress }
+    );
+    return { kind: 'curve', points } as unknown as R;
+  }
+  return runOnWorker<R>(job, { signal, onProgress });
 }

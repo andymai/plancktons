@@ -201,6 +201,8 @@ src/
     exports.ts          STL / JSON / PNG / URL-share
     provenance.ts       Build-stamp injected by Vite
     study.ts            Multi-trial batch runner + CSV with provenance
+    studyClient.ts      Per-call short-lived Web Worker dispatcher
+    workerPool.ts       Trial / Ns fan-out across hardwareConcurrency-1 workers
     store.ts            Zustand UI state
     validate.ts         Pairwise overlap auditor (used in tests)
   scenes/
@@ -233,19 +235,27 @@ docs/
 
 ## Known gaps
 
-- **Voronoi / alpha-shape `V_α`** - planned. Convex hull V is an _upper_
-  bound on the true vacuum-bag volume; assemblies with deep concavities
-  have V_α < V_hull < V_bbox.
-- **Worker pool** - heavy Research-mode sweeps (e.g. 500 trials × 12 N
-  values) currently block the main thread. The CLI is the workaround.
-- **Metropolis MC post-growth refinement** - would let η_C asymptotically
-  approach the lattice limit by accepting/rejecting local rearrangements
-  rather than the current strictly-deposit model.
-- **Anisotropic g(r)** - current g(r) assumes 3D isotropy; for elongated
-  aggregates the radial average smears out directional structure that
-  S(k) or g(r, θ) would reveal.
-- **No SVG plot export** - the trial histogram and sweep curve are
-  on-screen only; data export is CSV/JSON.
+The simulation kernels for the four "planned" items in earlier revisions of
+this README have all landed (`voronoi.ts`, `morphology.ts`, `mcRefine.ts`,
+`pairCorrelationAniso`, `svgExport.ts`, `workerPool.ts`). Residuals worth
+flagging today:
+
+- **MC refinement / Voronoi η_V / morphological η_M not surfaced in the UI** -
+  the worker handles `mc`, `voronoi`, and `morph` job kinds and returns
+  results, but Research mode only renders Histogram, η-vs-N, g(r), kinetics,
+  and S₂(r). Wiring these into the HUD / Research view is the next obvious
+  UI pass.
+- **CLI is single-threaded** - the browser fans out study and curve jobs
+  across `navigator.hardwareConcurrency − 1` Web Workers via
+  `src/lib/workerPool.ts`, but `scripts/study.ts` still walks trials
+  sequentially. Users who want offline parallelism shell out N processes.
+- **No two-level Ns × trials fan-out for curve sweeps** - the pool
+  partitions Ns across workers; if Ns is shorter than the pool size, some
+  cores idle. A two-level partition would help short-Ns / many-trials
+  sweeps but adds CurvePoint-merge complexity.
+- **`brepjsOverlap.ts` oracle is dev-only** - the BREP-based independent
+  overlap check still exists as a devDep sanity script but isn't run in CI;
+  drift between BREP and the SAT kernel would only surface on a manual run.
 
 ## References
 
