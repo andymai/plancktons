@@ -36,17 +36,28 @@ import { rigidMatrixFromVerts } from '../src/lib/brepjsKernel.js';
 import type { Planckton } from '../src/lib/planckton.js';
 
 const L = 1;
+// Broader sample: same math used regardless of the playground's brepjs render
+// toggle. If this passes, both render paths are guaranteed overlap-free.
 const SAMPLES: ReadonlyArray<{
   strategy: 'uniform' | 'compact';
   N: number;
   seed: number;
+  beta?: number;
+  cb?: number;
 }> = [
-  { strategy: 'uniform', N: 8, seed: 1 },
-  { strategy: 'uniform', N: 12, seed: 2 },
-  { strategy: 'uniform', N: 20, seed: 3 },
-  { strategy: 'compact', N: 10, seed: 7 },
-  { strategy: 'compact', N: 15, seed: 11 },
-  { strategy: 'compact', N: 20, seed: 13 },
+  // uniform strategy, various N
+  { strategy: 'uniform', N: 5, seed: 1 },
+  { strategy: 'uniform', N: 10, seed: 17 },
+  { strategy: 'uniform', N: 25, seed: 42 },
+  { strategy: 'uniform', N: 40, seed: 99 },
+  // all-R, all-L chirality
+  { strategy: 'uniform', N: 15, seed: 5, cb: 1 },
+  { strategy: 'uniform', N: 15, seed: 5, cb: 0 },
+  // compact strategy, sweep beta
+  { strategy: 'compact', N: 15, seed: 11, beta: 0.5 },
+  { strategy: 'compact', N: 15, seed: 11, beta: 3 },
+  { strategy: 'compact', N: 15, seed: 11, beta: 10 },
+  { strategy: 'compact', N: 30, seed: 23, beta: 5 },
 ];
 
 const HILL_FACES_R = [
@@ -96,14 +107,14 @@ async function main() {
   let worstOverall = 0;
   let totalChecked = 0;
   let totalAssemblies = 0;
-  for (const { strategy, N, seed } of SAMPLES) {
+  for (const { strategy, N, seed, beta, cb } of SAMPLES) {
     const t0 = Date.now();
     const a = makeAssembly({
       L,
       rng: new Rng(seed),
-      chiralityBias: 0.5,
+      chiralityBias: cb ?? 0.5,
       strategy,
-      compactBeta: 3,
+      compactBeta: beta ?? 3,
     });
     while (a.tets.length < N) {
       if (growOne(a) !== 'grown') break;
@@ -127,8 +138,9 @@ async function main() {
     totalAssemblies++;
     worstOverall = Math.max(worstOverall, worst);
     const ms = Date.now() - t0;
+    const tag = `${strategy}${beta ? ` β=${beta}` : ''}${cb !== undefined ? ` cb=${cb}` : ''}`;
     console.log(
-      `  ${strategy} N=${a.tets.length} seed=${seed}: ${pairs} pairs, worst V = ${worst.toExponential(3)} L³  (${ms} ms)`
+      `  ${tag} N=${a.tets.length}/${N} seed=${seed}: ${pairs} pairs, worst V = ${worst.toExponential(3)} L³  (${ms} ms)`
     );
   }
   const threshold = L ** 3 * 1e-9;
