@@ -22,6 +22,7 @@ import { etaVFromVoronoi, voronoiCells, type VoronoiResult } from '../lib/vorono
 import { rebuildFromTets } from '../lib/assembly.js';
 import { runMcRefine, type McRefineResult } from '../lib/mcRefine.js';
 import { growTrajectory, type KineticsResult } from '../lib/kinetics.js';
+import { autocorrelationS2, type AutocorrResult } from '../lib/autocorr.js';
 import { Rng } from '../lib/rng.js';
 import { growOne, makeAssembly, type GrowthStrategy } from '../lib/assembly.js';
 import { computeHull } from '../lib/hull.js';
@@ -93,6 +94,17 @@ export type StudyJob =
       chiralityBias: number;
       strategy: GrowthStrategy;
       compactBeta: number;
+    }
+  | {
+      kind: 'autocorr';
+      jobId: number;
+      /** Pre-serialized tets (verts + chirality; faces aren't needed). */
+      tets: { verts: [number, number, number][]; chirality: 'R' | 'L' }[];
+      L: number;
+      voxelSize: number;
+      samples: number;
+      nBins: number;
+      seed: number;
     };
 
 export type StudyMessage =
@@ -111,7 +123,8 @@ export type StudyResult =
   | { kind: 'morph'; morph: MorphologyResult | null }
   | { kind: 'voronoi'; voronoi: VoronoiResult | null; etaV: number | null }
   | { kind: 'mc'; mc: McRefineResult }
-  | { kind: 'kinetics'; kinetics: KineticsResult };
+  | { kind: 'kinetics'; kinetics: KineticsResult }
+  | { kind: 'autocorr'; autocorr: AutocorrResult | null };
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
 
@@ -203,6 +216,15 @@ ctx.addEventListener('message', (event: MessageEvent<StudyJob>) => {
         }
       );
       postResult(job.jobId, { kind: 'kinetics', kinetics });
+    } else if (job.kind === 'autocorr') {
+      const tetsP = job.tets as unknown as Planckton[];
+      const autocorr = autocorrelationS2(tetsP, job.L, {
+        voxelSize: job.voxelSize,
+        samples: job.samples,
+        nBins: job.nBins,
+        seed: job.seed,
+      });
+      postResult(job.jobId, { kind: 'autocorr', autocorr });
     }
   } catch (err) {
     ctx.postMessage({
