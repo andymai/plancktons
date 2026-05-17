@@ -4,13 +4,17 @@ import type { ShapeDescriptors } from '../lib/shape.js';
 
 const UNIT_SPHERE = new THREE.SphereGeometry(1, 32, 24);
 
-// scaleFactor = √5: for a uniform solid ellipsoid, Iᵢ = aᵢ²/5, so
-// aᵢ = √(5 λᵢ) makes the visual ellipsoid match the gyration tensor exactly.
-export function InertiaEllipsoid({
+// For a uniform solid ellipsoid the gyration tensor eigenvalues are
+//   λᵢ = aᵢ²/5  ⇒  aᵢ = √(5λᵢ)
+// so scaleFactor = √5 makes the rendered semi-axes match the gyration tensor
+// exactly. NB: this is the *gyration* ellipsoid, not the inertia ellipsoid -
+// the inertia tensor I_ij = ⟨r²⟩δ_ij - ⟨rᵢrⱼ⟩ has different (orthogonal)
+// principal directions.
+export function GyrationEllipsoid({
   shape,
   scaleFactor = Math.sqrt(5),
   color = '#5fa8e3',
-  opacity = 0.18,
+  opacity = 0.35,
 }: {
   shape: ShapeDescriptors;
   scaleFactor?: number;
@@ -94,7 +98,7 @@ export function PrincipalAxes({
     <group>
       {lines.map((l) => (
         <lineSegments key={l.key} geometry={l.geom}>
-          <lineBasicMaterial color={l.color} linewidth={2} />
+          <lineBasicMaterial color={l.color} linewidth={3} />
         </lineSegments>
       ))}
     </group>

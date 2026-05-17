@@ -63,7 +63,10 @@ describe('trialsToCSV', () => {
     });
     const csv = trialsToCSV(trials);
     const lines = csv.split('\n');
-    expect(lines[0]).toMatch(/^trial,N,seed,V,Vstar/);
-    expect(lines.length).toBe(1 + trials.length);
+    // Lines: provenance block (commented with #) + header + trial rows.
+    expect(lines[0]).toMatch(/^# plancktons export/);
+    const headerIdx = lines.findIndex((l) => !l.startsWith('#'));
+    expect(lines[headerIdx]).toMatch(/^trial,N,seed,V,Vbbox,Vstar,efficiency,bboxEfficiency,/);
+    expect(lines.length - headerIdx).toBe(1 + trials.length);
   });
 });

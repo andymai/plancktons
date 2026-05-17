@@ -18,7 +18,7 @@ import { computeHull } from '../lib/hull.js';
 import { gyrationDescriptors, type ShapeDescriptors } from '../lib/shape.js';
 import { PlancktonMesh } from './PlancktonMesh.js';
 import { HullMesh } from './HullMesh.js';
-import { InertiaEllipsoid, PrincipalAxes } from './InertiaEllipsoid.js';
+import { GyrationEllipsoid, PrincipalAxes } from './GyrationEllipsoid.js';
 import { CameraFit } from './CameraFit.js';
 
 export const GROWTH_L = 1;
@@ -28,7 +28,10 @@ export interface GrowthMetrics {
   targetN: number;
   Vstar: number;
   V: number;
+  /** η_C = Vstar / V_hull. Convex hull compactness; not a true packing density because the hull shrink-wraps the aggregate. */
   efficiency: number;
+  /** η_B = Vstar / V_bbox. Bbox packing fraction; comparable to literature RCP/RLP/FCC since the bbox is a fixed-orientation container. */
+  bboxEfficiency: number;
   surfaceArea: number;
   freeIso: number;
   freeScalene: number;
@@ -185,6 +188,7 @@ export function GrowthScene({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => v
           ...baseMetrics,
           V: NaN,
           efficiency: NaN,
+          bboxEfficiency: NaN,
           bboxVolume: NaN,
           bboxSize: [NaN, NaN, NaN] as [number, number, number],
           hullOk: false,
@@ -198,6 +202,7 @@ export function GrowthScene({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => v
         ...baseMetrics,
         V: hull.volume,
         efficiency: Vstar / hull.volume,
+        bboxEfficiency: hull.bbox.volume > 0 ? Vstar / hull.bbox.volume : NaN,
         bboxVolume: hull.bbox.volume,
         bboxSize: hull.bbox.size,
         hullOk: true,
@@ -259,7 +264,7 @@ export function GrowthScene({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => v
         )}
         {color.showEllipsoid && metrics.shape && (
           <>
-            <InertiaEllipsoid shape={metrics.shape} />
+            <GyrationEllipsoid shape={metrics.shape} />
             <PrincipalAxes shape={metrics.shape} />
           </>
         )}

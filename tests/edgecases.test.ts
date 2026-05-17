@@ -287,10 +287,15 @@ describe('edge: runStudy', () => {
 // ──────────────────────────────────────────────────────────────────────
 
 describe('edge: CSV serialization', () => {
-  it('empty trials gives header-only CSV', () => {
+  function dataLines(csv: string): string[] {
+    return csv.split('\n').filter((l) => !l.startsWith('#'));
+  }
+
+  it('empty trials gives provenance + header CSV', () => {
     const csv = trialsToCSV([]);
-    expect(csv).toMatch(/^trial,N,seed,V,Vstar/);
-    expect(csv.split('\n')).toHaveLength(1);
+    const data = dataLines(csv);
+    expect(data[0]).toMatch(/^trial,N,seed,V,Vbbox,Vstar,/);
+    expect(data).toHaveLength(1);
   });
 
   it('CSV row count matches trial count + header', () => {
@@ -303,7 +308,7 @@ describe('edge: CSV serialization', () => {
       compactBeta: 2,
     });
     const csv = trialsToCSV(trials);
-    expect(csv.split('\n')).toHaveLength(11);
+    expect(dataLines(csv)).toHaveLength(11);
   });
 });
 

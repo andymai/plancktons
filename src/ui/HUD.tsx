@@ -41,10 +41,17 @@ export function HUD({ metrics }: { metrics: GrowthMetrics | null }) {
       </div>
       <div
         className="hud-row hud-prominent"
-        title="Packing fraction. η = 1 is the Hill cube tiling (see Cube scene); random aggregation asymptotes near η ≈ 0.17 at large N."
+        title="η_C = V*/V_hull. Convex compactness, not a true packing density - the hull shrink-wraps the aggregate so this can approach 1 even for sparse clusters. Compare values WITHIN this app; do not compare against literature sphere RCP/FCC."
       >
-        <span className="hud-label">η = V*/V</span>
+        <span className="hud-label">η_C = V*/V_hull</span>
         <span className="hud-value">{pct(metrics.efficiency)}</span>
+      </div>
+      <div
+        className="hud-row hud-prominent"
+        title="η_B = V*/V_bbox. Bbox packing fraction. The bbox is a fixed-orientation container, so this IS comparable to literature sphere RCP ≈ 0.636, sphere FCC ≈ 0.74, etc."
+      >
+        <span className="hud-label">η_B = V*/V_bbox</span>
+        <span className="hud-value">{pct(metrics.bboxEfficiency)}</span>
       </div>
       <div
         className="hud-row"
@@ -142,7 +149,7 @@ function SingleHUD() {
         className="hud-section"
         title="Hill orthoscheme T₁ - the right-tetrahedron studied here as a 'Planckton'."
       >
-        Hill T (Planckton)
+        Hill T₁ (Planckton)
       </div>
       <div
         className="hud-row"

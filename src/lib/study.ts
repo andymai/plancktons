@@ -3,6 +3,7 @@ import {
   chiralityCounts,
   growOne,
   makeAssembly,
+  meanTetCoordination,
   partVolumeTotal,
   freeSurfaceArea,
   vertexCoordination,
@@ -10,20 +11,27 @@ import {
 import { computeHull } from './hull.js';
 import { gyrationDescriptors } from './shape.js';
 import type { GrowthStrategy } from './assembly.js';
+import { provenanceCsvHeader } from './provenance.js';
 
 export interface TrialResult {
   trial: number;
   N: number;
   seed: number;
   V: number;
+  Vbbox: number;
   Vstar: number;
+  /** η_C = Vstar / V_hull (convex compactness, not comparable to literature packing densities). */
   efficiency: number;
+  /** η_B = Vstar / V_bbox (bbox packing fraction, comparable to literature RCP/RLP/FCC). */
+  bboxEfficiency: number;
   surface: number;
   rg: number;
   kappaSq: number;
   prolateness: number;
   meanCoord: number;
   maxCoord: number;
+  /** Mean tet-tet coordination: average number of face-shared neighbors per tet. 4 in a perfect tiling. */
+  meanTetCoord: number;
   chirR: number;
   ms: number;
 }
@@ -65,14 +73,17 @@ export function runStudy(p: StudyParams): TrialResult[] {
       N: a.tets.length,
       seed,
       V: hull.volume,
+      Vbbox: hull.bbox.volume,
       Vstar,
       efficiency: Vstar / hull.volume,
+      bboxEfficiency: hull.bbox.volume > 0 ? Vstar / hull.bbox.volume : NaN,
       surface: freeSurfaceArea(a),
       rg: shape?.rg ?? NaN,
       kappaSq: shape?.kappaSq ?? NaN,
       prolateness: shape?.prolateness ?? NaN,
       meanCoord: coord.meanCoord,
       maxCoord: coord.maxCoord,
+      meanTetCoord: meanTetCoordination(a),
       chirR: chir.R,
       ms,
     });
@@ -82,10 +93,30 @@ export function runStudy(p: StudyParams): TrialResult[] {
 
 export interface CurvePoint {
   N: number;
+  /** Mean η_C (hull compactness). */
   meanEff: number;
   stdEff: number;
+  /** SEM = stdEff / √n. */
+  semEff: number;
+  /** Mean η_B (bbox packing fraction, comparable to literature). */
+  meanBboxEff: number;
+  stdBboxEff: number;
+  semBboxEff: number;
+  /** Mean radius of gyration. Slope of ln(rg) vs ln(N) gives fractal dimension D_f via rg ~ N^(1/D_f). */
+  meanRg: number;
+  /** Mean tet-tet face coordination ⟨z⟩. */
+  meanZ: number;
   meanV: number;
   meanVstar: number;
+  nReached: number;
+}
+
+function meanStd(xs: number[]): { mean: number; std: number; sem: number } {
+  if (xs.length === 0) return { mean: NaN, std: NaN, sem: NaN };
+  const m = xs.reduce((s, x) => s + x, 0) / xs.length;
+  const v = xs.reduce((s, x) => s + (x - m) ** 2, 0) / xs.length;
+  const std = Math.sqrt(v);
+  return { mean: m, std, sem: std / Math.sqrt(xs.length) };
 }
 
 export function runCurve(
@@ -106,29 +137,76 @@ export function runCurve(
       ...(compactBeta !== undefined ? { compactBeta } : {}),
     });
     if (trials.length === 0) {
-      return { N, meanEff: NaN, stdEff: NaN, meanV: NaN, meanVstar: NaN };
+      return {
+        N,
+        meanEff: NaN,
+        stdEff: NaN,
+        semEff: NaN,
+        meanBboxEff: NaN,
+        stdBboxEff: NaN,
+        semBboxEff: NaN,
+        meanRg: NaN,
+        meanZ: NaN,
+        meanV: NaN,
+        meanVstar: NaN,
+        nReached: 0,
+      };
     }
-    const effs = trials.map((t) => t.efficiency);
-    const mean = effs.reduce((s, x) => s + x, 0) / effs.length;
-    const variance = effs.reduce((s, x) => s + (x - mean) ** 2, 0) / effs.length;
+    const eff = meanStd(trials.map((t) => t.efficiency));
+    const beff = meanStd(trials.map((t) => t.bboxEfficiency).filter((x) => Number.isFinite(x)));
+    const rg = meanStd(trials.map((t) => t.rg).filter((x) => Number.isFinite(x)));
+    const z = meanStd(trials.map((t) => t.meanTetCoord));
     return {
       N,
-      meanEff: mean,
-      stdEff: Math.sqrt(variance),
+      meanEff: eff.mean,
+      stdEff: eff.std,
+      semEff: eff.sem,
+      meanBboxEff: beff.mean,
+      stdBboxEff: beff.std,
+      semBboxEff: beff.sem,
+      meanRg: rg.mean,
+      meanZ: z.mean,
       meanV: trials.reduce((s, t) => s + t.V, 0) / trials.length,
       meanVstar: trials.reduce((s, t) => s + t.Vstar, 0) / trials.length,
+      nReached: trials.filter((t) => t.N >= N).length,
     };
   });
 }
 
-export function trialsToCSV(trials: ReadonlyArray<TrialResult>): string {
-  const header =
-    'trial,N,seed,V,Vstar,efficiency,surface,rg,kappaSq,prolateness,meanCoord,maxCoord,chirR,ms';
-  const rows = trials.map(
-    (t) =>
-      `${t.trial},${t.N},${t.seed},${t.V},${t.Vstar},${t.efficiency},${t.surface},${t.rg},${t.kappaSq},${t.prolateness},${t.meanCoord},${t.maxCoord},${t.chirR},${t.ms}`
-  );
-  return [header, ...rows].join('\n');
+const CSV_COLUMNS = [
+  'trial',
+  'N',
+  'seed',
+  'V',
+  'Vbbox',
+  'Vstar',
+  'efficiency',
+  'bboxEfficiency',
+  'surface',
+  'rg',
+  'kappaSq',
+  'prolateness',
+  'meanCoord',
+  'maxCoord',
+  'meanTetCoord',
+  'chirR',
+  'ms',
+] as const;
+
+export interface CsvProvenance {
+  studyParams?: Partial<StudyParams>;
+  note?: string;
+}
+
+export function trialsToCSV(trials: ReadonlyArray<TrialResult>, meta?: CsvProvenance): string {
+  const header = CSV_COLUMNS.join(',');
+  const rows = trials.map((t) => CSV_COLUMNS.map((col) => t[col]).join(','));
+  const prov = provenanceCsvHeader({
+    n_trials: trials.length,
+    ...(meta?.studyParams ?? {}),
+    ...(meta?.note ? { note: meta.note } : {}),
+  });
+  return [prov, header, ...rows].join('\n');
 }
 
 export function downloadCSV(csv: string, filename: string): void {

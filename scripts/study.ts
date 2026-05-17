@@ -171,5 +171,17 @@ for (const N of Ns) {
 }
 process.stderr.write(`done in ${(Date.now() - t0) / 1000}s - ${allTrials.length} trials\n`);
 
-const text = args.format === 'jsonl' ? trialsToJsonl(allTrials) : trialsToCSV(allTrials);
+const text =
+  args.format === 'jsonl'
+    ? trialsToJsonl(allTrials)
+    : trialsToCSV(allTrials, {
+        studyParams: {
+          startSeed: args.startSeed,
+          chiralityBias: args.chirality,
+          strategy: args.strategy,
+          compactBeta: args.beta,
+          ...(args.N !== undefined ? { N: args.N } : {}),
+        },
+        ...(args.sweepN ? { note: `sweep_N=[${args.sweepN.join(',')}]` } : {}),
+      });
 emit(text, args.out);

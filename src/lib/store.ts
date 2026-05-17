@@ -15,7 +15,7 @@ export interface ColorOpts {
   /** Shrink each tet toward its centroid by this fraction (0 = touching, 0.04 = visible gap). */
   tetInset: number;
   colorMode: ColorMode;
-  /** Inertia ellipsoid overlay (growth scene). */
+  /** Gyration ellipsoid overlay (growth scene). NOT the inertia ellipsoid. */
   showEllipsoid: boolean;
   /** Reference-density lines on plots. */
   showReferences: boolean;

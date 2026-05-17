@@ -57,7 +57,7 @@ export default function App() {
             className="title-sub"
             title="Interactive study of random aggregation and packing density for Hill T₁ orthoschemes."
           >
-            Planckton packing - a Hill-tetrahedra study
+            Planckton packing - a Hill T₁ orthoscheme study
           </span>
         </div>
         <Actions />

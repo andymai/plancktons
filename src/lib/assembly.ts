@@ -254,6 +254,17 @@ export function freeFaceFraction(a: Assembly): number {
   return a.freeFaces.length / (4 * a.tets.length);
 }
 
+/**
+ * Mean tet-tet face coordination: average number of face-shared neighbors per
+ * Planckton. Each tet has 4 faces; faces not in the free-face list are shared
+ * with exactly one neighbor. ⟨z⟩ = 4 in a perfect tiling (cube, m³-reptile),
+ * < 4 in any aggregate with surface.
+ */
+export function meanTetCoordination(a: Assembly): number {
+  if (a.tets.length === 0) return 0;
+  return (4 * a.tets.length - a.freeFaces.length) / a.tets.length;
+}
+
 export function freeFaceShapeCounts(a: Assembly): { isoceles: number; scalene: number } {
   const L = a.opts.L;
   const isoSig: [number, number, number] = [L, L, L * Math.SQRT2].sort((x, y) => x - y) as [

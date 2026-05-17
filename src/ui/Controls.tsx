@@ -21,7 +21,7 @@ const SCENES = [
   {
     id: 'growth' as const,
     label: 'Random face-to-face growth',
-    tip: 'Random sequential adsorption on the face graph. The aggregate density study this app is built around.',
+    tip: 'Face-restricted cluster aggregation (Eden-like growth on the face graph) with SAT overlap rejection. Not standard RSA (no spatial randomness) and not DLA (no diffusion). Aggregate density study this app is built around.',
   },
 ];
 
@@ -422,14 +422,14 @@ function AdvancedControls() {
       </label>
       <label
         className="checkbox-row"
-        title="Solid ellipsoid aligned with the gyration-tensor eigenvectors, scaled by √(5λᵢ)"
+        title="Gyration ellipsoid: principal axes are the eigenvectors of G_ij = ⟨rᵢrⱼ⟩, semi-axes = √(5λᵢ). NOT the inertia ellipsoid - that's a different tensor."
       >
         <input
           type="checkbox"
           checked={color.showEllipsoid}
           onChange={(e) => setColor({ showEllipsoid: e.target.checked })}
         />
-        Inertia ellipsoid
+        Gyration ellipsoid
       </label>
       <label
         className="checkbox-row"

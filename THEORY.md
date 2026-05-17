@@ -4,10 +4,13 @@ Companion to [README.md](./README.md). This document is for readers who want
 the math behind the interactive tool and the reasoning that motivates each
 observable.
 
-> **Notation.** Throughout, `L` is the unit edge length. The Hill T (Planckton)
-> at canonical position has vertices `V₀ = (0,0,0)`, `V₁ = (L,0,0)`, `V₂ =
-(L,L,0)`, `V₃ = (L,L,L)`. We use `Vol` for tet/assembly volume, `A` for area,
-> `r` for radius, and `Δ` for packing density.
+> **Notation.** Throughout, `L` is the unit edge length. The Hill orthoscheme
+> T₁ (called "Planckton" in the UI) at canonical position has vertices
+> `V₀ = (0,0,0)`, `V₁ = (L,0,0)`, `V₂ = (L,L,0)`, `V₃ = (L,L,L)`. We use
+> `Vol` for tet/assembly volume, `A` for area, `r` for radius, and `Δ` for
+> packing density. We carefully distinguish two different "η" values:
+> `η_C = V★ / V_hull` (compactness, hull) and `η_B = V★ / V_bbox` (literature-
+> comparable bbox packing fraction). See §4.2.
 
 ---
 
@@ -107,25 +110,38 @@ tetrahedra_, [arXiv:1006.1807](https://arxiv.org/abs/1006.1807) (2010).
 
 ---
 
-## 4. Random face-to-face growth: an off-lattice RSA
+## 4. Random face-to-face growth: face-restricted cluster aggregation
 
-The "growth" scene constructs an assembly by **random sequential adsorption
-(RSA)** on the dual face-graph of the assembly:
+The "growth" scene constructs an assembly by **face-restricted cluster
+aggregation** (a variant of Eden growth where the substrate is the dual
+face-graph of an evolving polyhedral aggregate):
 
 ```
    1. Place one seed Planckton at the origin.
    2. while N < target:
+        # Phase 1 - random sampling, up to maxAttempts (default 80):
         pick a free face F of the assembly             (strategy)
         pick a template Planckton chirality            (chirality bias)
         find a face F' of the template congruent to F
-        rigid-mate the template onto F  (no overlap with existing tets)
-        if accepted: append; add F'sister faces to free-face set
+        rigid-mate the template onto F
+        if no SAT overlap with existing tets: accept and continue
+        # Phase 2 - deterministic exhaustive search:
+        for (free face × chirality × template face × perm):
+          if accepted: continue
+        # If no placement exists at all → JAMMED.
 ```
 
-This is structurally identical to classical RSA except the substrate is the
-_evolving_ assembly's face-graph rather than a fixed continuous surface. The
-**jamming limit** is reached when every free face has _no_ allowed (chirality,
-template, perm) triple that produces a non-overlapping placement.
+This is **not** standard RSA (which places objects at random _positions_ in a
+continuous medium, accepting if non-overlapping). It is also **not** DLA
+(which uses Brownian trajectories). The closest published analogue is the
+Eden growth model adapted to a face-mating constraint. The two-phase
+structure ensures that "jammed" is a true statement about the geometry, not
+an artifact of finite random sampling - Phase 2 finds any placement that
+exists.
+
+The **jamming limit** is reached when every free face has _no_ allowed
+(chirality, template, perm) triple that produces a non-overlapping placement
+(verified by Phase 2 exhaustive search).
 
 ### 4.1 Strategy and inverse temperature
 
@@ -145,55 +161,110 @@ sweep this directly.
 
 For an assembly of `N` Plancktons with vertex set `{r_α}`:
 
-- **Sum of part volumes** `V★ = N · L³ / 6` (tight bound: equals the actual
+- **Sum of part volumes** `V★ = N · L³ / 6` (tight: equals the actual
   occupied solid volume because face-to-face never overlaps).
-- **Convex-hull volume** `V = Vol(conv {r_α})` (the "vacuum bag" upper bound).
-- **Packing efficiency** `η ≡ V★ / V ∈ (0, 1]`. `η = 1` ⇔ convex assembly
-  with no voids (a perfect tiling).
-- **Free surface area** `S = Σ_{free faces} A_face`. Grows linearly for
-  compact piles and super-linearly (~`N^β` with `β > 2/3`) for fractal piles.
+- **Convex-hull volume** `V_hull = Vol(conv {r_α})`.
+- **Bbox volume** `V_bbox = Δx · Δy · Δz` of the axis-aligned bounding box.
+
+Two distinct η values, both in `(0, 1]`:
+
+- **`η_C = V★ / V_hull` (compactness).** The convex hull shrink-wraps the
+  aggregate, so this can approach 1 even for sparse clusters. It measures
+  _how convex_ the cluster is, not how dense it is in a fixed container.
+  **Do not** compare `η_C` to literature packing densities (sphere RCP, FCC,
+  etc.) - they're different quantities.
+- **`η_B = V★ / V_bbox` (bbox packing fraction).** The bbox is a fixed-
+  orientation container, so this **is** directly comparable to literature
+  packing densities. `η_B < η_C` always (a hull fits inside its bbox).
+
+Other observables:
+
+- **Free surface area** `S = Σ_{free faces} A_face`. Grows ~ `N^{2/3}` for
+  compact (3D bulk) piles and super-linearly for fractal piles.
 - **Gyration tensor** `Σ_ij = (1/N_v) Σ_α (r_α − r_cm)_i (r_α − r_cm)_j`.
   Eigenvalues `λ₁ ≥ λ₂ ≥ λ₃` give:
   - `R_g² = tr Σ` (radius of gyration),
-  - `b = λ₁ − (λ₂+λ₃)/2` (asphericity, length²; HUD shows it as `b`),
+  - `b = λ₁ − (λ₂+λ₃)/2` (Rudnick-Gaspari asphericity, length²),
   - `c = λ₂ − λ₃` (acylindricity, length²),
   - `κ² = (b² + ¾c²) / (tr Σ)² ∈ [0,1]`: relative shape anisotropy
-    (Rudnick–Gaspari / Theodorou–Suter normalization),
+    (Theodorou-Suter normalization),
   - `S = (3λ₁−tr)(3λ₂−tr)(3λ₃−tr) / (tr)³ ∈ [-¼, 2]`: prolateness (sign
     distinguishes prolate `+` from oblate `−`).
+  - The tool renders the **gyration ellipsoid** (semi-axes `√(5λᵢ)` along
+    eigenvectors) as an overlay. NB: this is **not** the inertia ellipsoid
+    of `I_ij = ⟨r²⟩δ_ij − ⟨rᵢrⱼ⟩`, which has different (orthogonal)
+    principal directions.
+- **Tet-tet coordination ⟨z⟩.** Mean number of face-shared neighbors per
+  tet. `z = (4N − F_free) / N`. For a perfect tiling `⟨z⟩ = 4`; for any
+  finite aggregate with surface `⟨z⟩ < 4`.
 - **Vertex coordination histogram**: for each spatial vertex (`L·10⁻⁶`
-  quantization), the number of tets meeting there. Telltale of internal
-  topology - e.g., in the 6-cube tiling the diagonal endpoints `(0,0,0)` and
-  `(1,1,1)` both have coordination 6.
-- **Free-face fraction** `f_F = |free faces| / (4N)`. Asymptotes to a
-  strategy-dependent constant in the jamming limit.
+  quantization), the number of tets meeting there. In the 6-cube tiling the
+  diagonal endpoints `(0,0,0)` and `(L,L,L)` both have coordination 6.
+- **Free-face fraction** `f_F = |free faces| / (4N) = 1 − ⟨z⟩/4`.
+- **Fractal dimension `D_f`** from `R_g ∼ N^{1/D_f}`. `D_f → 3` for compact
+  3D growth; `D_f < 3` for surface-dominated / fractal aggregates.
+  Reported as a log-log fit of the `R_g(N)` sweep in Research mode, with
+  uncertainty propagated from the slope error.
+- **Pair correlation `g(r)`** between tet centroids, normalized by the
+  uniform-density expectation. Crystalline order → sharp peaks; amorphous
+  → broad peaks decaying to 1.
 
-All of these are shown live in the HUD when _Advanced mode_ is on.
+All of these are shown live in the HUD or Research panel when _Advanced
+mode_ is on.
 
-### 4.3 Suggested measurements (empirical)
+### 4.3 Empirical findings
 
-After the SAT overlap fix (which correctly rejects placements the earlier
-loose test was wrongly accepting), measured large-N means:
+Measured at compact strategy, β = 3, c_R = 0.5, 200 trials per N (script:
+`npm run study -- --sweep-N 10,20,40,70,100,150,200 --trials 200 --strategy
+compact --beta 3`):
 
-| Strategy          | `η_∞` (mean, N=30, 50 trials) | comment                                   |
-| ----------------- | ----------------------------- | ----------------------------------------- |
-| uniform           | `≈ 0.22`                      | branchy, fractal-like piles               |
-| compact, `β = 3`  | `≈ 0.30`                      | rounder piles                             |
-| compact, `β = 10` | jams early (N ≈ 5–15)         | greedy regime is over-constrained for RSA |
+| N target | reach % | mean η_C | SEM η_C | ⟨R_g⟩ / L |
+| -------- | ------- | -------- | ------- | --------- |
+| 10       | 100 %   | 0.294    | 0.002   | 1.08      |
+| 20       | 100 %   | 0.253    | 0.002   | 1.30      |
+| 40       | 100 %   | 0.223    | 0.002   | 1.62      |
+| 70       | 100 %   | 0.203    | 0.001   | 1.93      |
+| 100      | 100 %   | 0.191    | 0.001   | 2.17      |
+| 150      | 100 %   | 0.181    | 0.001   | 2.48      |
+| 200      | 100 %   | 0.175    | 0.001   | 2.73      |
 
-Re-measure with `npx tsx scripts/study.ts --sweep-N 20,30,40,50 --trials 50`.
+η_C decays monotonically, still slowly decreasing at N = 200 toward an
+asymptote in the 0.15-0.17 range. The 1 − η_C ≈ 0.83 "vacuum" at large N is
+the Dehn-invariant signature - the gap between random aggregation and a
+deterministic Hill tiling.
 
-Open questions you can explore with this tool:
+### 4.4 Fit models for 1 − η(N)
 
-1. **Is there a chirality-bias optimum?** Is `η` maximized at `c_R = 0.5`
+The Research panel fits **three** candidate models simultaneously to the
+1 − η_C(N) sweep, with AIC-based model selection:
+
+| Model                            | Form                          | k   | Interpretation                                |
+| -------------------------------- | ----------------------------- | --- | --------------------------------------------- |
+| **Pure power**                   | `1 − η = A · N^α`             | 2   | implies η → 0 (no asymptote)                  |
+| **Asymptote + power correction** | `1 − η = y∞ + B · N^(−β)`     | 3   | physical for systems with finite bulk density |
+| **Exponential approach**         | `1 − η = y∞ + B · exp(−N/N₀)` | 3   | short-range correction only                   |
+
+AIC = `n · ln(SSE/n) + 2k` (Gaussian residuals). ΔAIC > 2 is considered
+meaningful evidence. The **pure power-law** fit will _always_ return a
+finite α even when the underlying truth has an asymptote - so reading α in
+isolation is misleading. Always inspect which model wins AIC.
+
+### 4.5 Open questions
+
+1. **Is there a chirality-bias optimum?** Is η_C maximized at `c_R = 0.5`
    (balanced) or at the extremes? Run the histogram sweep at fixed `N = 50`
    for `c_R ∈ {0, 0.25, 0.5, 0.75, 1.0}`.
-2. **Does `η_∞(β)` saturate, and at what value?** Sweep `β`; the curve should
-   plateau as `β → ∞`.
-3. **What is the fractal dimension `d_f` of the uniform-strategy assembly?**
-   `Vol_hull(N) ∼ N^{3/d_f}` for large `N`; equivalently `R_g(N) ∼ N^{1/d_f}`.
-   Compact RSA should give `d_f = 3`; branchy RSA `d_f < 3`.
-4. **Coordination of the m³-reptile recursion**: at depth `n`, are interior
+2. **Does η_∞(β) saturate, and at what value?** Sweep β; expect a plateau
+   as `β → ∞` but **also** a jamming threshold beyond which placements
+   become so constrained that growth stalls at small N.
+3. **What is the fractal dimension `D_f`?** The tool computes
+   `D_f = 1/slope` of `ln(R_g)` vs `ln(N)`. Compact compact-strategy
+   aggregates should converge to `D_f ≈ 3`; uniform RSA should give a
+   smaller value reflecting fractal / branchy growth.
+4. **g(r) signature.** Look for the first peak position in g(r); for face-
+   shared Plancktons it should be at the centroid-to-centroid distance of a
+   mated tet pair (~L·√(3/8) ≈ 0.61 L for one face type).
+5. **Coordination of the m³-reptile recursion**: at depth `n`, are interior
    vertex coordinations bounded, or do they grow?
 
 ---
@@ -203,22 +274,25 @@ Open questions you can explore with this tool:
 Hill T's are special because they _can_ tile space - most polytopes (including
 the regular tetrahedron) cannot. For comparison:
 
-| System                        | Δ (density)    | Source                        |
-| ----------------------------- | -------------- | ----------------------------- |
-| Hill T tiling (cube, reptile) | **1.000**      | Hill 1896; Matoušek 2010      |
-| Sphere FCC                    | π/√18 ≈ 0.7405 | Hales 2005, Kepler conjecture |
-| Regular tet (Welsh displaced) | ≈ 0.71746      | Conway & Torquato 2006        |
-| Regular tet (Bravais lattice) | 18/49 ≈ 0.367  | Hoylman 1970                  |
-| Sphere random close packing   | ≈ 0.637        | Scott & Kilgour 1969          |
-| Sphere random loose packing   | ≈ 0.555        | Onoda & Liniger 1990          |
+| System                         | Δ (density)    | Source                        |
+| ------------------------------ | -------------- | ----------------------------- |
+| Hill T₁ tiling (cube, reptile) | **1.000**      | Hill 1896; Matoušek 2010      |
+| Sphere FCC                     | π/√18 ≈ 0.7405 | Hales 2005, Kepler conjecture |
+| Regular tet (Welsh displaced)  | ≈ 0.71746      | Conway & Torquato 2006        |
+| Regular tet (Bravais lattice)  | 18/49 ≈ 0.367  | Hoylman 1970                  |
+| Sphere random close packing    | ≈ 0.637        | Scott & Kilgour 1969          |
+| Sphere random loose packing    | ≈ 0.555        | Onoda & Liniger 1990          |
 
-The reference lines drawn on the V★/V curve in the Research panel are these
-values. The point of the playground is **not** to "discover" `η = 1` for
-canonical tilings (that's a theorem) but to characterize the _random_ and
-_compactified_ regimes between `η ≈ 0.25` and `η = 1` - a regime that is, to
-the author's knowledge, not directly addressed in the published literature
-even though it is the natural Hill-T analog of "random close packing" for
-spheres.
+**Important:** these literature values are measured against _fixed_ containers
+(periodic boxes, gravity-settled beds). They are directly comparable to
+**`η_B`** (bbox packing fraction) and **not** to `η_C` (hull compactness).
+The Research-panel curve plots the references as horizontal lines only when
+`η_B` is selected as the y-axis. The point of the playground is **not** to
+"discover" `η = 1` for canonical tilings (that's a theorem) but to
+characterize the _random_ and _compactified_ regimes between this app's
+measured asymptote and `η = 1` - a regime that is, to the author's
+knowledge, not directly addressed in the published literature even though it
+is the natural Hill-T₁ analog of "random close packing" for spheres.
 
 **References on packing densities:**
 
@@ -249,8 +323,17 @@ npx tsx scripts/study.ts --sweep-N 10,20,30,40,50,80,120 --trials 500 \
     --strategy compact --beta 3 --out compact_b3.csv
 ```
 
-The CSV columns are: `trial, N, seed, V, Vstar, efficiency, surface, rg,
-kappaSq, prolateness, meanCoord, maxCoord, chirR, ms`.
+The CSV columns are: `trial, N, seed, V, Vbbox, Vstar, efficiency,
+bboxEfficiency, surface, rg, kappaSq, prolateness, meanCoord, maxCoord,
+meanTetCoord, chirR, ms`. Here `efficiency = η_C`, `bboxEfficiency = η_B`,
+`meanTetCoord = ⟨z⟩`.
+
+Every CSV begins with a `#`-commented provenance block recording the
+algorithm version, git commit short-hash (build time, injected by Vite),
+build time, export time, and the full parameter set. This makes
+re-identification of any historical run unambiguous, even years later. JSON
+exports (`exportAssemblyJSON`) carry the same provenance object as a
+top-level field.
 
 ---
 
@@ -258,11 +341,13 @@ kappaSq, prolateness, meanCoord, maxCoord, chirR, ms`.
 
 - **`L = 1` throughout.** All dimensional quantities scale with the obvious
   power of `L` (volumes as `L³`, areas as `L²`, etc.).
-- **Hull vs. true shrink-wrap.** `V` is the convex hull. For assemblies with
-  concavities, the _true_ vacuum-bag volume is the **alpha-shape** at the
-  inter-tet length scale, which can be substantially smaller than the hull.
-  Alpha-shape support is a planned extension; until then `V_hull ≥ V_α ≥ V★`
-  and `η_hull ≤ η_α ≤ 1`.
+- **Three "container" choices, three η values.** `V_hull` (convex hull) is
+  an _upper_ bound on the true vacuum-bag volume. `V_α` (alpha-shape at the
+  inter-tet length scale) is closer to the physical envelope but not yet
+  implemented. `V_bbox` (axis-aligned bbox) is what literature packing
+  densities use. Always: `V_α ≤ V_hull ≤ V_bbox`, hence
+  `η_B ≤ η_C_hull ≤ η_α ≤ 1`. The tool reports `η_C` and `η_B`; α-shape is
+  on the roadmap.
 - **Overlap detection.** Two tets are tested via the Separating Axis Theorem
   (44 candidate axes: 4 + 4 face normals + 6 × 6 edge-edge cross products).
   Margin `L · 10⁻⁴`, ten orders of magnitude above the FP error bound. See

@@ -2,6 +2,7 @@ import type { Planckton } from './planckton.js';
 import type { Assembly } from './assembly.js';
 import type { Vec3 } from './vec.js';
 import { cross, sub } from './vec.js';
+import { ALGORITHM_VERSION, provenance } from './provenance.js';
 
 // ------------------------------- STL ---------------------------------------
 
@@ -54,6 +55,8 @@ export function exportSTL(pts: ReadonlyArray<Planckton>, filename = 'plancktons.
 export function exportAssemblyJSON(a: Assembly, filename = 'plancktons.json'): void {
   const payload = {
     version: 2,
+    provenance: provenance(),
+    algorithmVersion: ALGORITHM_VERSION,
     L: a.opts.L,
     seed: a.opts.rng.seed,
     chiralityBias: a.opts.chiralityBias,
