@@ -225,8 +225,9 @@ function CubeControls() {
         Auto-play scissors-congruence morph
       </label>
       <p className="caption">
-        Six Plancktons - 3 R + 3 L, one per permutation of (x, y, z) - fill a cube exactly. Each has
-        volume L³/6.
+        Six <Term name="planckton">Plancktons</Term> — 3 R + 3 L, one per permutation of (x, y, z) —
+        fill a cube exactly. Each has volume L³/6. The Dehn invariant collapses to zero, so this is
+        a <Term name="scissorsCongruence" /> in action.
       </p>
     </div>
   );
@@ -323,7 +324,7 @@ function GrowthControls() {
             if (Number.isFinite(n) && n >= 1) setGrowth({ N: n });
           }}
           style={{ width: '4.2rem' }}
-          title="Slider tops at 500; type above for N up to 2000 (slow at extreme N)."
+          title="Slider tops at 1000; type above for N up to 2000 (slow at extreme N)."
         />
       </label>
       <label
@@ -425,9 +426,9 @@ function GrowthControls() {
       )}
       {animationMode === 'step' && <StepButton />}
       <p className="caption">
-        Each step picks a free face at random and glues a fresh Planckton onto a congruent face.
-        SAT-checked rejection guarantees no two Plancktons overlap. Compact mode biases toward
-        concave pockets - tighter packings, but also earlier jamming.
+        Each step picks a free face at random and glues a fresh <Term name="planckton" /> onto a
+        congruent face. SAT-checked rejection guarantees no two Plancktons overlap. Compact mode
+        biases toward concave pockets — tighter packings, but also earlier <Term name="jamming" />.
       </p>
     </div>
   );

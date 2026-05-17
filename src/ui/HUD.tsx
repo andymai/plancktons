@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { GrowthMetrics } from '../scenes/GrowthScene.js';
 import { useStore, isAtLeast } from '../lib/store.js';
 import { Term } from './Term.js';
@@ -8,11 +9,20 @@ const pct = (n: number) => (Number.isFinite(n) ? `${(n * 100).toFixed(1)}%` : '-
 export function HUD({ metrics }: { metrics: GrowthMetrics | null }) {
   const scene = useStore((s) => s.scene);
   const mode = useStore((s) => s.mode);
-  const showAdvanced = isAtLeast(mode, 'explore');
   if (scene === 'single') return <SingleHUD />;
   if (scene === 'cube') return <CubeHUD />;
   if (scene === 'reptile') return <ReptileHUD />;
   if (!metrics) return null;
+  return <GrowthHUD metrics={metrics} showAdvanced={isAtLeast(mode, 'explore')} />;
+}
+
+const GrowthHUD = memo(function GrowthHUD({
+  metrics,
+  showAdvanced,
+}: {
+  metrics: GrowthMetrics;
+  showAdvanced: boolean;
+}) {
   return (
     <div className="hud">
       <div
@@ -168,7 +178,7 @@ export function HUD({ metrics }: { metrics: GrowthMetrics | null }) {
       )}
     </div>
   );
-}
+});
 
 function SingleHUD() {
   return (
