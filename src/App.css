@@ -161,6 +161,60 @@ input[type='range'] {
   flex: 1 1 auto;
 }
 
+.transport {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(20, 23, 28, 0.88);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  backdrop-filter: blur(8px);
+  font-variant-numeric: tabular-nums;
+  z-index: 20;
+  max-width: calc(100% - 32px);
+}
+.transport-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1;
+}
+.transport-btn:hover:not(:disabled) {
+  background: #313845;
+}
+.transport-play[aria-pressed='true'] {
+  background: var(--accent);
+  color: #0c1117;
+  border-color: var(--accent);
+}
+.transport-progress {
+  width: 120px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  overflow: hidden;
+}
+.transport-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 80ms linear;
+}
+.transport-counter {
+  font-size: 12px;
+  color: var(--text-dim);
+  min-width: 70px;
+  text-align: center;
+}
+
 .actions {
   display: flex;
   gap: 6px;

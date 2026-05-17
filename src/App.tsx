@@ -5,6 +5,7 @@ import { Actions } from './ui/Actions.js';
 import { Research } from './ui/Research.js';
 import { ModeSwitch } from './ui/ModeSwitch.js';
 import { MetricsPanel } from './ui/MetricsPanel.js';
+import { Transport } from './ui/Transport.js';
 import { HelpOverlay } from './ui/HelpOverlay.js';
 import { FirstVisitToast } from './ui/FirstVisitToast.js';
 import { ErrorBoundary } from './ui/ErrorBoundary.js';
@@ -80,6 +81,7 @@ export default function App() {
           <ErrorBoundary>
             <SceneCanvas onMetrics={setMetrics} />
           </ErrorBoundary>
+          <Transport metrics={metrics} />
         </main>
         <MetricsPanel metrics={metrics} />
       </div>

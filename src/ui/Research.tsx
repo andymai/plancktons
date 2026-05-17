@@ -93,6 +93,7 @@ function Histogram() {
   const growth = useStore((s) => s.growth);
   const [snapshot, setSnapshot] = useState<SavedRun | null>(null);
   const [count, setCount] = useState(100);
+  const [bParams, setBParams] = useState<typeof growth | null>(null);
 
   const job = useWorkerRun<{ kind: 'study'; trials: TrialResult[] }>();
   // useMemo so downstream `[trials]` deps don't fire on every render.
@@ -100,18 +101,21 @@ function Histogram() {
   const running = job.running;
   const err = job.err;
   const progress = job.progress;
-  const run = () =>
+  const run = () => {
+    const params = { ...growth };
+    setBParams(params);
     job.run({
       kind: 'study',
       params: {
-        N: growth.N,
+        N: params.N,
         trials: count,
-        startSeed: growth.seed,
-        chiralityBias: growth.chiralityBias,
-        strategy: growth.strategy,
-        compactBeta: growth.compactBeta,
+        startSeed: params.seed,
+        chiralityBias: params.chiralityBias,
+        strategy: params.strategy,
+        compactBeta: params.compactBeta,
       },
     });
+  };
 
   const stats = useMemo(() => statsOf(trials), [trials]);
   const snapStats = useMemo(() => (snapshot ? statsOf(snapshot.trials) : null), [snapshot]);
@@ -126,7 +130,11 @@ function Histogram() {
     [trials, snapshot]
   );
 
-  const currentLabel = paramLabel(growth);
+  // Label the current B series with the params used at run() time, not the
+  // current sidebar values - prevents the displayed legend from drifting if
+  // the user changes parameters after kicking off a study.
+  const currentLabel = paramLabel(bParams ?? growth);
+  const exportParams = bParams ?? growth;
 
   return (
     <details className="research-section collapsible" open>
@@ -168,14 +176,14 @@ function Histogram() {
               downloadCSV(
                 trialsToCSV(trials, {
                   studyParams: {
-                    N: growth.N,
-                    chiralityBias: growth.chiralityBias,
-                    strategy: growth.strategy,
-                    compactBeta: growth.compactBeta,
-                    startSeed: growth.seed,
+                    N: exportParams.N,
+                    chiralityBias: exportParams.chiralityBias,
+                    strategy: exportParams.strategy,
+                    compactBeta: exportParams.compactBeta,
+                    startSeed: exportParams.seed,
                   },
                 }),
-                `plancktons_trials_N${growth.N}_${growth.strategy}.csv`
+                `plancktons_trials_N${exportParams.N}_${exportParams.strategy}.csv`
               )
             }
           >
@@ -185,7 +193,7 @@ function Histogram() {
       </div>
       {stats && (
         <div className="stats-line">
-          <span style={{ color: '#5fa8e3' }}>B (current)</span>: μ={stats.mean.toFixed(3)} ±{' '}
+          <span style={{ color: '#5fa8e3' }}>B ({currentLabel})</span>: μ={stats.mean.toFixed(3)} ±{' '}
           {stats.sem.toFixed(4)} (SEM) · σ={stats.std.toFixed(3)} · n={stats.n}
         </div>
       )}

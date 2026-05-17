@@ -71,6 +71,12 @@ interface State {
   /** Monotonic counter - bump to advance one tet in step mode. */
   stepTrigger: number;
   bumpStep: () => void;
+  /** Monotonic counter - bump to restart growth animation from N=1 (animated mode). */
+  resetTrigger: number;
+  bumpReset: () => void;
+  /** Monotonic counter - bump to jump animation/step state to target N. */
+  jumpEndTrigger: number;
+  bumpJumpEnd: () => void;
 
   // Visual
   color: ColorOpts;
@@ -135,6 +141,10 @@ export const useStore = create<State>((set) => ({
   setAnimSpeed: (animSpeed) => set({ animSpeed }),
   stepTrigger: 0,
   bumpStep: () => set((s) => ({ stepTrigger: s.stepTrigger + 1 })),
+  resetTrigger: 0,
+  bumpReset: () => set((s) => ({ resetTrigger: s.resetTrigger + 1 })),
+  jumpEndTrigger: 0,
+  bumpJumpEnd: () => set((s) => ({ jumpEndTrigger: s.jumpEndTrigger + 1 })),
 
   color: DEFAULT_COLOR,
   setColor: (c) => set((s) => ({ color: { ...s.color, ...c } })),
