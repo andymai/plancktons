@@ -95,6 +95,27 @@ export function HUD({ metrics }: { metrics: GrowthMetrics | null }) {
             <span className="hud-value">{fmt(metrics.prolateness, 3)}</span>
           </div>
           <div className="hud-divider" />
+          <div
+            className="hud-section"
+            title="Steinhardt bond-orientational order parameters from face-shared neighbor bond directions. Rotation-invariant, in [0, 1]."
+          >
+            Bond-orientational order
+          </div>
+          <div
+            className="hud-row"
+            title="Q_4: sensitive to tetrahedral / icosahedral motifs. Random ≈ 0."
+          >
+            <span className="hud-label">Q₄</span>
+            <span className="hud-value">{fmt(metrics.q4, 3)}</span>
+          </div>
+          <div
+            className="hud-row"
+            title="Q_6: the canonical crystallinity diagnostic. FCC/HCP ≈ 0.575; BCC ≈ 0.51; hard-sphere glass ≈ 0.40; random ≈ 0."
+          >
+            <span className="hud-label">Q₆</span>
+            <span className="hud-value">{fmt(metrics.q6, 3)}</span>
+          </div>
+          <div className="hud-divider" />
           <div className="hud-section">Topology / chirality</div>
           <div
             className="hud-row"
