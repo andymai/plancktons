@@ -36,6 +36,8 @@ interface State {
   // Single-Planckton inspector
   singleChirality: 'R' | 'L';
   setSingleChirality: (c: 'R' | 'L') => void;
+  singleShowAngles: boolean;
+  setSingleShowAngles: (b: boolean) => void;
 
   // Reptile
   reptileExplode: number; // 0..1
@@ -46,6 +48,8 @@ interface State {
   // Cube tiling
   cubeExplode: number;
   setCubeExplode: (v: number) => void;
+  cubeAutoplay: boolean;
+  setCubeAutoplay: (b: boolean) => void;
 
   // Growth
   growth: GrowthParams;
@@ -92,6 +96,8 @@ export const useStore = create<State>((set) => ({
 
   singleChirality: 'R',
   setSingleChirality: (singleChirality) => set({ singleChirality }),
+  singleShowAngles: false,
+  setSingleShowAngles: (singleShowAngles) => set({ singleShowAngles }),
 
   // Modest explode by default so canonical scenes don't look like a single
   // blob on first view.
@@ -102,6 +108,8 @@ export const useStore = create<State>((set) => ({
 
   cubeExplode: 0.15,
   setCubeExplode: (cubeExplode) => set({ cubeExplode }),
+  cubeAutoplay: false,
+  setCubeAutoplay: (cubeAutoplay) => set({ cubeAutoplay }),
 
   // N=40 is dense enough to be visually striking but quick to generate.
   // Compact strategy with β=3 yields visibly rounder, denser piles than
