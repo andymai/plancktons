@@ -276,8 +276,9 @@ The full bibliographic list is in [THEORY.md §5-§6](./THEORY.md). Key entries:
   Soc. 2:39 (1896).
 - J. Matoušek & Z. Safernová, _On the nonexistence of k-reptile tetrahedra_,
   [arXiv:1006.1807](https://arxiv.org/abs/1006.1807) (2010).
-- J. H. Conway & S. Torquato, _Packing, tiling, and covering with tetrahedra_,
-  PNAS 103:10612 (2006).
+- E. R. Chen, M. Engel & S. C. Glotzer, _Dense crystalline dimer packings of
+  regular tetrahedra_, Discrete Comput. Geom. 44:253 (2010),
+  [doi:10.1007/s00454-010-9273-0](https://doi.org/10.1007/s00454-010-9273-0).
 - D. N. Theodorou & U. W. Suter, _Shape of unperturbed linear polymers:
   polypropylene_, Macromolecules 18:1206 (1985) - gyration descriptors.
 - J. Rudnick & G. Gaspari, _The asphericity of random walks_, J. Phys. A
