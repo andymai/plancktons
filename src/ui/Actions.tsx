@@ -21,7 +21,7 @@ async function copyShareLink() {
   try {
     if (!navigator.clipboard) throw new Error('Clipboard API unavailable');
     await navigator.clipboard.writeText(url);
-    showToast('🔗 link copied!');
+    showToast('Link copied');
   } catch {
     window.prompt('Copy this URL:', url);
   }
@@ -52,10 +52,10 @@ export function Actions() {
         onClick={() => copyShareLink()}
         title="Copy a shareable URL with the current parameters"
       >
-        🔗 Share link
+        Share link
       </button>
       <button onClick={() => takeScreenshot()} title="Save the canvas as PNG">
-        📸 PNG
+        PNG
       </button>
       <button
         onClick={() => {
@@ -65,7 +65,7 @@ export function Actions() {
         disabled={scene !== 'growth'}
         title="Export the assembly as an STL mesh"
       >
-        🧊 STL
+        STL
       </button>
       <button
         onClick={() => {
@@ -75,7 +75,7 @@ export function Actions() {
         disabled={scene !== 'growth'}
         title="Save the assembly as JSON"
       >
-        💾 JSON
+        JSON
       </button>
     </div>
   );

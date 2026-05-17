@@ -5,6 +5,7 @@ import { HUD } from './ui/HUD.js';
 import { Actions } from './ui/Actions.js';
 import { Research } from './ui/Research.js';
 import { ErrorBoundary } from './ui/ErrorBoundary.js';
+import { useKeyboardShortcuts } from './ui/useKeyboard.js';
 import type { GrowthMetrics } from './scenes/GrowthScene.js';
 import { decodeStateFromHash } from './lib/exports.js';
 import { useStore } from './lib/store.js';
@@ -37,6 +38,7 @@ function applyHashStateOnce() {
 
 export default function App() {
   const [metrics, setMetrics] = useState<GrowthMetrics | null>(null);
+  useKeyboardShortcuts();
   useEffect(() => {
     applyHashStateOnce();
   }, []);

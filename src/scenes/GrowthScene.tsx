@@ -19,6 +19,7 @@ import { gyrationDescriptors, type ShapeDescriptors } from '../lib/shape.js';
 import { PlancktonMesh } from './PlancktonMesh.js';
 import { HullMesh } from './HullMesh.js';
 import { InertiaEllipsoid, PrincipalAxes } from './InertiaEllipsoid.js';
+import { CameraFit } from './CameraFit.js';
 
 export const GROWTH_L = 1;
 
@@ -95,7 +96,10 @@ export function GrowthScene({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => v
   // (mode, seed, strategy, …). Render-time setState is React's documented
   // pattern for "derived state that resets on prop change" — see
   // https://react.dev/reference/react/useState#storing-information-from-previous-renders
-  const simKey = `${animationMode}|${growth.seed}|${growth.strategy}|${growth.chiralityBias}|${growth.compactBeta}`;
+  // Any change to a simulation parameter (mode included) resets the rendered
+  // growth. growth.N is in the key too so dragging the N slider in animated /
+  // step mode restarts the animation from N=1 — visible regeneration.
+  const simKey = `${animationMode}|${growth.seed}|${growth.strategy}|${growth.chiralityBias}|${growth.compactBeta}|${growth.N}`;
   const [prevSimKey, setPrevSimKey] = useState(simKey);
   const [grown, setGrown] = useState(growth.N);
   const [prevStep, setPrevStep] = useState(stepTrigger);
@@ -214,24 +218,37 @@ export function GrowthScene({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => v
     return `hsl(${hue}, 70%, ${light}%)`;
   };
 
+  // For camera framing: the assembly half-extent (max distance from centroid to
+  // any vertex). Falls back to R_g · √2 if bbox isn't available yet.
+  const extent = useMemo(() => {
+    if (Number.isFinite(metrics.bboxVolume)) {
+      const [sx, sy, sz] = metrics.bboxSize;
+      return 0.5 * Math.sqrt(sx * sx + sy * sy + sz * sz);
+    }
+    return Math.max(1, metrics.rg * Math.SQRT2);
+  }, [metrics.bboxSize, metrics.bboxVolume, metrics.rg]);
+
   return (
-    <group position={center}>
-      {assembly.tets.map((p, i) => (
-        <PlancktonMesh
-          key={i}
-          planckton={p}
-          colorOverride={colorByDepth ? depthHue(i) : undefined}
-        />
-      ))}
-      {color.showHull && hullPoints.length > 0 && (
-        <HullMesh points={hullPoints} faces={hullFaces} />
-      )}
-      {color.showEllipsoid && metrics.shape && (
-        <>
-          <InertiaEllipsoid shape={metrics.shape} />
-          <PrincipalAxes shape={metrics.shape} />
-        </>
-      )}
-    </group>
+    <>
+      <CameraFit extent={extent} />
+      <group position={center}>
+        {assembly.tets.map((p, i) => (
+          <PlancktonMesh
+            key={i}
+            planckton={p}
+            colorOverride={colorByDepth ? depthHue(i) : undefined}
+          />
+        ))}
+        {color.showHull && hullPoints.length > 0 && (
+          <HullMesh points={hullPoints} faces={hullFaces} />
+        )}
+        {color.showEllipsoid && metrics.shape && (
+          <>
+            <InertiaEllipsoid shape={metrics.shape} />
+            <PrincipalAxes shape={metrics.shape} />
+          </>
+        )}
+      </group>
+    </>
   );
 }

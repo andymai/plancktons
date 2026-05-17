@@ -73,10 +73,10 @@ const DEFAULT_COLOR: ColorOpts = {
   showHull: false,
   showEdges: true,
   edgeOpacity: 0.55,
-  // Default 1 % inset: visually separates pieces in canonical tilings (cube /
-  // 8-reptile) where mathematical face-sharing would otherwise z-fight. Set to
-  // 0 in advanced to see the true touching configuration.
-  tetInset: 0.012,
+  // 2.5 % inset: visually separates pieces in canonical tilings and random
+  // growth where mathematical face-sharing would otherwise z-fight. Set to 0
+  // in advanced to see the true touching configuration.
+  tetInset: 0.025,
   colorMode: 'chirality',
   showEllipsoid: false,
   showReferences: true,
@@ -109,6 +109,6 @@ export const useStore = create<State>((set) => ({
   color: DEFAULT_COLOR,
   setColor: (c) => set((s) => ({ color: { ...s.color, ...c } })),
 
-  advanced: false,
+  advanced: true,
   setAdvanced: (advanced) => set({ advanced }),
 }));
