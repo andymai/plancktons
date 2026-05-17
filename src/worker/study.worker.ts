@@ -1,7 +1,7 @@
-// Dedicated Web Worker for batch study runs. Receives a job description,
-// runs the same kernel as the main thread (so results are bit-identical), and
-// streams progress events back. Vite handles the bundling via the
-// `new Worker(new URL(...), { type: 'module' })` syntax in studyClient.ts.
+// Dedicated Web Worker for batch study runs. Runs the same kernel as the main
+// thread (results are bit-identical) and streams progress events back. Bundled
+// by Vite via the `new Worker(new URL(...), { type: 'module' })` syntax in
+// studyClient.ts.
 
 import {
   runCurve,
@@ -51,8 +51,8 @@ export type StudyJob =
   | {
       kind: 'morph';
       jobId: number;
-      // Tets pre-serialized (only verts + chirality - faces are reconstructed
-      // from the canonical Hill T₁ face table client-side if needed).
+      // Pre-serialized: only verts + chirality (faces are reconstructed from
+      // the canonical Hill T₁ face table client-side if needed).
       tets: { verts: [number, number, number][]; chirality: 'R' | 'L' }[];
       L: number;
       voxelSize: number;
@@ -76,28 +76,24 @@ export type StudyResult =
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
 
+function postProgress(jobId: number, done: number, total: number): void {
+  ctx.postMessage({ kind: 'progress', jobId, done, total } satisfies StudyMessage);
+}
+
+function postResult(jobId: number, payload: StudyResult): void {
+  ctx.postMessage({ kind: 'result', jobId, payload } satisfies StudyMessage);
+}
+
 ctx.addEventListener('message', (event: MessageEvent<StudyJob>) => {
   const job = event.data;
   try {
     if (job.kind === 'study') {
       const trials = runStudy(job.params, {
-        onTrial: (done, total) =>
-          ctx.postMessage({
-            kind: 'progress',
-            jobId: job.jobId,
-            done,
-            total,
-          } satisfies StudyMessage),
+        onTrial: (done, total) => postProgress(job.jobId, done, total),
       });
-      ctx.postMessage({
-        kind: 'result',
-        jobId: job.jobId,
-        payload: { kind: 'study', trials },
-      } satisfies StudyMessage);
+      postResult(job.jobId, { kind: 'study', trials });
     } else if (job.kind === 'curve') {
-      // Two-level progress: total = sum over Ns of trialsPerN. We collapse to
-      // (done trials so far) / (total trials across all Ns) so a single bar
-      // moves smoothly across the whole sweep.
+      // Two-level progress collapsed to one bar: total trials across all Ns.
       const totalTrials = job.Ns.length * job.trialsPerN;
       let doneTrials = 0;
       const points = runCurve(
@@ -110,42 +106,22 @@ ctx.addEventListener('message', (event: MessageEvent<StudyJob>) => {
         {
           onTrial: () => {
             doneTrials++;
-            ctx.postMessage({
-              kind: 'progress',
-              jobId: job.jobId,
-              done: doneTrials,
-              total: totalTrials,
-            } satisfies StudyMessage);
+            postProgress(job.jobId, doneTrials, totalTrials);
           },
         }
       );
-      ctx.postMessage({
-        kind: 'result',
-        jobId: job.jobId,
-        payload: { kind: 'curve', points },
-      } satisfies StudyMessage);
+      postResult(job.jobId, { kind: 'curve', points });
     } else if (job.kind === 'paircorr') {
       const { pc, pcAniso } = computePairCorrelationEnsemble(job);
-      ctx.postMessage({
-        kind: 'result',
-        jobId: job.jobId,
-        payload: { kind: 'paircorr', pc, pcAniso },
-      } satisfies StudyMessage);
+      postResult(job.jobId, { kind: 'paircorr', pc, pcAniso });
     } else if (job.kind === 'morph') {
-      // Reconstruct minimal Planckton objects from serialized verts. faces
-      // and other fields aren't needed by morphologicalHull (it only reads
-      // .verts) so we cast through unknown to keep the postMessage payload
-      // small.
+      // morphologicalHull only reads .verts; cast keeps the postMessage small.
       const tets = job.tets as unknown as Planckton[];
       const morph = morphologicalHull(tets, job.L, {
         voxelSize: job.voxelSize,
         alpha: job.alpha,
       });
-      ctx.postMessage({
-        kind: 'result',
-        jobId: job.jobId,
-        payload: { kind: 'morph', morph },
-      } satisfies StudyMessage);
+      postResult(job.jobId, { kind: 'morph', morph });
     }
   } catch (err) {
     ctx.postMessage({
@@ -171,7 +147,6 @@ function computePairCorrelationEnsemble(job: {
   let rArr: number[] = [];
   let totalRho = 0;
   let used = 0;
-  // Aniso accumulators (only filled if job.aniso).
   let accumPar: number[] = [];
   let accumPerp: number[] = [];
   let countParSum: number[] = [];
@@ -209,9 +184,8 @@ function computePairCorrelationEnsemble(job: {
     }
     totalRho += single.rhoBulk;
     if (job.aniso) {
-      // Principal axis from the gyration tensor's largest eigenvalue. We
-      // compute it on the centroid cloud (not the vertex cloud) so the axis
-      // tracks the aggregate's overall elongation, not its vertex spread.
+      // Principal axis on the centroid cloud (not vertex cloud) so it tracks
+      // aggregate elongation rather than per-tet vertex spread.
       const shape = gyrationDescriptors(cents);
       if (shape) {
         const axis = shape.axes[0];
@@ -232,12 +206,7 @@ function computePairCorrelationEnsemble(job: {
       }
     }
     used++;
-    ctx.postMessage({
-      kind: 'progress',
-      jobId: job.jobId,
-      done: used,
-      total: job.nTrials,
-    } satisfies StudyMessage);
+    postProgress(job.jobId, used, job.nTrials);
   }
   if (used === 0) return { pc: null, pcAniso: null };
   const pc: PairCorrelation = {

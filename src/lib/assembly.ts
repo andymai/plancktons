@@ -105,12 +105,18 @@ export function growOne(a: Assembly): GrowResult {
   return 'jammed';
 }
 
-/** Try a single random placement on free face `ffIdx` with chirality `chir`. */
+/**
+ * Try a single random placement on free face `ffIdx`. The `chir` argument is
+ * the chirality of the RESULTING tet (what the user requested via the
+ * chirality bias). Because `matePlanckton` is a reflection that flips
+ * chirality, we use a template of the opposite handedness so the placed tet
+ * ends up with the requested chirality.
+ */
 function tryPlace(a: Assembly, ffIdx: number, chir: Chirality, rng: Rng): boolean {
   const ff = a.freeFaces[ffIdx];
   if (!ff) return false;
   const tgtSig = edgeSig(ff.tri);
-  const tmpl = unitPlanckton(a.opts.L, chir);
+  const tmpl = unitPlanckton(a.opts.L, chir === 'R' ? 'L' : 'R');
   const tF = faceTriangles(tmpl);
   const compat: number[] = [];
   for (let i = 0; i < 4; i++) {
@@ -127,12 +133,13 @@ function tryPlace(a: Assembly, ffIdx: number, chir: Chirality, rng: Rng): boolea
 /**
  * Deterministically iterate every compatible template face × perm for the
  * given free face + chirality. Used as the exhaustive fallback in growOne.
+ * Same template-chirality flip as `tryPlace` for the same reflection reason.
  */
 function tryPlaceExhaustive(a: Assembly, ffIdx: number, chir: Chirality): boolean {
   const ff = a.freeFaces[ffIdx];
   if (!ff) return false;
   const tgtSig = edgeSig(ff.tri);
-  const tmpl = unitPlanckton(a.opts.L, chir);
+  const tmpl = unitPlanckton(a.opts.L, chir === 'R' ? 'L' : 'R');
   const tF = faceTriangles(tmpl);
   for (let tfIdx = 0; tfIdx < 4; tfIdx++) {
     if (!sigEq(edgeSig(tF[tfIdx] as [Vec3, Vec3, Vec3]), tgtSig)) continue;

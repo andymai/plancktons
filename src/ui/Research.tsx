@@ -59,7 +59,7 @@ function statsOf(trials: TrialResult[]) {
   if (n === 0) return null;
   const effs = trials.map((t) => t.efficiency);
   const mean = effs.reduce((s, x) => s + x, 0) / n;
-  // Sample variance (Bessel correction); SEM = s/√n is then unbiased.
+  // Bessel-corrected sample variance, so SEM = s/√n is unbiased.
   const variance = n > 1 ? effs.reduce((s, x) => s + (x - mean) ** 2, 0) / (n - 1) : NaN;
   const std = Math.sqrt(variance);
   return {
@@ -88,9 +88,7 @@ function Histogram() {
   const [count, setCount] = useState(100);
 
   const job = useWorkerRun<{ kind: 'study'; trials: TrialResult[] }>();
-  // Stable [] when there's no result, so downstream useMemos with `[trials]`
-  // deps don't re-execute every render. job.result identity is preserved
-  // across re-renders by useWorkerRun until the next run() call.
+  // useMemo so downstream `[trials]` deps don't fire on every render.
   const trials = useMemo<TrialResult[]>(() => job.result?.trials ?? [], [job.result]);
   const running = job.running;
   const err = job.err;
@@ -225,7 +223,7 @@ function Curve() {
       compactBeta: growth.compactBeta,
     });
 
-  // All three candidate models on (1 - η) vs N. AIC picks the best.
+  // Three candidate models on (1 − η) vs N; AIC picks the best.
   const fits = useMemo<CombinedFit>(() => {
     if (points.length < 4) return { power: null, asym: null, exp: null };
     const usable = points.filter((p) => Number.isFinite(p.meanEff) && p.meanEff < 1);

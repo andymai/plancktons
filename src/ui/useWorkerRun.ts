@@ -10,8 +10,8 @@ export interface WorkerRunState<R> {
 }
 
 /**
- * Hook that runs one study job on a Web worker. Tracks running/progress/error
- * state. If a new run starts while one is in flight, aborts the in-flight job.
+ * Runs one study job on a Web worker, tracking running/progress/error state.
+ * A new run() aborts any in-flight job.
  */
 export function useWorkerRun<R extends StudyResult>() {
   const [state, setState] = useState<WorkerRunState<R>>({
