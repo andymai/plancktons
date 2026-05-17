@@ -1,5 +1,6 @@
 import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { Text } from '@react-three/drei';
 import { useStore } from '../lib/store.js';
 import { eightReptile, explode, tetFromPts } from '../lib/canonicalScenes.js';
 import type { Planckton } from '../lib/planckton.js';
@@ -65,11 +66,27 @@ export function ReptileScene() {
     () => explode(subdivided, reptileExplode * REPTILE_L * 2),
     [subdivided, reptileExplode]
   );
+  const R = subdivided.filter((p) => p.chirality === 'R').length;
+  const L = subdivided.filter((p) => p.chirality === 'L').length;
+  const badge = `${subdivided.length} pieces · ${R} R · ${L} L`;
   return (
-    <group position={[-REPTILE_L, -REPTILE_L, -REPTILE_L]}>
-      {pieces.map((p, i) => (
-        <PlancktonMesh key={i} planckton={p} />
-      ))}
-    </group>
+    <>
+      <group position={[-REPTILE_L, -REPTILE_L, -REPTILE_L]}>
+        {pieces.map((p, i) => (
+          <PlancktonMesh key={i} planckton={p} />
+        ))}
+      </group>
+      <Text
+        position={[0, -REPTILE_L * 1.6, 0]}
+        fontSize={REPTILE_L * 0.16}
+        anchorX="center"
+        anchorY="top"
+        color="#9aa3ad"
+        outlineWidth={0.003}
+        outlineColor="#15181c"
+      >
+        {badge}
+      </Text>
+    </>
   );
 }
