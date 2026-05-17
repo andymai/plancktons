@@ -50,6 +50,8 @@ interface State {
   setCubeExplode: (v: number) => void;
   cubeAutoplay: boolean;
   setCubeAutoplay: (b: boolean) => void;
+  reptileAutoplay: boolean;
+  setReptileAutoplay: (b: boolean) => void;
 
   // Growth
   growth: GrowthParams;
@@ -110,6 +112,8 @@ export const useStore = create<State>((set) => ({
   setCubeExplode: (cubeExplode) => set({ cubeExplode }),
   cubeAutoplay: false,
   setCubeAutoplay: (cubeAutoplay) => set({ cubeAutoplay }),
+  reptileAutoplay: false,
+  setReptileAutoplay: (reptileAutoplay) => set({ reptileAutoplay }),
 
   // N=40 is dense enough to be visually striking but quick to generate.
   // Compact strategy with β=3 yields visibly rounder, denser piles than

@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
 import { useStore } from '../lib/store.js';
 import { eightReptile, explode, tetFromPts } from '../lib/canonicalScenes.js';
 import type { Planckton } from '../lib/planckton.js';
@@ -43,6 +44,18 @@ function recursiveReptile(L: number, depth: number): Planckton[] {
 export function ReptileScene() {
   const reptileExplode = useStore((s) => s.reptileExplode);
   const reptileDepth = useStore((s) => s.reptileDepth);
+  const autoplay = useStore((s) => s.reptileAutoplay);
+  const setExplode = useStore((s) => s.setReptileExplode);
+  const tRef = useRef(0);
+  // Cycle the explode 0 ↔ 1 at ~0.4 Hz so the sub-Plancktons visibly fly
+  // out and re-pack into the parent shape. The constructive demonstration
+  // of self-similar dissection: 8 (or 64, or 512) of THESE are ONE of the
+  // bigger thing.
+  useFrame((_, delta) => {
+    if (!autoplay) return;
+    tRef.current += delta;
+    setExplode(0.5 - 0.5 * Math.cos(tRef.current * 2.5));
+  });
   const pieces = useMemo(
     () => explode(recursiveReptile(REPTILE_L, reptileDepth), reptileExplode * REPTILE_L * 2),
     [reptileExplode, reptileDepth]
