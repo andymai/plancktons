@@ -143,6 +143,7 @@ input[type='range'] {
   background: var(--border);
   flex: 0 0 6px;
   transition: background 120ms ease;
+  touch-action: none;
 }
 .pane-resizer:hover,
 .pane-resizer:active {

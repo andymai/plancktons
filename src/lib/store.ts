@@ -67,6 +67,14 @@ interface State {
   setAnimationMode: (m: AnimationMode) => void;
   animSpeed: number; // tets per second
   setAnimSpeed: (n: number) => void;
+  /** Tracks the most recent non-zero animSpeed so togglePlay can resume to it. */
+  lastNonZeroAnimSpeed: number;
+  /**
+   * Toggle animSpeed between 0 (paused) and the most recent non-zero value.
+   * Shared by the Space keyboard shortcut and the Transport play/pause button
+   * so the resume speed is consistent regardless of which surface paused.
+   */
+  togglePlay: () => void;
   // Monotonic counters; each scene watches these to step / restart / jump.
   stepTrigger: number;
   bumpStep: () => void;
@@ -135,6 +143,14 @@ export const useStore = create<State>((set) => ({
   setAnimationMode: (animationMode) => set({ animationMode }),
   animSpeed: 12,
   setAnimSpeed: (animSpeed) => set({ animSpeed }),
+  togglePlay: () =>
+    set((s) => {
+      if (s.animSpeed > 0) {
+        return { animSpeed: 0, lastNonZeroAnimSpeed: s.animSpeed };
+      }
+      return { animSpeed: s.lastNonZeroAnimSpeed };
+    }),
+  lastNonZeroAnimSpeed: 12,
   stepTrigger: 0,
   bumpStep: () => set((s) => ({ stepTrigger: s.stepTrigger + 1 })),
   resetTrigger: 0,

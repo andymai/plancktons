@@ -1,34 +1,27 @@
-import { useEffect, useRef } from 'react';
 import type { GrowthMetrics } from '../scenes/GrowthScene.js';
 import { useStore } from '../lib/store.js';
 import { PauseIcon, PlayIcon, PlusOneIcon, SkipBackIcon, SkipForwardIcon } from './icons.js';
-
-const DEFAULT_RESUME_SPEED = 12;
 
 export function Transport({ metrics }: { metrics: GrowthMetrics | null }) {
   const scene = useStore((s) => s.scene);
   const animationMode = useStore((s) => s.animationMode);
   const animSpeed = useStore((s) => s.animSpeed);
-  const setAnimSpeed = useStore((s) => s.setAnimSpeed);
+  const togglePlay = useStore((s) => s.togglePlay);
   const growth = useStore((s) => s.growth);
   const bumpStep = useStore((s) => s.bumpStep);
   const bumpReset = useStore((s) => s.bumpReset);
   const bumpJumpEnd = useStore((s) => s.bumpJumpEnd);
 
-  const lastSpeedRef = useRef(DEFAULT_RESUME_SPEED);
-  useEffect(() => {
-    if (animSpeed > 0) lastSpeedRef.current = animSpeed;
-  }, [animSpeed]);
-
-  if (scene !== 'growth') return null;
+  // Instant mode has no playback to control — the assembly is rendered at its
+  // target N directly, so a transport row would be inert at best, misleading
+  // at worst (⏮ silently does nothing).
+  if (scene !== 'growth' || animationMode === 'instant') return null;
 
   const currentN = metrics?.N ?? 0;
   const targetN = growth.N;
   const playing = animSpeed > 0;
   const atEnd = currentN >= targetN;
   const pct = targetN > 0 ? (100 * currentN) / targetN : 0;
-
-  const togglePlay = () => setAnimSpeed(playing ? 0 : lastSpeedRef.current);
 
   return (
     <div className="transport" role="region" aria-label="Growth playback">

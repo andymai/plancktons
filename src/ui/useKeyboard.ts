@@ -13,7 +13,7 @@ function nextAnimationMode(m: AnimationMode): AnimationMode {
 export function useKeyboardShortcuts() {
   const setScene = useStore((s) => s.setScene);
   const setGrowth = useStore((s) => s.setGrowth);
-  const setAnimSpeed = useStore((s) => s.setAnimSpeed);
+  const togglePlay = useStore((s) => s.togglePlay);
   const setAnimationMode = useStore((s) => s.setAnimationMode);
   const bumpStep = useStore((s) => s.bumpStep);
   const setMode = useStore((s) => s.setMode);
@@ -29,11 +29,8 @@ export function useKeyboardShortcuts() {
       switch (e.key) {
         case ' ':
           if (st.scene !== 'growth') return;
-          if (st.animationMode === 'animated') {
-            setAnimSpeed(st.animSpeed === 0 ? 4 : 0);
-          } else if (st.animationMode === 'step') {
-            bumpStep();
-          }
+          if (st.animationMode === 'animated') togglePlay();
+          else if (st.animationMode === 'step') bumpStep();
           e.preventDefault();
           break;
         case 'r':
@@ -73,5 +70,5 @@ export function useKeyboardShortcuts() {
     }
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [setScene, setGrowth, setAnimSpeed, setAnimationMode, bumpStep, setMode]);
+  }, [setScene, setGrowth, togglePlay, setAnimationMode, bumpStep, setMode]);
 }

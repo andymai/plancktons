@@ -52,6 +52,10 @@ export function ResizablePane({
       if (!draggingRef.current) return;
       const x = pointerX(e);
       if (x == null) return;
+      // touch-action: none on .pane-resizer suppresses scroll once the gesture
+      // starts on it, but Safari still fires touchmove with cancelable=true
+      // afterwards — preventDefault here is the second line of defence.
+      if ('touches' in e && e.cancelable) e.preventDefault();
       const raw = side === 'left' ? x : window.innerWidth - x;
       setWidth(Math.max(minWidth, Math.min(maxWidth, raw)));
     }
