@@ -153,11 +153,23 @@ function SingleControls() {
   return (
     <div>
       <div className="panel-title">Chirality</div>
-      <div className="chirality-toggle">
-        <button className={`chir-btn ${chir === 'R' ? 'active' : ''}`} onClick={() => set('R')}>
+      <div className="chirality-toggle" role="radiogroup" aria-label="Chirality">
+        <button
+          type="button"
+          role="radio"
+          aria-checked={chir === 'R'}
+          className={`chir-btn ${chir === 'R' ? 'active' : ''}`}
+          onClick={() => set('R')}
+        >
           Right (red)
         </button>
-        <button className={`chir-btn ${chir === 'L' ? 'active' : ''}`} onClick={() => set('L')}>
+        <button
+          type="button"
+          role="radio"
+          aria-checked={chir === 'L'}
+          className={`chir-btn ${chir === 'L' ? 'active' : ''}`}
+          onClick={() => set('L')}
+        >
           Left (white)
         </button>
       </div>

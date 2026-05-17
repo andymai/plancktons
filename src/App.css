@@ -63,6 +63,14 @@ button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
+button svg {
+  display: inline-block;
+  vertical-align: -2px;
+  margin-right: 4px;
+}
+button > svg:only-child {
+  margin-right: 0;
+}
 
 :focus-visible {
   outline: 2px solid var(--accent);

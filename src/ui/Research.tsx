@@ -16,6 +16,7 @@ import {
 import { useWorkerRun } from './useWorkerRun.js';
 import { ProgressBar } from './ProgressBar.js';
 import { SvgPlot } from './SvgPlot.js';
+import { CloseIcon, DownloadIcon, PinIcon } from './icons.js';
 
 type FitModel = 'power' | 'asymptote+power' | 'exp';
 type YMetric = 'etaC' | 'etaB';
@@ -162,12 +163,16 @@ function Histogram() {
             onClick={() => setSnapshot({ label: currentLabel, trials: [...trials] })}
             title="Save the current trials as 'A' so the next run overlays as 'B' for comparison."
           >
-            📌 Save A
+            <PinIcon /> Pin as A
           </button>
         )}
         {snapshot && (
-          <button onClick={() => setSnapshot(null)} title="Clear the saved comparison run">
-            ✕
+          <button
+            onClick={() => setSnapshot(null)}
+            title="Clear the saved comparison run"
+            aria-label="Clear comparison A"
+          >
+            <CloseIcon />
           </button>
         )}
         {trials.length > 0 && (
@@ -187,7 +192,7 @@ function Histogram() {
               )
             }
           >
-            ⬇ CSV
+            <DownloadIcon /> CSV
           </button>
         )}
       </div>
@@ -304,12 +309,16 @@ function Curve() {
             onClick={() => setSnapshot({ label: paramLabel(growth), points: [...points] })}
             title="Save the current sweep as A so the next sweep overlays as B."
           >
-            📌 Save A
+            <PinIcon /> Pin as A
           </button>
         )}
         {snapshot && (
-          <button onClick={() => setSnapshot(null)} title="Clear the saved overlay">
-            ✕
+          <button
+            onClick={() => setSnapshot(null)}
+            title="Clear the saved overlay"
+            aria-label="Clear sweep A"
+          >
+            <CloseIcon />
           </button>
         )}
       </div>

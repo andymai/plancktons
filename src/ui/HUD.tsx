@@ -31,7 +31,7 @@ export function HUD({ metrics }: { metrics: GrowthMetrics | null }) {
         <span className="hud-value">
           {metrics.N}
           {metrics.stalled && (
-            <span className="hud-stalled" title="No more valid placements">
+            <span className="hud-stalled" role="status" title="No more valid placements">
               {' '}
               / {metrics.targetN} stalled
             </span>
