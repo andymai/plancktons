@@ -138,6 +138,10 @@ npm run study -- --sweep-N 10,20,30,50,80,120 --trials 200 \
 
 # JSON Lines, for streaming into a notebook
 npm run study -- --N 30 --trials 1000 --format jsonl --out trials.jsonl
+
+# Parallel: fan trials out across N node:worker_threads. 'auto' picks
+# max(1, min(8, cpus()-1)). Output is bit-identical to single-worker.
+npm run study -- --N 50 --trials 500 --workers auto --out compact_par.csv
 ```
 
 CSV columns:
@@ -253,17 +257,12 @@ Morph / Voronoi / MC panels in the sidebar (`Analyses`), and the Histogram /
 η-vs-N / g(r) / Kinetics / S₂(r) / Q_l-ensemble panels in the Research
 drawer. Residuals worth flagging today:
 
-- **CLI is single-threaded** — the browser fans out study and curve jobs
-  across `navigator.hardwareConcurrency − 1` Web Workers via
-  `src/lib/workerPool.ts`, but `scripts/study.ts` still walks trials
-  sequentially. Users who want offline parallelism shell out N processes.
-- **No two-level Ns × trials fan-out for curve sweeps** — the pool
+- **No two-level Ns × trials fan-out for curve sweeps** — the browser pool
   partitions Ns across workers; if Ns is shorter than the pool size, some
   cores idle. A two-level partition would help short-Ns / many-trials
-  sweeps but adds CurvePoint-merge complexity.
-- **`brepjsOverlap.ts` oracle is dev-only** — the BREP-based independent
-  overlap check still exists as a devDep sanity script but isn't run in CI;
-  drift between BREP and the SAT kernel would only surface on a manual run.
+  sweeps but adds CurvePoint-merge complexity. (CLI uses
+  `node:worker_threads` and fans out trials within a single N — see
+  `scripts/study.ts --workers`.)
 
 ## References
 

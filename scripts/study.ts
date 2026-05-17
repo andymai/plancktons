@@ -23,7 +23,25 @@
  */
 
 import { writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { Worker } from 'node:worker_threads';
+import { fileURLToPath } from 'node:url';
+import { cpus } from 'node:os';
 import { runStudy, trialsToCSV, type TrialResult } from '../src/lib/study.js';
+import { SEED_STRIDE } from '../src/lib/constants.js';
+
+// __BUILD_COMMIT__ is normally injected by Vite. When running via tsx the
+// import returns 'dev' — useless for reproducibility of CLI-generated data.
+// Resolve at startup from git via execFile (no shell, no injection vector)
+// and shove it into the global namespace before provenance.ts's typeof check
+// fires.
+try {
+  const sha = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf-8' }).trim();
+  (globalThis as Record<string, unknown>).__BUILD_COMMIT__ = sha;
+  (globalThis as Record<string, unknown>).__BUILD_TIME__ = new Date().toISOString();
+} catch {
+  // Outside a git checkout (CI on a tarball, etc.); leave the 'dev' fallback.
+}
 
 type Args = {
   N?: number;
@@ -35,6 +53,7 @@ type Args = {
   beta: number;
   format: 'csv' | 'jsonl';
   out?: string;
+  workers: number;
 };
 
 function parseArgs(argv: string[]): Args {
@@ -45,6 +64,7 @@ function parseArgs(argv: string[]): Args {
     chirality: 0.5,
     beta: 3,
     format: 'csv',
+    workers: 1,
   };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
@@ -113,6 +133,18 @@ function parseArgs(argv: string[]): Args {
         a.out = need();
         i++;
         break;
+      case '--workers':
+      case '-w': {
+        const w = need();
+        if (w === 'auto') {
+          // -1 to leave a core for OS/this process, clamp to [1, 8].
+          a.workers = Math.max(1, Math.min(8, cpus().length - 1));
+        } else {
+          a.workers = Math.max(1, parseInt(w, 10) || 1);
+        }
+        i++;
+        break;
+      }
       case '-h':
       case '--help':
         console.log(USAGE);
@@ -138,6 +170,10 @@ const USAGE = `plancktons study CLI
   --beta <float>        inverse-temperature for 'compact' (default 3)
   --format <csv|jsonl>  output format (default csv)
   --out <path>          write to file instead of stdout
+  --workers <int|auto>  parallel slices via node:worker_threads (default 1).
+                        'auto' = max(1, min(8, cpus()-1)). Output is
+                        bit-identical to single-worker thanks to the
+                        seed_t = startSeed + t·SEED_STRIDE contract.
 `;
 
 function trialsToJsonl(trials: ReadonlyArray<TrialResult>): string {
@@ -160,13 +196,79 @@ function runOne(args: Args, N: number): TrialResult[] {
   });
 }
 
+interface WorkerSlice {
+  start: number;
+  count: number;
+}
+
+function partitionSlices(total: number, workers: number): WorkerSlice[] {
+  if (workers <= 1 || total <= 1) return [{ start: 0, count: total }];
+  const base = Math.floor(total / workers);
+  const extra = total - base * workers;
+  const slices: WorkerSlice[] = [];
+  let cur = 0;
+  for (let i = 0; i < workers; i++) {
+    const c = base + (i < extra ? 1 : 0);
+    if (c === 0) continue;
+    slices.push({ start: cur, count: c });
+    cur += c;
+  }
+  return slices;
+}
+
+function runOneSliceInWorker(args: Args, N: number, slice: WorkerSlice): Promise<TrialResult[]> {
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(fileURLToPath(new URL('./_studyWorker.ts', import.meta.url)), {
+      // tsx isn't bundled with Node; spawn the worker with the tsx loader so
+      // it can resolve the .ts source via the conventional `.js` import
+      // specifier the rest of the codebase uses.
+      execArgv: ['--import', 'tsx'],
+      workerData: {
+        params: {
+          N,
+          trials: slice.count,
+          startSeed: args.startSeed + slice.start * SEED_STRIDE,
+          chiralityBias: args.chirality,
+          strategy: args.strategy,
+          compactBeta: args.beta,
+        },
+      },
+    });
+    worker.on(
+      'message',
+      (msg: { kind: 'result'; trials: TrialResult[] } | { kind: 'progress' }) => {
+        if (msg.kind === 'result') {
+          worker.terminate();
+          // Remap local trial indices to global, matching workerPool.mergeTrialSlices.
+          const remapped = msg.trials.map((t) => ({ ...t, trial: slice.start + t.trial }));
+          resolve(remapped);
+        }
+      }
+    );
+    worker.on('error', (err) => {
+      worker.terminate();
+      reject(err);
+    });
+  });
+}
+
+async function runOneParallel(args: Args, N: number): Promise<TrialResult[]> {
+  if (args.workers <= 1) return runOne(args, N);
+  const slices = partitionSlices(args.trials, args.workers);
+  const results = await Promise.all(slices.map((slice) => runOneSliceInWorker(args, N, slice)));
+  const flat: TrialResult[] = [];
+  for (const slice of results) flat.push(...slice);
+  return flat;
+}
+
 const args = parseArgs(process.argv.slice(2));
 const Ns = args.sweepN ?? [args.N as number];
 const allTrials: TrialResult[] = [];
 const t0 = Date.now();
+const workerNote = args.workers > 1 ? ` (${args.workers} workers)` : '';
 for (const N of Ns) {
-  process.stderr.write(`  N=${N} × ${args.trials} trials...\n`);
-  const trials = runOne(args, N);
+  process.stderr.write(`  N=${N} × ${args.trials} trials${workerNote}...\n`);
+  const trials = await runOneParallel(args, N);
   allTrials.push(...trials);
 }
 process.stderr.write(`done in ${(Date.now() - t0) / 1000}s - ${allTrials.length} trials\n`);
