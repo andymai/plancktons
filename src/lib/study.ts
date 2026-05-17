@@ -123,7 +123,7 @@ function meanStd(xs: number[]): { mean: number; std: number; sem: number } {
   if (n === 0) return { mean: NaN, std: NaN, sem: NaN };
   const m = xs.reduce((s, x) => s + x, 0) / n;
   if (n === 1) return { mean: m, std: NaN, sem: NaN };
-  // Sample variance (Bessel-corrected), so SEM = s / √n is unbiased.
+  // Bessel-corrected sample variance, so SEM = s/√n is unbiased.
   const variance = xs.reduce((s, x) => s + (x - m) ** 2, 0) / (n - 1);
   const std = Math.sqrt(variance);
   return { mean: m, std, sem: std / Math.sqrt(n) };
@@ -156,7 +156,7 @@ export function runCurve(
         strategy,
         ...(compactBeta !== undefined ? { compactBeta } : {}),
       },
-      hooks?.onTrial ? { onTrial: (done, total) => hooks.onTrial!(done, total) } : undefined
+      hooks?.onTrial ? { onTrial: hooks.onTrial } : undefined
     );
     const n = trials.length;
     const eff = meanStd(trials.map((t) => t.efficiency));

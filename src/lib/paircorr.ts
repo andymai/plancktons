@@ -1,13 +1,7 @@
 // Pair correlation g(r) = ⟨ρ(r)⟩ / ρ_bulk for tet centroids. ρ_bulk uses the
-// convex hull volume so g(r) is comparable across cluster sizes; shell
-// volume 4π·r²·dr assumes 3D isotropy and over-counts near the boundary,
-// but matches the standard form used in the literature.
-//
-// Anisotropic variant: split pairs by the angle θ between r_ij and a
-// principal direction (typically the largest gyration eigenvector). Returns
-// separate g(r) curves for "parallel" (θ < 45°) and "perpendicular"
-// (θ > 45°) bands. A difference between the two reveals nematic-like
-// ordering invisible to the scalar g(r).
+// convex hull volume so g(r) is comparable across cluster sizes; shell volume
+// 4π·r²·dr assumes 3D isotropy and over-counts near the boundary, but matches
+// the standard form used in the literature.
 
 import type { Vec3 } from './vec.js';
 
@@ -33,7 +27,7 @@ export function pairCorrelation(
   if (N < 2 || V <= 0 || dr <= 0) {
     return { r: [], g: [], counts, rhoBulk: 0 };
   }
-  // Each unordered pair contributes 2 (i sees j at r_ij, j sees i at same r).
+  // Each unordered pair contributes 2: i sees j at r_ij, j sees i at same r.
   for (let i = 0; i < N; i++) {
     const a = centroids[i] as Vec3;
     for (let j = i + 1; j < N; j++) {
@@ -76,11 +70,9 @@ export interface PairCorrelationAniso {
 
 /**
  * Pair correlation split by the angle between r_ij and a principal axis.
- * cos²(π/4) = 0.5 is the natural break: parallel band covers the solid-angle
- * cone of (1 − 1/√2) ≈ 29% of 4π, perpendicular covers the remaining 71%.
- * We normalize each band by its own ideal shell density, so a uniform
- * isotropic cloud yields gPar ≈ gPerp ≈ 1 (within the per-band counting
- * noise).
+ * Parallel band: cos²θ > 0.5 (cone of solid angle (1−√2/2)·4π, ≈ 29%);
+ * perpendicular: the remaining ≈ 71%. Each band is normalized by its own
+ * ideal shell density, so a uniform isotropic cloud yields gPar ≈ gPerp ≈ 1.
  */
 export function pairCorrelationAniso(
   centroids: ReadonlyArray<Vec3>,
@@ -96,15 +88,12 @@ export function pairCorrelationAniso(
   if (N < 2 || V <= 0 || dr <= 0) {
     return { r: [], gPar: [], gPerp: [], countsPar, countsPerp, rhoBulk: 0 };
   }
-  // Solid-angle fractions: ω_par / 4π = 1 − cos(π/4) = 1 − √2/2 ≈ 0.293.
-  // ω_perp / 4π = √2/2 ≈ 0.707. Each band's "ideal" shell volume is the
-  // full-sphere shell volume scaled by its solid-angle fraction.
+  // Solid-angle fractions: ω_par/4π = 1 − √2/2 ≈ 0.293, ω_perp/4π = √2/2.
   const OMEGA_PAR = 1 - Math.SQRT1_2;
   const OMEGA_PERP = Math.SQRT1_2;
-  // Normalize axis defensively.
   const len = Math.sqrt(axis[0] ** 2 + axis[1] ** 2 + axis[2] ** 2) || 1;
   const ax: Vec3 = [axis[0] / len, axis[1] / len, axis[2] / len];
-  // cos²(45°) = 0.5 threshold on (r̂ · â)² avoids a sqrt per pair.
+  // Compare cos²θ to 0.5 to avoid sqrt-per-pair; equivalent to |θ| < π/4.
   const COS_SQ_45 = 0.5;
   for (let i = 0; i < N; i++) {
     const a = centroids[i] as Vec3;
@@ -116,8 +105,6 @@ export function pairCorrelationAniso(
       const d2 = dx * dx + dy * dy + dz * dz;
       const d = Math.sqrt(d2);
       if (d >= rMax || d === 0) continue;
-      // Cosine of angle between r_ij and axis, then squared (since +r and -r
-      // are equivalent for a non-oriented pair).
       const cosVal = (dx * ax[0] + dy * ax[1] + dz * ax[2]) / d;
       const cosSq = cosVal * cosVal;
       const k = Math.min(nBins - 1, Math.floor(d / dr));

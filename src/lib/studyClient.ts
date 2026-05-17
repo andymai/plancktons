@@ -1,10 +1,6 @@
-// React-friendly client for the study.worker.ts dedicated worker. Each call
-// to runOnWorker(...) opens a short-lived worker, runs one job, and resolves
-// with the result (or rejects on error). Progress events flow through an
-// optional callback.
-//
-// Why a fresh worker per call: jobs are independent and we don't want job
-// queueing complexity. Worker spinup is <10ms on modern engines.
+// Each runOnWorker call opens a short-lived worker, runs one job, and resolves
+// with the result. Worker spinup is <10ms; isolating jobs this way avoids
+// in-worker queueing.
 
 import type { StudyJob, StudyMessage, StudyResult } from '../worker/study.worker.js';
 
@@ -13,8 +9,8 @@ export interface RunOptions {
   signal?: AbortSignal;
 }
 
-// Distributive Omit: `Omit<A | B, 'k'>` collapses the union, losing the
-// discriminant variant. Distributing over the union preserves each shape.
+// Distributive Omit: `Omit<A | B, 'k'>` collapses the union and loses the
+// discriminant; distributing over each member preserves it.
 type StudyJobInput = StudyJob extends infer J
   ? J extends { jobId: number }
     ? Omit<J, 'jobId'>
@@ -23,10 +19,6 @@ type StudyJobInput = StudyJob extends infer J
 
 let nextJobId = 1;
 
-/**
- * Runs a job on a fresh worker instance. Resolves with the typed result.
- * Throws on error or abort. Worker is terminated when the job settles.
- */
 export function runOnWorker<R extends StudyResult>(
   job: StudyJobInput,
   opts?: RunOptions

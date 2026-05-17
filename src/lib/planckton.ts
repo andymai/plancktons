@@ -11,7 +11,7 @@
 // each face's vertex order to keep normals outward.
 
 import type { Vec3 } from './vec.js';
-import { add, centroid, cross, dot, norm, scl, sub, unit } from './vec.js';
+import { add, centroid, cross, dot, norm, sub, unit } from './vec.js';
 
 export type Chirality = 'R' | 'L';
 
@@ -114,6 +114,22 @@ export function matchPerms(
  * lies on `target` with the opposite outward normal. Returns a new Planckton in
  * world coordinates.
  */
+/**
+ * Mate a template Planckton onto a target face triangle in world coordinates,
+ * producing the new Planckton whose face `tfIdx` (permuted by `perm`) is
+ * vertex-coincident with `target` and whose apex lies on the opposite side of
+ * the shared face plane from the template's interior.
+ *
+ * Face mating is a reflection through the shared face plane (the unique rigid
+ * motion that vertex-aligns one congruent triangle to another while putting
+ * the bodies on opposite sides). Reflections flip chirality, so the result's
+ * `chirality` field is the OPPOSITE of the template's. This matches the Hill
+ * cube tiling, which is necessarily 3R + 3L with alternating chirality around
+ * each shared edge.
+ *
+ * Callers requesting a result of chirality C must therefore supply a template
+ * of chirality flip(C). `unitPlanckton(L, flip(C))` is the convenient way.
+ */
 export function matePlanckton(
   template: Planckton,
   tfIdx: number,
@@ -134,25 +150,36 @@ export function matePlanckton(
   const tC = centroid(target[0], target[1], target[2]);
   const tU = unit(sub(target[1], target[0]));
   const tN = faceNormal(target);
-  // Flip normal so the new tet sits on the opposite side of the shared face.
-  const tWf = scl(tN, -1);
-  const tVf = cross(tWf, tU);
+  const tV = cross(tN, tU);
 
-  // R · sU = tU, R · sV = tVf, R · sN = tWf
-  // Apply: out = tC + R · (v - sC)
+  // Proper rotation R: sU→tU, sV→tV, sN→tN. Maps Fp[i] → target[i] for
+  // i ∈ {0,1,2} vertex-coincidently (both faces are congruent with matching
+  // cyclic edge orientation, courtesy of matchPerms). To put the apex on the
+  // OPPOSITE side of the shared face from the existing tet, additionally
+  // reflect through the face plane: flip the N component before recomposing.
+  // The combined transform = rotation ∘ reflection, det = -1, hence the
+  // chirality flip in the returned Planckton.
   const apply = (v: Vec3): Vec3 => {
     const d = sub(v, sC);
     const cU = dot(d, sU);
     const cV = dot(d, sV);
     const cN = dot(d, sN);
     return add(tC, [
-      cU * tU[0] + cV * tVf[0] + cN * tWf[0],
-      cU * tU[1] + cV * tVf[1] + cN * tWf[1],
-      cU * tU[2] + cV * tVf[2] + cN * tWf[2],
+      cU * tU[0] + cV * tV[0] - cN * tN[0],
+      cU * tU[1] + cV * tV[1] - cN * tN[1],
+      cU * tU[2] + cV * tV[2] - cN * tN[2],
     ]);
   };
   const newVerts = template.verts.map(apply) as [Vec3, Vec3, Vec3, Vec3];
-  return { verts: newVerts, faces: template.faces, chirality: template.chirality };
+  const newChir: Chirality = template.chirality === 'R' ? 'L' : 'R';
+  return {
+    verts: newVerts,
+    // Faces are vertex-index triples; mirroring reverses each face's winding
+    // so the outward normal stays outward in world space. The HILL_FACES_L
+    // table is precisely HILL_FACES_R reversed (see `unitPlanckton`).
+    faces: newChir === 'R' ? HILL_FACES_R : HILL_FACES_L,
+    chirality: newChir,
+  };
 }
 
 // ---------------------------------------------------------------------------
