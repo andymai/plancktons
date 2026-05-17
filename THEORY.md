@@ -244,24 +244,27 @@ Research mode.
 
 ### 4.3 Empirical findings
 
-Measured at compact strategy, β = 3, c_R = 0.5, 200 trials per N (script:
+Compact strategy, β = 3, c_R = 0.5, 200 trials per N. Source data is
+committed at `data/preliminary/q3_df_compact.csv`; reproduce with
 `npm run study -- --sweep-N 10,20,40,70,100,150,200 --trials 200 --strategy
-compact --beta 3`):
+compact --beta 3 --workers auto`:
 
 | N target | reach % | mean η_C | SEM η_C | ⟨R_g⟩ / L |
 | -------- | ------- | -------- | ------- | --------- |
-| 10       | 100 %   | 0.294    | 0.002   | 1.08      |
-| 20       | 100 %   | 0.253    | 0.002   | 1.30      |
-| 40       | 100 %   | 0.223    | 0.002   | 1.62      |
-| 70       | 100 %   | 0.203    | 0.001   | 1.93      |
-| 100      | 100 %   | 0.191    | 0.001   | 2.17      |
-| 150      | 100 %   | 0.181    | 0.001   | 2.48      |
-| 200      | 100 %   | 0.175    | 0.001   | 2.73      |
+| 10       | 100 %   | 0.597    | 0.008   | 1.02      |
+| 20       | 100 %   | 0.561    | 0.007   | 1.14      |
+| 40       | 100 %   | 0.549    | 0.006   | 1.29      |
+| 70       | 100 %   | 0.530    | 0.005   | 1.46      |
+| 100      | 100 %   | 0.525    | 0.004   | 1.59      |
+| 150      | 100 %   | 0.523    | 0.004   | 1.75      |
+| 200      | 100 %   | 0.526    | 0.003   | 1.88      |
 
-η_C decays monotonically, still slowly decreasing at N = 200 toward an
-asymptote in the 0.15-0.17 range. The 1 − η_C ≈ 0.83 "vacuum" at large N is
-the Dehn-invariant signature - the gap between random aggregation and a
-deterministic Hill tiling.
+η_C falls quickly over N=10→40 and plateaus near 0.52-0.53 by N ≥ 100. The
+residual 1 − η_C ≈ 0.47 "vacuum" at large N is the gap between random
+one-shot aggregation and the deterministic η = 1 Hill tiling — driven by
+local-pocket sticking, not by any Dehn-invariant obstruction (the Dehn
+invariant of Hill T₁ vanishes; that's what makes η = 1 achievable in
+principle, but only with a non-random placement order).
 
 ### 4.4 Fit models for 1 − η(N)
 
@@ -340,13 +343,14 @@ a tighter `R_g(N)` growth than uniform, consistent with `compact` producing
 denser packings (cf. `η_C(β)` above and the `η_C(N)` curve in §4.3).
 (`data/preliminary/q3_df_{compact,uniform}.csv`.)
 
-**Q4 — g(r) first peak.** The first peak of the centroid-centroid pair
-correlation lies at **r ≈ 0.633 L** (g = 2.23 at N=50, compact β=3, 100
-trials, see `data/preliminary/q4_gr.csv`). The theoretical centroid-to-
-centroid distance for two face-shared Hill T₁'s sharing the isoceles face
-is L·√(3/8) ≈ **0.612 L**; the difference is 3.4 %, comparable to the
-histogram bin width (`rMax = 4 L, nBins = 60` → bin width ≈ 0.067 L). The
-prediction is consistent with the data.
+**Q4 — g(r) peak positions.** The centroid-centroid g(r) at N=50, compact
+β=3, 100 trials (`data/preliminary/q4_gr.csv`) has two sharp short-range
+peaks: r ≈ 0.367 L (g ≈ 3.22) and r ≈ 0.633 L (g ≈ 2.23). The two peaks
+correspond to the two face-shared neighbor classes — scalene-face and
+isoceles-face shares respectively. The theoretical centroid-to-centroid
+distance for two Hill T₁'s sharing the isoceles face is L·√(3/8) ≈
+**0.612 L**; the bin at 0.633 L is within one bin width
+(`rMax = 4 L, nBins = 60` → bin width ≈ 0.067 L) of that prediction.
 
 ### 4.6 Open questions
 
@@ -365,9 +369,9 @@ Currently unresolved:
    vertex coordinations bounded, or do they grow with `n`? The 6-cube tiling
    has coordination 6 at the two diagonal endpoints; the 8-reptile descends
    the recursion once; no closed-form answer is currently known.
-3. **MC-refined η_∞ vs. one-shot growth.** How much of the 1 − η ≈ 0.83
+3. **MC-refined η_∞ vs. one-shot growth.** How much of the 1 − η_C ≈ 0.47
    "vacuum" at N = 200 is true jamming versus local-minimum stickiness?
-   Mc refinement (§7 and `mcRefine.ts`) gives partial answers; a systematic
+   MC refinement (§7 and `mcRefine.ts`) gives partial answers; a systematic
    sweep is open.
 
 ---
