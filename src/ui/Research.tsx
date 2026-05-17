@@ -251,6 +251,18 @@ function Curve() {
   const fractalDimErr =
     rgFit && rgFit.alpha > 0 ? rgFit.alphaErr / (rgFit.alpha * rgFit.alpha) : null;
 
+  // Surface roughness exponent α from S(N) ~ N^α. For compact 3D growth
+  // (every tet contributes a fixed bulk volume), α = 2/3 by surface-to-
+  // volume scaling. α > 2/3 indicates fractal / branchy growth where each
+  // tet exposes more surface than the bulk ratio would predict.
+  const surfaceFit = useMemo<LogLogFit | null>(() => {
+    if (points.length < 3) return null;
+    return fitLogLog(
+      points.map((p) => p.N),
+      points.map((p) => p.meanSurface)
+    );
+  }, [points]);
+
   const bestModel = bestFitModel(fits);
   const { power, asym, exp } = fits;
 
@@ -374,6 +386,20 @@ function Curve() {
               {bestModel === 'exp' ? ' ← best' : ''}
             </div>
           )}
+        </div>
+      )}
+      {surfaceFit && points.length > 0 && (
+        <div
+          className="stats-line"
+          title="From S(N) ~ N^α. α = 2/3 = compact 3D growth (every tet adds the same bulk volume to surface area). α > 2/3 = fractal / branchy growth where new tets expose more surface than the bulk scaling predicts."
+        >
+          Surface exponent α = {surfaceFit.alpha.toFixed(3)} ± {surfaceFit.alphaErr.toFixed(3)} (R²
+          = {surfaceFit.r2.toFixed(3)})
+          {Math.abs(surfaceFit.alpha - 2 / 3) < 0.05
+            ? ' — compact 3D'
+            : surfaceFit.alpha > 2 / 3
+              ? ' — fractal / branchy'
+              : ' — sub-bulk (rounded surface)'}
         </div>
       )}
       {fractalDim && points.length > 0 && (
