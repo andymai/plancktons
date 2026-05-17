@@ -504,17 +504,6 @@ function DisplayControls() {
         />
         Gyration ellipsoid
       </label>
-      <label
-        className="checkbox-row"
-        title="Show known packing densities (sphere FCC, regular tet, RCP, RLP, …) as horizontal lines on the V*/V curve"
-      >
-        <input
-          type="checkbox"
-          checked={color.showReferences}
-          onChange={(e) => setColor({ showReferences: e.target.checked })}
-        />
-        Reference densities on plots
-      </label>
       <label className="checkbox-row">
         <input
           type="checkbox"
@@ -564,9 +553,22 @@ function DisplayControls() {
 }
 
 function AnalysesControls() {
+  const color = useStore((s) => s.color);
+  const setColor = useStore((s) => s.setColor);
   return (
     <div>
       <div className="panel-title">Analyses</div>
+      <label
+        className="checkbox-row"
+        title="Show known packing densities (sphere FCC, regular tet, RCP, RLP, …) as horizontal lines on the V*/V curve"
+      >
+        <input
+          type="checkbox"
+          checked={color.showReferences}
+          onChange={(e) => setColor({ showReferences: e.target.checked })}
+        />
+        Reference densities on plots
+      </label>
       <MorphologyPanel />
       <VoronoiPanel />
       <McRefinePanel />

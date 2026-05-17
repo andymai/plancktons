@@ -35,3 +35,43 @@ export function DownloadIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function PlayIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...ICON_PROPS} {...props}>
+      <path d="M4 3l8 5-8 5z" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function PauseIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...ICON_PROPS} {...props}>
+      <path d="M5 3v10M11 3v10" />
+    </svg>
+  );
+}
+
+export function SkipBackIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...ICON_PROPS} {...props}>
+      <path d="M4 3v10M13 3l-7 5 7 5z" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function SkipForwardIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...ICON_PROPS} {...props}>
+      <path d="M12 3v10M3 3l7 5-7 5z" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function PlusOneIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...ICON_PROPS} {...props}>
+      <path d="M8 4v8M4 8h8" />
+    </svg>
+  );
+}

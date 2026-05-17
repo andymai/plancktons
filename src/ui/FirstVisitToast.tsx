@@ -19,7 +19,7 @@ export function FirstVisitToast() {
   if (dismissed) return null;
   return (
     <div className="first-visit-toast" role="status">
-      <span>👋 New here? Tap</span>
+      <span>New here? Tap</span>
       <button
         type="button"
         className="first-visit-link"
