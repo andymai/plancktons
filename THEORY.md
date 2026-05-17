@@ -280,12 +280,78 @@ meaningful evidence. The **pure power-law** fit will _always_ return a
 finite α even when the underlying truth has an asymptote - so reading α in
 isolation is misleading. Always inspect which model wins AIC.
 
-### 4.5 Open questions
+### 4.5 Preliminary results
 
-The 1-η_C(N) tail behaviour, β-saturation, chirality-bias optimum, fractal
-dimension, and g(r) first-peak location are all quantitative sweeps the tool
-can run today; see `scripts/study.ts` (§6). They are bookkeeping rather than
-open questions. The questions that remain genuinely open in our view:
+The chirality-bias optimum, β-saturation, fractal dimension, and g(r)
+first-peak location are all quantitative sweeps the tool can run today. The
+parallel CLI mode (§6, `--workers`) made them tractable in seconds. The raw
+data are committed under `data/preliminary/`; each CSV carries the full
+provenance block (algorithm version, git short-sha, build time, parameters).
+
+**Q1 — chirality optimum.** η*C(c_R) is symmetric and unimodal in c_R, with
+the peak at c_R = 0.5 (balanced 50/50 R/L). Single-chirality assemblies
+(`c_R ∈ {0, 1}`) collapse to η_C ≈ 0.14 because face-shared Hill T₁'s
+require alternating chirality at the shared face — an all-one-chirality
+template starves the placement options and the aggregate degenerates into
+long chains. (`data/preliminary/q1_chir*\*.csv`, N=50, compact β=3, 500
+trials each.)
+
+| c_R  | ⟨η_C⟩ ± SEM         | ⟨η_B⟩ ± SEM         |
+| ---- | ------------------- | ------------------- |
+| 0    | 0.1443 ± 0.0015     | 0.0212 ± 0.0005     |
+| 0.25 | 0.4873 ± 0.0035     | 0.2381 ± 0.0030     |
+| 0.5  | **0.5338 ± 0.0033** | **0.2516 ± 0.0030** |
+| 0.75 | 0.4863 ± 0.0035     | 0.2357 ± 0.0031     |
+| 1    | 0.1442 ± 0.0015     | 0.0212 ± 0.0005     |
+
+**Q2 — β saturation.** η*C is **not** monotonic in β. It rises from
+β = 0 (uniform) to a maximum at β ≈ 5 (η_C ≈ 0.609), then falls back as
+β → ∞. The drop is the geometric signature of a jamming threshold:
+extremely greedy face selection (`p ∝ exp(β·n̂·ĉ)` strongly biased toward
+the deepest pocket) over-commits to single concave sites and exhausts the
+local placement options before the rest of the surface has been considered.
+The default β = 3 in the playground is conservative; β ≈ 5 is the empirical
+sweet spot. (`data/preliminary/q2_beta*\*.csv`, N=50, c_R=0.5, 500 trials.)
+
+| β   | ⟨η_C⟩ ± SEM         |
+| --- | ------------------- |
+| 0   | 0.3625 ± 0.0023     |
+| 1   | 0.4073 ± 0.0026     |
+| 2   | 0.4732 ± 0.0030     |
+| 3   | 0.5338 ± 0.0033     |
+| 5   | **0.6086 ± 0.0037** |
+| 8   | 0.5126 ± 0.0032     |
+| 12  | 0.4673 ± 0.0024     |
+
+**Q3 — fractal / mass dimension.** Fitting `R_g ~ N^{1/D_f}` over
+N ∈ {10, 20, 40, 70, 100, 150, 200} (200 trials per N, R_g over **all
+vertices**, both strategies) gives
+
+- compact β=3: **D_f = 4.87 ± 0.18** (R² = 0.993)
+- uniform: **D_f = 4.43 ± 0.08** (R² = 0.999)
+
+Both are **larger than 3**, the value expected for a uniform 3D sphere
+where `R_g ∝ N^{1/3}`. The interpretation isn't "super-3D" — the
+vertex-cloud R*g is dominated at small N by the per-tet vertex spread
+(R_g ≈ 0.5 L even for one isolated Planckton), and at large N converges
+toward the bulk N^{1/3} scaling. The fit straddles that crossover, so the
+quoted `D_f` is an effective scaling exponent, not a true Hausdorff
+dimension. The qualitative finding stands: compact-strategy aggregates have
+a tighter `R_g(N)` growth than uniform, consistent with `compact` producing
+denser packings (cf. η_C(β) above and the η_C(N) curve in §4.3).
+(`data/preliminary/q3_df*{compact,uniform}.csv`.)
+
+**Q4 — g(r) first peak.** The first peak of the centroid-centroid pair
+correlation lies at **r ≈ 0.633 L** (g = 2.23 at N=50, compact β=3, 100
+trials, see `data/preliminary/q4_gr.csv`). The theoretical centroid-to-
+centroid distance for two face-shared Hill T₁'s sharing the isoceles face
+is L·√(3/8) ≈ **0.612 L**; the difference is 3.4 %, comparable to the
+histogram bin width (`rMax = 4 L, nBins = 60` → bin width ≈ 0.067 L). The
+prediction is consistent with the data.
+
+### 4.6 Open questions
+
+The questions that remain genuinely open in our view:
 
 1. **Is the random Hill-T₁ asymptote `η_∞` in the literature?** To the
    author's knowledge, the random face-to-face packing density of an
