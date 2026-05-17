@@ -229,6 +229,48 @@ input[type='range'] {
 .actions .action-link {
   white-space: nowrap;
 }
+.action-link-github {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: var(--text);
+}
+.action-link-github:hover {
+  color: var(--accent);
+}
+.export-menu {
+  position: relative;
+  display: inline-flex;
+}
+.export-menu-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+  padding: 4px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+.export-menu-list button {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  text-align: left;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.export-menu-list button:hover:not(:disabled) {
+  background: var(--panel-2);
+  border-color: var(--border);
+}
 .topbar-right {
   display: flex;
   gap: 12px;
@@ -900,6 +942,27 @@ details.collapsible[open] > summary {
 }
 .references-table a:hover {
   text-decoration: underline;
+}
+
+/* --- tablet: condense topbar, narrow sidebars, keep three columns -------- */
+@media (max-width: 1024px) {
+  .title-sub {
+    display: none;
+  }
+  .topbar {
+    padding: 8px 10px;
+  }
+  .topbar-right {
+    gap: 8px;
+  }
+  .sidebar,
+  .pane-left {
+    min-width: 240px;
+  }
+  .pane-right,
+  .metrics-panel {
+    min-width: 220px;
+  }
 }
 
 /* --- mobile: stack sidebar / canvas / metrics vertically ----------------- */
