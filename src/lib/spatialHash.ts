@@ -1,8 +1,16 @@
 // Uniform-grid spatial hash for fast neighbor lookup during growth's SAT
-// overlap test, keyed by tet centroid. Hill T₁ at edge L has bounding sphere
-// radius √3·L/2, so any two tets with centroid distance ≥ √3·L can't overlap.
-// With cell side 2L, pairs outside the 3×3×3 cell neighborhood are provably
-// non-overlapping and SAT is skipped.
+// overlap test, keyed by tet centroid.
+//
+// Hill T₁ at edge L has vertices (0,0,0), (L,0,0), (L,L,0), (L,L,L); centroid
+// (3L/4, L/2, L/4). The farthest vertices (V0 and V3) are at distance √14/4·L
+// ≈ 0.935·L from the centroid, so the bounding-sphere radius is r_b = √14/4·L
+// and two tets are guaranteed non-overlapping when centroid distance exceeds
+// 2 r_b = √14/2·L ≈ 1.87 L.
+//
+// With cell side 2L, two tets in cells more than 1 cell apart in any axis are
+// separated by at least 2L > 1.87 L, so the 3×3×3 cell neighborhood is a
+// sound (conservative) candidate set for SAT testing. Margin = 0.13 L; shrink
+// the cell or use a tighter test only with a fresh proof.
 
 import type { Vec3 } from './vec.js';
 
