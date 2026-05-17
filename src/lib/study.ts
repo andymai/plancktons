@@ -111,6 +111,10 @@ export interface CurvePoint {
   semBboxEff: number;
   /** Mean radius of gyration. Slope of ln(rg) vs ln(N) gives fractal dimension D_f via rg ~ N^(1/D_f). */
   meanRg: number;
+  /** Mean free surface area. Slope of ln(S) vs ln(N) gives the surface
+   *  roughness exponent α: α = 2/3 for compact 3D; α > 2/3 for fractal /
+   *  branchy growth (more surface per tet than the bulk ratio). */
+  meanSurface: number;
   /** Mean tet-tet face coordination ⟨z⟩. */
   meanZ: number;
   meanV: number;
@@ -162,6 +166,7 @@ export function runCurve(
     const eff = meanStd(trials.map((t) => t.efficiency));
     const beff = meanStd(trials.map((t) => t.bboxEfficiency).filter((x) => Number.isFinite(x)));
     const rg = meanStd(trials.map((t) => t.rg).filter((x) => Number.isFinite(x)));
+    const surface = meanStd(trials.map((t) => t.surface).filter((x) => Number.isFinite(x)));
     const z = meanStd(trials.map((t) => t.meanTetCoord));
     const point: CurvePoint = {
       N,
@@ -172,6 +177,7 @@ export function runCurve(
       stdBboxEff: beff.std,
       semBboxEff: beff.sem,
       meanRg: rg.mean,
+      meanSurface: surface.mean,
       meanZ: z.mean,
       meanV: n === 0 ? NaN : trials.reduce((s, t) => s + t.V, 0) / n,
       meanVstar: n === 0 ? NaN : trials.reduce((s, t) => s + t.Vstar, 0) / n,
