@@ -6,7 +6,7 @@ headless CLI for batch runs.
 
 **Live:** <https://andymai.github.io/plancktons/>
 
-**Deep dive:** [THEORY.md](./THEORY.md) — Schläfli orthoschemes, Hilbert's
+**Deep dive:** [THEORY.md](./THEORY.md) - Schläfli orthoschemes, Hilbert's
 third problem, Matoušek's m³-reptile theorem, RSA jamming, gyration-tensor
 descriptors, and where Plancktons sit relative to sphere FCC, regular-tet
 packing, and random close packing in the literature.
@@ -22,38 +22,38 @@ Two face types, both right triangles:
 - `(L, L, L√2)` isoceles right (×2)
 - `(L, L√2, L√3)` scalene right (×2)
 
-All 6 dihedral angles are _rational_ multiples of π — which is exactly the
+All 6 dihedral angles are _rational_ multiples of π - which is exactly the
 condition (Dehn invariant = 0) making the Hill T scissors-congruent to a
 cube. So 6 Plancktons tile a cube, 8 tile a doubled Planckton, 64 tile it
-recursively, etc. — the **only** known reptile family of tetrahedra.
+recursively, etc. - the **only** known reptile family of tetrahedra.
 
 The chiral mirror is its other handedness (red = right-handed, white =
 left-handed in the default color scheme).
 
 ## Scenes
 
-1. **Single Planckton inspector** — chiral pair side by side, toggle
+1. **Single Planckton inspector** - chiral pair side by side, toggle
    handedness.
-2. **6-piece cube tiling** — six Plancktons (3 R + 3 L, one per permutation
+2. **6-piece cube tiling** - six Plancktons (3 R + 3 L, one per permutation
    of `(x, y, z)`) tile a cube exactly. Explode slider.
-3. **8-reptile dissection** — eight unit Plancktons tile a doubled Planckton;
+3. **8-reptile dissection** - eight unit Plancktons tile a doubled Planckton;
    recurse to 64 sub-Plancktons. Per Matoušek & Safernová 2010, this is
    provably the _only_ k-reptile family for tetrahedra (`k = m³`).
-4. **Random face-to-face growth** — RSA-style assembly. Live readout of:
+4. **Random face-to-face growth** - RSA-style assembly. Live readout of:
    - `V★ = N L³/6` (sum of part volumes)
    - `V` = convex-hull volume (vacuum-bag shrink-wrap upper bound)
-   - `η = V★/V` — packing efficiency
+   - `η = V★/V` - packing efficiency
    - Free surface area, vertex coordination, free-face fraction
    - Gyration tensor: `R_g`, anisotropy `κ²`, prolateness `S`
    - Optional **inertia ellipsoid** overlay
 
 ## Two growth strategies
 
-- **Uniform** — pick any free face with equal probability. Asymptotic
+- **Uniform** - pick any free face with equal probability. Asymptotic
   efficiency `η_∞ ≈ 0.25` (branchy fractal-like pile).
-- **Compact** — Boltzmann weight `p(face) ∝ exp(β · n̂ · ĉ)` biases toward
+- **Compact** - Boltzmann weight `p(face) ∝ exp(β · n̂ · ĉ)` biases toward
   concave pockets. Slider over `β`: `β = 0` recovers uniform; `β → ∞` is
-  greedy. `β = 3` gives `η_∞ ≈ 0.34` — measurably tighter packing.
+  greedy. `β = 3` gives `η_∞ ≈ 0.34` - measurably tighter packing.
 
 Chirality bias slider (`c_R ∈ [0, 1]`) controls the fraction of
 right-handed templates drawn during growth.
@@ -62,7 +62,7 @@ right-handed templates drawn during growth.
 
 Toggle **Advanced** in the sidebar to expose:
 
-- **Trial histogram** at fixed `N` — distribution of `η`, mean ± std, CSV
+- **Trial histogram** at fixed `N` - distribution of `η`, mean ± std, CSV
   export.
 - **`η` vs `N` curve** with confidence band, plus reference packing
   densities (sphere FCC `0.7405`, regular tet `0.717`, RCP `0.637`, …)
@@ -73,7 +73,7 @@ Toggle **Advanced** in the sidebar to expose:
 - **Visual options**: color by chirality vs. by placement order; toggle hull
   / inertia ellipsoid; tweak tet inset, edge opacity.
 
-## CLI — `scripts/study.ts`
+## CLI - `scripts/study.ts`
 
 For real ensemble averages, fit-grade statistics, and offline pipelines:
 
@@ -97,11 +97,11 @@ the browser, so results are bit-identical and `seed` is fully reproducible
 
 ## Export and share
 
-- **🔗 Share link** — encodes scene/seed/N/strategy/β/chirality in the URL
+- **🔗 Share link** - encodes scene/seed/N/strategy/β/chirality in the URL
   hash. Click, paste, identical view.
-- **📸 PNG** — high-res canvas screenshot.
-- **🧊 STL** — watertight STL of the current assembly (for 3D printing).
-- **💾 JSON** — full state dump (vertices, chirality).
+- **📸 PNG** - high-res canvas screenshot.
+- **🧊 STL** - watertight STL of the current assembly (for 3D printing).
+- **💾 JSON** - full state dump (vertices, chirality).
 
 ## Local development
 
@@ -157,12 +157,12 @@ scripts/
 
 ## Status / known gaps
 
-- **Voronoi / alpha-shape `V_α`** — planned. Convex hull `V` is an
+- **Voronoi / alpha-shape `V_α`** - planned. Convex hull `V` is an
   _upper_ bound on the true vacuum-bag volume; assemblies with deep
   concavities have `V_α < V`.
-- **Worker pool** — heavy Research-mode sweeps (e.g. 500 trials × 12 N
+- **Worker pool** - heavy Research-mode sweeps (e.g. 500 trials × 12 N
   values) currently block the main thread. CLI is the workaround.
-- **Metropolis MC post-growth refinement** — would let `η_∞` approach the
+- **Metropolis MC post-growth refinement** - would let `η_∞` approach the
   true greedy maximum.
 
 ## References
@@ -179,4 +179,4 @@ The full bibliographic list is in [THEORY.md §5–§6](./THEORY.md). The big tw
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+MIT - see [LICENSE](./LICENSE).

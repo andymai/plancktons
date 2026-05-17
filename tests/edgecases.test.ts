@@ -69,7 +69,7 @@ describe('edge: N parameter sweep (1 → 200)', () => {
 });
 
 // ──────────────────────────────────────────────────────────────────────
-// Chirality bias: 0, 0.25, 0.5, 0.75, 1 — all-R, all-L, mixed
+// Chirality bias: 0, 0.25, 0.5, 0.75, 1 - all-R, all-L, mixed
 // ──────────────────────────────────────────────────────────────────────
 
 describe('edge: chirality bias sweep', () => {

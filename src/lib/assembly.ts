@@ -57,9 +57,9 @@ export type GrowResult = 'grown' | 'closed' | 'jammed';
 
 /**
  * Try to attach one more Planckton.
- *   'grown'  — placed a new tet
- *   'closed' — no free faces (assembly truly maxed out)
- *   'jammed' — free faces exist but every candidate overlapped within maxAttempts
+ *   'grown'  - placed a new tet
+ *   'closed' - no free faces (assembly truly maxed out)
+ *   'jammed' - free faces exist but every candidate overlapped within maxAttempts
  */
 export function growOne(a: Assembly): GrowResult {
   const { opts } = a;

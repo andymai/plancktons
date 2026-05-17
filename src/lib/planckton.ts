@@ -156,7 +156,7 @@ export function matePlanckton(
 }
 
 // ---------------------------------------------------------------------------
-// Overlap detection (SAT — Separating Axis Theorem)
+// Overlap detection (SAT - Separating Axis Theorem)
 // ---------------------------------------------------------------------------
 
 const TET_EDGES: ReadonlyArray<readonly [number, number]> = [
@@ -201,7 +201,7 @@ function projectTet(t: readonly [Vec3, Vec3, Vec3, Vec3], axis: Vec3): [number, 
  * Total: 44 axes. If any axis separates them (intervals disjoint with margin),
  * the tets do NOT overlap. Otherwise they do.
  *
- * The margin is `edgeLen · 1e-4` — large enough to tolerate floating-point
+ * The margin is `edgeLen · 1e-4` - large enough to tolerate floating-point
  * error in the rigid transform pipeline (~10⁻¹⁴ · L), small enough that
  * legitimate face/edge/vertex contact does NOT count as overlap. This is the
  * mathematically rigorous test; the earlier vertex/edge-face test was unsound
@@ -234,7 +234,7 @@ export function tetsOverlap(
       const eb = sub(B[bj] as Vec3, B[bi] as Vec3);
       const n = cross(ea, eb);
       const len = Math.sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
-      if (len < 1e-12) continue; // parallel edges — useless axis
+      if (len < 1e-12) continue; // parallel edges - useless axis
       const axis: Vec3 = [n[0] / len, n[1] / len, n[2] / len];
       const [aMin, aMax] = projectTet(A, axis);
       const [bMin, bMax] = projectTet(B, axis);

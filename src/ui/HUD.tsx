@@ -1,8 +1,8 @@
 import type { GrowthMetrics } from '../scenes/GrowthScene.js';
 import { useStore } from '../lib/store.js';
 
-const fmt = (n: number, d = 4) => (Number.isFinite(n) ? n.toFixed(d) : '—');
-const pct = (n: number) => (Number.isFinite(n) ? `${(n * 100).toFixed(1)}%` : '—');
+const fmt = (n: number, d = 4) => (Number.isFinite(n) ? n.toFixed(d) : '-');
+const pct = (n: number) => (Number.isFinite(n) ? `${(n * 100).toFixed(1)}%` : '-');
 
 export function HUD({ metrics }: { metrics: GrowthMetrics | null }) {
   const scene = useStore((s) => s.scene);

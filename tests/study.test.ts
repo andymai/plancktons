@@ -19,7 +19,7 @@ describe('runStudy', () => {
     }
   });
 
-  it('seeds are deterministic — same seed gives same V', () => {
+  it('seeds are deterministic - same seed gives same V', () => {
     const a = runStudy({
       N: 8,
       trials: 1,

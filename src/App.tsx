@@ -48,9 +48,7 @@ export default function App() {
       <header className="topbar">
         <div className="title">
           <span className="title-main">Plancktons</span>
-          <span className="title-sub">
-            Hill tetrahedra — interactive study of face-to-face assemblies
-          </span>
+          <span className="title-sub">Planckton packing - a Hill-tetrahedra study</span>
         </div>
         <Actions />
       </header>

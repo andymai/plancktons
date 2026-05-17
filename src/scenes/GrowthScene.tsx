@@ -94,11 +94,11 @@ export function GrowthScene({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => v
 
   // Reset the rendered tet count whenever the simulation identity changes
   // (mode, seed, strategy, …). Render-time setState is React's documented
-  // pattern for "derived state that resets on prop change" — see
+  // pattern for "derived state that resets on prop change" - see
   // https://react.dev/reference/react/useState#storing-information-from-previous-renders
   // Any change to a simulation parameter (mode included) resets the rendered
   // growth. growth.N is in the key too so dragging the N slider in animated /
-  // step mode restarts the animation from N=1 — visible regeneration.
+  // step mode restarts the animation from N=1 - visible regeneration.
   const simKey = `${animationMode}|${growth.seed}|${growth.strategy}|${growth.chiralityBias}|${growth.compactBeta}|${growth.N}`;
   const [prevSimKey, setPrevSimKey] = useState(simKey);
   const [grown, setGrown] = useState(growth.N);

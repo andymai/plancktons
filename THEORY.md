@@ -1,4 +1,4 @@
-# Plancktons — Theory and Background
+# Plancktons - Theory and Background
 
 Companion to [README.md](./README.md). This document is for readers who want
 the math behind the interactive tool and the reasoning that motivates each
@@ -17,7 +17,7 @@ A _Schläfli orthoscheme_ in `ℝᵈ` is a simplex with a chain of `d` mutually
 perpendicular edges. In 3D, the Hill tetrahedron is the orthoscheme
 
 ```
-       V₀ —e₁→ V₁ —e₂→ V₂ —e₃→ V₃ ,         e₁ ⟂ e₂,   e₂ ⟂ e₃,   |eᵢ| = L
+       V₀ -e₁→ V₁ -e₂→ V₂ -e₃→ V₃ ,         e₁ ⟂ e₂,   e₂ ⟂ e₃,   |eᵢ| = L
 ```
 
 so its edges fall naturally into three groups:
@@ -35,7 +35,7 @@ so its edges fall naturally into three groups:
 - Two are _isoceles right triangles_ with sides `(L, L, L√2)`,
 - Two are _scalene right triangles_ with sides `(L, L√2, L√3)`.
 
-Both contain a right angle and only those edge lengths appear — a strong
+Both contain a right angle and only those edge lengths appear - a strong
 combinatorial constraint that makes face-to-face matching of two Plancktons a
 small discrete operation, easy to enumerate and execute reliably.
 
@@ -50,7 +50,7 @@ multiples of `π`:
 
 (Verify: `cos α(V₀V₂) = √2/2 → α = π/4`; the others follow from the orthoscheme
 structure.) Their integer combinations satisfy `2·(π/2) + 2·(π/3) + 2·(π/4) +
-… = π` modulo redistributions — this is exactly Bricard's condition for
+… = π` modulo redistributions - this is exactly Bricard's condition for
 rectifiability.
 
 ---
@@ -74,7 +74,7 @@ every `α_i mod π·ℚ = 0`, so `D = 0`. Hence:
 This is why 6 Plancktons exactly tile a cube (see scene 2) and why 8 unit
 Plancktons exactly tile a doubled Planckton (scene 3, the m³-reptile family).
 For _regular_ tetrahedra `α = arccos(1/3)` which is irrational over `π·ℚ`,
-giving a nonzero Dehn invariant — so regular tets cannot tile space.
+giving a nonzero Dehn invariant - so regular tets cannot tile space.
 
 **References:**
 
@@ -163,7 +163,7 @@ For an assembly of `N` Plancktons with vertex set `{r_α}`:
     distinguishes prolate `+` from oblate `−`).
 - **Vertex coordination histogram**: for each spatial vertex (`L·10⁻⁶`
   quantization), the number of tets meeting there. Telltale of internal
-  topology — e.g., in the 6-cube tiling the diagonal endpoints `(0,0,0)` and
+  topology - e.g., in the 6-cube tiling the diagonal endpoints `(0,0,0)` and
   `(1,1,1)` both have coordination 6.
 - **Free-face fraction** `f_F = |free faces| / (4N)`. Asymptotes to a
   strategy-dependent constant in the jamming limit.
@@ -200,7 +200,7 @@ Open questions you can explore with this tool:
 
 ## 5. Where Plancktons sit in the packing literature
 
-Hill T's are special because they _can_ tile space — most polytopes (including
+Hill T's are special because they _can_ tile space - most polytopes (including
 the regular tetrahedron) cannot. For comparison:
 
 | System                        | Δ (density)    | Source                        |
@@ -215,19 +215,19 @@ the regular tetrahedron) cannot. For comparison:
 The reference lines drawn on the V★/V curve in the Research panel are these
 values. The point of the playground is **not** to "discover" `η = 1` for
 canonical tilings (that's a theorem) but to characterize the _random_ and
-_compactified_ regimes between `η ≈ 0.25` and `η = 1` — a regime that is, to
+_compactified_ regimes between `η ≈ 0.25` and `η = 1` - a regime that is, to
 the author's knowledge, not directly addressed in the published literature
 even though it is the natural Hill-T analog of "random close packing" for
 spheres.
 
 **References on packing densities:**
 
-- T.C. Hales, _Ann. Math._ 162, 1065 (2005) — Kepler conjecture (spheres).
-- J.H. Conway, S. Torquato, _PNAS_ 103, 10612 (2006) — regular tetrahedra.
-- D.J. Hoylman, _Bull. Amer. Math. Soc._ 76, 135 (1970) — tet lattice density.
-- G.D. Scott, D.M. Kilgour, _J. Phys. D_ 2, 863 (1969) — sphere RCP.
-- G.Y. Onoda, E.G. Liniger, _Phys. Rev. Lett._ 64, 2727 (1990) — sphere RLP.
-- S. Torquato, F.H. Stillinger, _Rev. Mod. Phys._ 82, 2633 (2010) — survey.
+- T.C. Hales, _Ann. Math._ 162, 1065 (2005) - Kepler conjecture (spheres).
+- J.H. Conway, S. Torquato, _PNAS_ 103, 10612 (2006) - regular tetrahedra.
+- D.J. Hoylman, _Bull. Amer. Math. Soc._ 76, 135 (1970) - tet lattice density.
+- G.D. Scott, D.M. Kilgour, _J. Phys. D_ 2, 863 (1969) - sphere RCP.
+- G.Y. Onoda, E.G. Liniger, _Phys. Rev. Lett._ 64, 2727 (1990) - sphere RLP.
+- S. Torquato, F.H. Stillinger, _Rev. Mod. Phys._ 82, 2633 (2010) - survey.
 
 ---
 
@@ -294,7 +294,7 @@ dissection are:
   `(M₀₂, M₁₃, M₀₁, M₀₃)`, `(M₀₂, M₁₃, M₀₃, M₂₃)`,
   `(M₀₂, M₁₃, M₂₃, M₁₂)`, `(M₀₂, M₁₃, M₁₂, M₀₁)`.
 
-Each has volume `L³/6`; their sum is `8·L³/6 = (2L)³/6` — the parent's volume.
+Each has volume `L³/6`; their sum is `8·L³/6 = (2L)³/6` - the parent's volume.
 Their chiralities split 6R + 2L (or 2R + 6L, depending on which orientation of
 the parent is taken as canonical), giving the chiral balance condition that
 distinguishes Hill orthoschemes from generic space-filling tetrahedra.

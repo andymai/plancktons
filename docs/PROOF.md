@@ -7,10 +7,10 @@ For an assembly `a` produced by repeated calls to `growOne(a)`, no two tets in
 
 ## Notation
 
-- `Tᵢ ⊂ ℝ³` — the closed solid region occupied by the `i`-th tet.
-- `int(Tᵢ)` — its open interior.
+- `Tᵢ ⊂ ℝ³` - the closed solid region occupied by the `i`-th tet.
+- `int(Tᵢ)` - its open interior.
 - Two tets **overlap** iff `int(Tᵢ) ∩ int(Tⱼ) ≠ ∅`.
-- `n(F)` — outward unit normal of face `F` of a tet (pointing away from the
+- `n(F)` - outward unit normal of face `F` of a tet (pointing away from the
   tet's centroid).
 - A _rigid motion_ is an isometry with determinant +1 (proper rotation + translation).
 
@@ -26,7 +26,7 @@ For an assembly `a` produced by repeated calls to `growOne(a)`, no two tets in
      `tVf = tWf × tU`.
 
 Both source and target frames are orthonormal and right-handed (verified by
-checking `sU × sV = sN` and `tU × tVf = tWf`), so the rotation has det = +1 — it
+checking `sU × sV = sN` and `tU × tVf = tWf`), so the rotation has det = +1 - it
 is a proper rigid motion, **not** a reflection. Chirality is preserved.
 
 ## Proof
@@ -76,7 +76,7 @@ $$\text{int}(T_\text{new}) \subset H^+ \quad \text{and} \quad \text{int}(T_p) \s
 so `int(T_new) ∩ int(T_p) = ∅`. ∎
 
 > **Implication for the implementation.** The proof does _not_ require running
-> the geometric overlap test against the parent — the side-of-face property is
+> the geometric overlap test against the parent - the side-of-face property is
 > a _consequence of the rigid-motion construction_ itself. This is exactly why
 > `growOne` excludes `ff.tetIdx` from the overlap loop without losing soundness.
 
@@ -97,8 +97,8 @@ of candidate axes is:
 Total: 44 axes. The implementation of `tetsOverlap` enumerates each axis,
 projects all 4 vertices of A and all 4 vertices of B onto it, and computes the
 two 1-D intervals. If the intervals are disjoint (with a small numerical
-margin) the axis separates A and B, so they don't overlap — return `false`. If
-all 44 axes have overlapping projections, A and B overlap — return `true`.
+margin) the axis separates A and B, so they don't overlap - return `false`. If
+all 44 axes have overlapping projections, A and B overlap - return `true`.
 
 > **Earlier bug, now fixed.** A prior version of this test used only
 > vertex-in-tet + edge-face crossing. That is incomplete: two tets sharing 3
@@ -169,7 +169,7 @@ strategies, β ∈ {0.5, 3, 5, 10}, chirality bias 0/0.5/1).
 > OpenCascade collapses to either an empty solid or one with sub-numerical
 > volume.
 
-brepjs is a **devDependency only** — not bundled with the playground; only
+brepjs is a **devDependency only** - not bundled with the playground; only
 used by this verification script. If either check (the SAT-based
 `findOverlaps`, or this brepjs oracle) ever finds a non-zero overlap, the
 proof is wrong and you should treat it as a regression.

@@ -54,7 +54,7 @@ interface State {
   setAnimationMode: (m: AnimationMode) => void;
   animSpeed: number; // tets per second
   setAnimSpeed: (n: number) => void;
-  /** Monotonic counter — bump to advance one tet in step mode. */
+  /** Monotonic counter - bump to advance one tet in step mode. */
   stepTrigger: number;
   bumpStep: () => void;
 

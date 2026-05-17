@@ -90,7 +90,7 @@ export function eightReptile(L: number): Planckton[] {
     [M01, W1, M12, M13],
     [M02, M12, W2, M23],
     [M03, M13, M23, W3],
-    // 4 octahedron sub-tets sharing the diagonal M02—M13
+    // 4 octahedron sub-tets sharing the diagonal M02-M13
     [M02, M13, M01, M03],
     [M02, M13, M03, M23],
     [M02, M13, M23, M12],

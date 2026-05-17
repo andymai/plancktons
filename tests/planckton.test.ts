@@ -152,7 +152,7 @@ describe('tetsOverlap', () => {
     expect(tetsOverlap(A, B, 1)).toBe(false);
   });
 
-  it('regression: detects "shared face, apexes on same side" — the SAT bug class', () => {
+  it('regression: detects "shared face, apexes on same side" - the SAT bug class', () => {
     // Two tets sharing 3 vertices forming a triangle at x=1, both apexes at x=0.
     // The pre-SAT vertex-in-tet + edge-face test missed this; SAT catches it
     // via the edge-edge cross-product axes.

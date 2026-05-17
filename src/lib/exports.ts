@@ -49,7 +49,7 @@ export function exportSTL(pts: ReadonlyArray<Planckton>, filename = 'plancktons.
  *     N: number,                           // tets.length
  *     tets: [{ chirality: 'R'|'L', verts: [Vec3,Vec3,Vec3,Vec3] }, …]
  *   }
- * v1 omitted compactBeta — readers should treat absence as 3 (the default).
+ * v1 omitted compactBeta - readers should treat absence as 3 (the default).
  */
 export function exportAssemblyJSON(a: Assembly, filename = 'plancktons.json'): void {
   const payload = {

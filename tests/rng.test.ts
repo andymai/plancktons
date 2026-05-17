@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Rng } from '../src/lib/rng.js';
 
 describe('Rng', () => {
-  it('is deterministic — same seed yields same sequence', () => {
+  it('is deterministic - same seed yields same sequence', () => {
     const a = new Rng(1234);
     const b = new Rng(1234);
     for (let i = 0; i < 10; i++) expect(a.next()).toBe(b.next());

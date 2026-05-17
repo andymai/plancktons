@@ -46,9 +46,9 @@ Or upgrade to npm ≥ 11.11 and the issue goes away.
 
 ```
 src/
-  lib/           Pure math (no React, no THREE) — fully unit-tested
-  scenes/        R3F components — coverage via integration only
-  ui/            React UI — coverage via integration only
+  lib/           Pure math (no React, no THREE) - fully unit-tested
+  scenes/        R3F components - coverage via integration only
+  ui/            React UI - coverage via integration only
 tests/           Vitest tests for src/lib/*
 scripts/         Standalone tsx-runnable CLIs (study.ts batch runner)
 ```

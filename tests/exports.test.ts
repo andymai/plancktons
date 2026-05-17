@@ -101,7 +101,7 @@ describe('URL hash round-trip', () => {
     expect(decodeStateFromHash()).toBe(null);
   });
 
-  it('handles partial state (missing fields) — fills defaults', () => {
+  it('handles partial state (missing fields) - fills defaults', () => {
     // Simulate an old hash with only N and seed
     const partial = btoa(JSON.stringify({ g: { N: 5, sd: 99 } }));
     window.history.replaceState(null, '', '/#' + partial);

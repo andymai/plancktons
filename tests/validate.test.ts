@@ -37,7 +37,7 @@ describe('sideOfFace', () => {
 describe('mateOnCorrectSide', () => {
   it('false when mate would overlap parent (same-side centroid)', () => {
     const parent = unitPlanckton(1, 'R');
-    // A fake "mate" placed on the SAME side as parent — should fail
+    // A fake "mate" placed on the SAME side as parent - should fail
     const fakeMate = { ...parent, verts: parent.verts };
     const target = [parent.verts[0], parent.verts[2], parent.verts[1]] as const;
     expect(mateOnCorrectSide(fakeMate, target, parent)).toBe(false);

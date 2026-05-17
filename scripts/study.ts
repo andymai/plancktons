@@ -169,7 +169,7 @@ for (const N of Ns) {
   const trials = runOne(args, N);
   allTrials.push(...trials);
 }
-process.stderr.write(`done in ${(Date.now() - t0) / 1000}s — ${allTrials.length} trials\n`);
+process.stderr.write(`done in ${(Date.now() - t0) / 1000}s - ${allTrials.length} trials\n`);
 
 const text = args.format === 'jsonl' ? trialsToJsonl(allTrials) : trialsToCSV(allTrials);
 emit(text, args.out);
