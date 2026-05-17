@@ -20,7 +20,14 @@ export function SvgPlot({
   const ref = useRef<SVGSVGElement | null>(null);
   return (
     <div className="svg-plot-wrap">
-      <svg ref={ref} width={width} height={height} className="plot">
+      <svg
+        ref={ref}
+        viewBox={`0 0 ${width} ${height}`}
+        width={width}
+        height={height}
+        preserveAspectRatio="xMidYMid meet"
+        className="plot"
+      >
         {children}
       </svg>
       <button
