@@ -3,8 +3,10 @@ import { useStore } from '../lib/store.js';
 import type { SceneId } from '../lib/store.js';
 import { GLOSSARY } from './glossary.js';
 import { useUiStore } from './uiStore.js';
+import { useRadioGroup } from './useRadioGroup.js';
 
 type Tab = 'glossary' | 'concepts' | 'scene';
+const TAB_ORDER = ['scene', 'concepts', 'glossary'] as const satisfies readonly Tab[];
 
 const SCENE_PRIMER: Record<SceneId, { title: string; body: string }> = {
   single: {
@@ -44,6 +46,7 @@ export function HelpOverlay() {
   const [tab, setTab] = useState<Tab>('scene');
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const backdropDownRef = useRef(false);
+  const getTabRadioProps = useRadioGroup(TAB_ORDER, tab, setTab);
 
   useEffect(() => {
     if (!open) return;
@@ -115,9 +118,16 @@ export function HelpOverlay() {
       >
         <header className="help-header">
           <div className="help-tabs" role="tablist">
-            <TabButton id="scene" active={tab} onSelect={setTab} label="What am I looking at?" />
-            <TabButton id="concepts" active={tab} onSelect={setTab} label="Concepts" />
-            <TabButton id="glossary" active={tab} onSelect={setTab} label="Glossary" />
+            {TAB_ORDER.map((id) => (
+              <TabButton
+                key={id}
+                id={id}
+                active={tab}
+                onSelect={setTab}
+                label={TAB_LABEL[id]}
+                radioProps={getTabRadioProps(id)}
+              />
+            ))}
           </div>
           <button
             type="button"
@@ -129,7 +139,12 @@ export function HelpOverlay() {
             ×
           </button>
         </header>
-        <div className="help-body">
+        <div
+          className="help-body"
+          role="tabpanel"
+          id={`help-tabpanel-${tab}`}
+          aria-labelledby={`help-tab-${tab}`}
+        >
           {tab === 'scene' && <SceneTab scene={scene} />}
           {tab === 'concepts' && <ConceptsTab />}
           {tab === 'glossary' && <GlossaryTab />}
@@ -139,24 +154,36 @@ export function HelpOverlay() {
   );
 }
 
+const TAB_LABEL: Record<Tab, string> = {
+  scene: 'What am I looking at?',
+  concepts: 'Concepts',
+  glossary: 'Glossary',
+};
+
 function TabButton({
   id,
   active,
   onSelect,
   label,
+  radioProps,
 }: {
   id: Tab;
   active: Tab;
   onSelect: (t: Tab) => void;
   label: string;
+  radioProps: ReturnType<ReturnType<typeof useRadioGroup<Tab>>>;
 }) {
+  const isActive = active === id;
   return (
     <button
       type="button"
       role="tab"
-      aria-selected={active === id}
-      className={`help-tab ${active === id ? 'active' : ''}`}
+      id={`help-tab-${id}`}
+      aria-selected={isActive}
+      aria-controls={`help-tabpanel-${id}`}
+      className={`help-tab ${isActive ? 'active' : ''}`}
       onClick={() => onSelect(id)}
+      {...radioProps}
     >
       {label}
     </button>

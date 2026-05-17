@@ -294,6 +294,7 @@ function GrowthControls() {
   const setAnimationMode = useStore((s) => s.setAnimationMode);
   const animSpeed = useStore((s) => s.animSpeed);
   const setAnimSpeed = useStore((s) => s.setAnimSpeed);
+  const lastNonZeroAnimSpeed = useStore((s) => s.lastNonZeroAnimSpeed);
   const [draftN, setDraftN] = useDraftValue(growth.N);
   const [draftBeta, setDraftBeta] = useDraftValue(growth.compactBeta);
   const [draftChir, setDraftChir] = useDraftValue(growth.chiralityBias);
@@ -418,10 +419,12 @@ function GrowthControls() {
             min={0.5}
             max={30}
             step={0.5}
-            value={animSpeed}
+            value={animSpeed > 0 ? animSpeed : lastNonZeroAnimSpeed}
             onChange={(e) => setAnimSpeed(parseFloat(e.target.value))}
           />
-          <span className="slider-value">{animSpeed.toFixed(1)}/s</span>
+          <span className="slider-value">
+            {animSpeed > 0 ? `${animSpeed.toFixed(1)}/s` : 'paused'}
+          </span>
         </label>
       )}
       {animationMode === 'step' && <StepButton />}
