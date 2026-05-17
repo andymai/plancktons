@@ -210,6 +210,7 @@ function Curve() {
 
   const job = useWorkerRun<{ kind: 'curve'; points: CurvePoint[] }>();
   const points = useMemo<CurvePoint[]>(() => job.result?.points ?? [], [job.result]);
+  const [snapshot, setSnapshot] = useState<{ label: string; points: CurvePoint[] } | null>(null);
   const running = job.running;
   const err = job.err;
   const progress = job.progress;
@@ -273,7 +274,31 @@ function Curve() {
           {running ? 'Running…' : 'Run sweep'}
         </button>
         {running && <button onClick={job.cancel}>cancel</button>}
+        {points.length > 0 && (
+          <button
+            onClick={() => setSnapshot({ label: paramLabel(growth), points: [...points] })}
+            title="Save the current sweep as A so the next sweep overlays as B."
+          >
+            📌 Save A
+          </button>
+        )}
+        {snapshot && (
+          <button onClick={() => setSnapshot(null)} title="Clear the saved overlay">
+            ✕
+          </button>
+        )}
       </div>
+      {snapshot && (
+        <div className="stats-line">
+          <span style={{ color: '#e7a44a' }}>A: {snapshot.label}</span>
+          {points.length > 0 && (
+            <>
+              {' · '}
+              <span style={{ color: '#5fa8e3' }}>B: {paramLabel(growth)}</span>
+            </>
+          )}
+        </div>
+      )}
       {progress && running && (
         <ProgressBar done={progress.done} total={progress.total} label="trials" />
       )}
@@ -310,6 +335,7 @@ function Curve() {
       {points.length > 0 && (
         <CurvePlot
           points={points}
+          snapshotPoints={snapshot?.points ?? null}
           logLog={logLog}
           showFit={showFit}
           showSpread={showSpread}
@@ -516,6 +542,7 @@ function curveYAxisLabel(m: YMetric, logLog: boolean): string {
 
 function CurvePlot({
   points,
+  snapshotPoints,
   logLog,
   showFit,
   showSpread,
@@ -524,6 +551,7 @@ function CurvePlot({
   bestModel,
 }: {
   points: CurvePoint[];
+  snapshotPoints: CurvePoint[] | null;
   logLog: boolean;
   showFit: boolean;
   showSpread: boolean;
@@ -576,6 +604,11 @@ function CurvePlot({
   }
   pathBand.push('Z');
   const pathLine = filt.map((p, i) => `${i === 0 ? 'M' : 'L'} ${x(p.N)} ${y(yVal(p))}`).join(' ');
+  // Snapshot overlay (saved run A). Same yMetric and log/linear projection.
+  const snapFilt = snapshotPoints?.filter((p) => Number.isFinite(meanFor(p))) ?? [];
+  const snapLine = snapFilt
+    .map((p, i) => `${i === 0 ? 'M' : 'L'} ${x(p.N)} ${y(yVal(p))}`)
+    .join(' ');
 
   const yAxisLabel = curveYAxisLabel(yMetric, logLog);
   const xAxisLabel = 'N';
@@ -651,6 +684,22 @@ function CurvePlot({
         ))}
       <path d={pathBand.join(' ')} fill="#5fa8e3" fillOpacity={0.22} />
       <path d={pathLine} stroke="#5fa8e3" fill="none" strokeWidth={2} />
+      {snapLine && (
+        <>
+          <path d={snapLine} stroke="#e7a44a" fill="none" strokeWidth={2} strokeDasharray="5 3" />
+          {snapFilt.map((p) => (
+            <circle
+              key={`snap-${p.N}`}
+              cx={x(p.N)}
+              cy={y(yVal(p))}
+              r={2.5}
+              fill="none"
+              stroke="#e7a44a"
+              strokeWidth={1.5}
+            />
+          ))}
+        </>
+      )}
       {fitPath && (
         <path d={fitPath} stroke="#e7a44a" strokeDasharray="4 3" fill="none" strokeWidth={1.5} />
       )}

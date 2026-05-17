@@ -11,6 +11,13 @@ import {
   tetsOverlap,
   unitPlanckton,
 } from './planckton.js';
+import {
+  createSpatialHash,
+  insertTet,
+  queryNeighbors,
+  tetCentroid,
+  type SpatialHash,
+} from './spatialHash.js';
 
 export interface FreeFace {
   /** Triangle in world coords */
@@ -42,11 +49,23 @@ export interface Assembly {
   tets: Planckton[];
   freeFaces: FreeFace[];
   opts: AssemblyOptions;
+  /** Spatial hash of tet centroids, used to skip far-away tets in SAT. */
+  spatialHash: SpatialHash;
 }
 
 export function makeAssembly(opts: AssemblyOptions): Assembly {
   const seed = unitPlanckton(opts.L, opts.rng.next() < opts.chiralityBias ? 'R' : 'L');
-  const a: Assembly = { tets: [seed], freeFaces: [], opts };
+  // Cell side = 2L. Hill T₁ bounding-sphere radius is √3·L/2 ≈ 0.87L, so
+  // any pair of centroids more than 2L apart cannot overlap. A 3×3×3
+  // neighborhood query covers everything within √3·2L ≈ 3.46L, comfortably
+  // larger than the 2·0.87L cutoff.
+  const a: Assembly = {
+    tets: [seed],
+    freeFaces: [],
+    opts,
+    spatialHash: createSpatialHash(2 * opts.L),
+  };
+  insertTet(a.spatialHash, 0, tetCentroid(seed.verts));
   faceTriangles(seed).forEach((tri, fi) => {
     a.freeFaces.push({ tri, tetIdx: 0, faceIdx: fi });
   });
@@ -126,8 +145,11 @@ function tryPlaceExhaustive(a: Assembly, ffIdx: number, chir: Chirality): boolea
 }
 
 /**
- * Mate the template, run the SAT overlap test against every non-parent tet,
- * and append on success. Returns true iff the placement was committed.
+ * Mate the template, run the SAT overlap test against every nearby tet (via
+ * spatial hash; far tets are provably non-overlapping by bounding-sphere
+ * radius), and append on success. Returns true iff the placement was
+ * committed. SAT cost goes from O(N) per attempt to O(neighbors) ≈ O(1) once
+ * the aggregate is large enough that most tets are far from the candidate.
  */
 function commitIfClear(
   a: Assembly,
@@ -138,13 +160,15 @@ function commitIfClear(
   perm: readonly [number, number, number]
 ): boolean {
   const newTet = matePlanckton(tmpl, tfIdx, ff.tri, perm);
-  for (let ti = 0; ti < a.tets.length; ti++) {
+  const newCent = tetCentroid(newTet.verts);
+  for (const ti of queryNeighbors(a.spatialHash, newCent)) {
     if (ti === ff.tetIdx) continue;
     if (tetsOverlap(newTet.verts, (a.tets[ti] as Planckton).verts, a.opts.L)) return false;
   }
   a.tets.push(newTet);
   a.freeFaces.splice(ffIdx, 1);
   const newIdx = a.tets.length - 1;
+  insertTet(a.spatialHash, newIdx, newCent);
   faceTriangles(newTet).forEach((tri, fi) => {
     if (fi !== tfIdx) a.freeFaces.push({ tri, tetIdx: newIdx, faceIdx: fi });
   });
