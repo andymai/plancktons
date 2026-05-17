@@ -44,11 +44,13 @@ matching of two Plancktons reduces to a small discrete enumeration.
 **Dihedral angles.** All 6 dihedral angles of the Hill orthoscheme are rational
 multiples of `π`:
 
-```
-α(V₀V₁) = π/2          α(V₁V₂) = π/3
-α(V₂V₃) = π/2          α(V₀V₂) = π/4
-α(V₁V₃) = π/4          α(V₀V₃) = π/3
-```
+$$
+\begin{aligned}
+α(V_0 V_1) &= π/2  &  α(V_1 V_2) &= π/3 \\
+α(V_2 V_3) &= π/2  &  α(V_0 V_2) &= π/4 \\
+α(V_1 V_3) &= π/4  &  α(V_0 V_3) &= π/3
+\end{aligned}
+$$
 
 (Verify: `cos α(V₀V₂) = √2/2 → α = π/4`; the others follow from the orthoscheme
 structure.) Their integer combinations satisfy `2·(π/2) + 2·(π/3) + 2·(π/4) +
@@ -82,9 +84,9 @@ In 1900, Hilbert asked: are any two polyhedra of equal volume scissors-congruent
 (decomposable into matching congruent pieces)? Dehn answered **no** the same
 year. The obstruction is the **Dehn invariant**
 
-```
-  D(P) = Σ_edges ℓ_i ⊗ (α_i mod π·ℚ)   ∈   ℝ ⊗_ℚ (ℝ / π·ℚ).
-```
+$$
+D(P) = \sum_{\text{edges}} ℓ_i \otimes (α_i \bmod π·ℚ) \;\in\; ℝ \otimes_ℚ (ℝ / π·ℚ).
+$$
 
 A polytope is scissors-congruent to a cube **iff** `D(P) = 0` (Sydler 1965). For
 a Hill tetrahedron, every dihedral angle is a rational multiple of `π`, so
@@ -177,9 +179,9 @@ The **jamming limit** is reached when every free face has _no_ allowed
 
 For the **compact** strategy, free faces are selected with probability
 
-```
-  p(face_i) ∝ exp(β · n̂_i · ĉ_i),
-```
+$$
+p(\text{face}_i) \propto \exp(β \cdot \hat n_i \cdot \hat c_i),
+$$
 
 where `n̂_i` is the outward normal of free face `i` and `ĉ_i` is the unit
 vector from the face center to the current assembly centroid. `β` is an
@@ -211,7 +213,12 @@ Other observables:
 
 - **Free surface area** `S = Σ_{free faces} A_face`. Grows ~ `N^{2/3}` for
   compact (3D bulk) piles and super-linearly for fractal piles.
-- **Gyration tensor** `Σ_ij = (1/N_v) Σ_α (r_α − r_cm)_i (r_α − r_cm)_j`.
+- **Gyration tensor**
+
+  $$
+  Σ_{ij} = \frac{1}{N_v} \sum_α (r_α − r_{\text{cm}})_i (r_α − r_{\text{cm}})_j.
+  $$
+
   Eigenvalues `λ₁ ≥ λ₂ ≥ λ₃` give:
   - `R_g² = tr Σ` (radius of gyration),
   - `b = λ₁ − (λ₂+λ₃)/2` (Rudnick-Gaspari asphericity, length²),
@@ -224,6 +231,7 @@ Other observables:
     eigenvectors) as an overlay. NB: this is **not** the inertia ellipsoid
     of `I_ij = ⟨r²⟩δ_ij − ⟨rᵢrⱼ⟩`, which has different (orthogonal)
     principal directions.
+
 - **Tet-tet coordination ⟨z⟩.** Mean number of face-shared neighbors per
   tet. `z = (4N − F_free) / N`. For a perfect tiling `⟨z⟩ = 4`; for any
   finite aggregate with surface `⟨z⟩ < 4`.

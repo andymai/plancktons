@@ -55,25 +55,25 @@ There are two cases:
 
 ### Side-of-face argument (rules out parent overlap)
 
-The shared face `F` lies in a plane Π with outward normal `n(F) = tN`,
-oriented outward from `T_p`. Since `T_p` is convex with `F` on its boundary
-and `tN` outward, the open interior of `T_p` lies entirely in the half-space
-`H⁻ = { x : (x − f₀) · tN < 0 }` for any `f₀ ∈ F`.
+The shared face $F$ lies in a plane $\Pi$ with outward normal $n(F) = tN$,
+oriented outward from $T_p$. Since $T_p$ is convex with $F$ on its boundary
+and $tN$ outward, the open interior of $T_p$ lies entirely in the half-space
+$H^- = \{ x : (x - f_0) \cdot tN < 0 \}$ for any $f_0 \in F$.
 
-In template-local coordinates, the template's face `Fp` has outward normal
-`sN`, and the template's interior lies in `{ y : (y − f₀ᵗ) · sN < 0 }`.
+In template-local coordinates, the template's face $F_p$ has outward normal
+$sN$, and the template's interior lies in $\{ y : (y - f_0^t) \cdot sN < 0 \}$.
 
-The rigid motion R applied by `matePlanckton` satisfies `R · sN = tWf = −tN`.
-Apply R to a point `y` strictly interior to the template:
+The rigid motion $R$ applied by `matePlanckton` satisfies $R \cdot sN = tWf = -tN$.
+Apply $R$ to a point $y$ strictly interior to the template:
 
 $$(R(y) − f_0) \cdot tN = R(y - f_0^t) \cdot tN = R(y - f_0^t) \cdot (-R(sN)) = -((y - f_0^t) \cdot sN) > 0$$
 
-So `R(y)` lies in the open half-space `H⁺ = { x : (x − f₀) · tN > 0 }`, which
-is **disjoint from `H⁻`**. Therefore
+So $R(y)$ lies in the open half-space $H^+ = \{ x : (x - f_0) \cdot tN > 0 \}$,
+which is **disjoint from $H^-$**. Therefore
 
 $$\text{int}(T_\text{new}) \subset H^+ \quad \text{and} \quad \text{int}(T_p) \subset H^-,$$
 
-so `int(T_new) ∩ int(T_p) = ∅`. ∎
+so $\text{int}(T_\text{new}) \cap \text{int}(T_p) = \emptyset$. ∎
 
 > **Implication for the implementation.** The proof does _not_ require running
 > the geometric overlap test against the parent - the side-of-face property is
