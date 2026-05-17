@@ -25,6 +25,9 @@ export function useKeyboardShortcuts() {
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target?.isContentEditable) {
         return;
       }
+      // Suppress global shortcuts while a modal is open so Arrow/Space/R/N
+      // can't mutate the underlying scene/seed/mode from inside the dialog.
+      if (target?.closest('.overlay-backdrop, .export-menu-list')) return;
       const st = useStore.getState();
       switch (e.key) {
         case ' ':
