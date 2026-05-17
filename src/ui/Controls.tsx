@@ -5,8 +5,10 @@ import { useDraftValue } from './useDraftValue.js';
 import { useWorkerRun } from './useWorkerRun.js';
 import { Rng } from '../lib/rng.js';
 import { growOne, makeAssembly } from '../lib/assembly.js';
+import { ProgressBar } from './ProgressBar.js';
 import type { MorphologyResult } from '../lib/morphology.js';
 import type { VoronoiResult } from '../lib/voronoi.js';
+import type { McRefineResult } from '../lib/mcRefine.js';
 
 const SCENES = [
   {
@@ -523,6 +525,7 @@ function AdvancedControls() {
       </p>
       <MorphologyPanel />
       <VoronoiPanel />
+      <McRefinePanel />
     </div>
   );
 }
@@ -691,6 +694,113 @@ function VoronoiPanel() {
           <div className="stats-line" style={{ color: 'var(--text-dim)' }}>
             grid {result.voronoi.dims[0]}×{result.voronoi.dims[1]}×{result.voronoi.dims[2]} @{' '}
             {result.voronoi.voxelSize.toFixed(3)} L
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function McRefinePanel() {
+  const scene = useStore((s) => s.scene);
+  const growth = useStore((s) => s.growth);
+  const [steps, setSteps] = useState(100);
+  const [temperature, setTemperature] = useState(0.001);
+  const job = useWorkerRun<{ kind: 'mc'; mc: McRefineResult }>();
+  const mc = job.result?.mc ?? null;
+  if (scene !== 'growth') return null;
+
+  function run() {
+    const a = makeAssembly({
+      L: 1,
+      rng: new Rng(growth.seed),
+      chiralityBias: growth.chiralityBias,
+      strategy: growth.strategy,
+      compactBeta: growth.compactBeta,
+    });
+    while (a.tets.length < growth.N) {
+      if (growOne(a) !== 'grown') break;
+    }
+    const tets = a.tets.map((t) => ({
+      verts: t.verts.map((v) => [v[0], v[1], v[2]] as [number, number, number]),
+      chirality: t.chirality,
+    }));
+    job.run({
+      kind: 'mc',
+      tets,
+      L: 1,
+      chiralityBias: growth.chiralityBias,
+      strategy: growth.strategy,
+      compactBeta: growth.compactBeta,
+      steps,
+      temperature,
+      mcSeed: growth.seed + 1,
+    });
+  }
+
+  return (
+    <>
+      <div className="panel-divider-small" />
+      <div className="panel-title" style={{ marginBottom: 4 }}>
+        Metropolis MC refinement
+      </div>
+      <p className="caption" style={{ margin: '0 0 6px' }}>
+        Post-growth relaxation: detach a leaf tet (z=1), re-grow on the trimmed assembly, accept by
+        Metropolis on ΔE = −Δη_C. T → 0 = greedy; T ≈ 0.01 = mild thermal noise. Lets η_C climb
+        above the RSA jamming line.
+      </p>
+      <label className="slider-row" title="Number of MC trial moves.">
+        <span>Steps</span>
+        <input
+          type="number"
+          value={steps}
+          min={1}
+          max={5000}
+          step={10}
+          onChange={(e) => setSteps(parseInt(e.target.value, 10) || 100)}
+          style={{ width: '5rem' }}
+        />
+      </label>
+      <label
+        className="slider-row"
+        title="Temperature in η units. 1e-9 = strict greedy; 0.001 = barely thermal; 0.01 = warm; 0.1 = liquid."
+      >
+        <span>T</span>
+        <input
+          type="range"
+          min={-9}
+          max={-1}
+          step={0.5}
+          value={Math.log10(Math.max(1e-9, temperature))}
+          onChange={(e) => setTemperature(Math.pow(10, parseFloat(e.target.value)))}
+        />
+        <span className="slider-value">{temperature.toExponential(0)}</span>
+      </label>
+      <div className="research-row">
+        <button onClick={run} disabled={job.running}>
+          {job.running ? 'Running…' : 'Run MC refine'}
+        </button>
+        {job.running && <button onClick={job.cancel}>cancel</button>}
+      </div>
+      {job.progress && job.running && (
+        <ProgressBar done={job.progress.done} total={job.progress.total} label="MC steps" />
+      )}
+      {job.err && <div className="error-line">⚠ {job.err}</div>}
+      {mc && (
+        <div className="stats-block">
+          <div className="stats-line">
+            <strong>
+              η_C: {(mc.initialEta * 100).toFixed(2)}% → {(mc.finalEta * 100).toFixed(2)}%
+            </strong>
+            &nbsp;(Δ = {((mc.finalEta - mc.initialEta) * 100).toFixed(2)} pts)
+          </div>
+          <div className="stats-line" style={{ color: 'var(--text-dim)' }}>
+            accepted: {mc.accepted} / {mc.proposed} proposed
+            {mc.proposed > 0 && ` (${((100 * mc.accepted) / mc.proposed).toFixed(0)}% acceptance)`}
+            {' · '}
+            {mc.proposed === 0
+              ? 'no valid leaf moves found'
+              : `accept rate = ${((100 * mc.accepted) / steps).toFixed(0)}% of steps`}
           </div>
         </div>
       )}

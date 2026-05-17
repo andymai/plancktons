@@ -19,6 +19,8 @@ import {
 import { gyrationDescriptors } from '../lib/shape.js';
 import { morphologicalHull, type MorphologyResult } from '../lib/morphology.js';
 import { etaVFromVoronoi, voronoiCells, type VoronoiResult } from '../lib/voronoi.js';
+import { rebuildFromTets } from '../lib/assembly.js';
+import { runMcRefine, type McRefineResult } from '../lib/mcRefine.js';
 import { Rng } from '../lib/rng.js';
 import { growOne, makeAssembly, type GrowthStrategy } from '../lib/assembly.js';
 import { computeHull } from '../lib/hull.js';
@@ -67,6 +69,20 @@ export type StudyJob =
       L: number;
       voxelSize: number;
       padL: number;
+    }
+  | {
+      kind: 'mc';
+      jobId: number;
+      /** Initial assembly: pre-serialized tets (verts + chirality). */
+      tets: { verts: [number, number, number][]; chirality: 'R' | 'L' }[];
+      L: number;
+      chiralityBias: number;
+      strategy: GrowthStrategy;
+      compactBeta: number;
+      /** MC sweep params. */
+      steps: number;
+      temperature: number;
+      mcSeed: number;
     };
 
 export type StudyMessage =
@@ -83,7 +99,8 @@ export type StudyResult =
       pcAniso: PairCorrelationAniso | null;
     }
   | { kind: 'morph'; morph: MorphologyResult | null }
-  | { kind: 'voronoi'; voronoi: VoronoiResult | null; etaV: number | null };
+  | { kind: 'voronoi'; voronoi: VoronoiResult | null; etaV: number | null }
+  | { kind: 'mc'; mc: McRefineResult };
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
 
@@ -140,6 +157,26 @@ ctx.addEventListener('message', (event: MessageEvent<StudyJob>) => {
       });
       const etaV = voronoi ? etaVFromVoronoi(voronoi, job.L) : null;
       postResult(job.jobId, { kind: 'voronoi', voronoi, etaV });
+    } else if (job.kind === 'mc') {
+      // Reconstruct an Assembly from the serialized tets + the same growth
+      // opts used to build them. The opts here are echoed by the caller so
+      // MC's growOne calls produce assemblies with consistent strategy.
+      const tetsP = job.tets as unknown as Planckton[];
+      const opts = {
+        L: job.L,
+        rng: new Rng(0),
+        chiralityBias: job.chiralityBias,
+        strategy: job.strategy,
+        compactBeta: job.compactBeta,
+      };
+      const initial = rebuildFromTets(tetsP, opts);
+      const mc = runMcRefine(
+        { initial, steps: job.steps, temperature: job.temperature, seed: job.mcSeed },
+        {
+          onStep: (done, total) => postProgress(job.jobId, done, total),
+        }
+      );
+      postResult(job.jobId, { kind: 'mc', mc });
     }
   } catch (err) {
     ctx.postMessage({
