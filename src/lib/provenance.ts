@@ -1,6 +1,3 @@
-// Build-time provenance, injected by Vite's `define`. Falls back to "dev" for
-// local node scripts or any environment where the substitution didn't happen.
-
 declare const __BUILD_COMMIT__: string | undefined;
 declare const __BUILD_TIME__: string | undefined;
 
@@ -23,6 +20,10 @@ export function provenance(): Provenance {
   };
 }
 
+function formatField(v: unknown): string {
+  return typeof v === 'object' ? JSON.stringify(v) : String(v);
+}
+
 /** CSV comment block stamped at the top of every exported file. */
 export function provenanceCsvHeader(extra?: Record<string, unknown>): string {
   const p = provenance();
@@ -34,9 +35,7 @@ export function provenanceCsvHeader(extra?: Record<string, unknown>): string {
     `# export_time=${p.exportTime}`,
   ];
   if (extra) {
-    for (const [k, v] of Object.entries(extra)) {
-      lines.push(`# ${k}=${typeof v === 'object' ? JSON.stringify(v) : String(v)}`);
-    }
+    for (const [k, v] of Object.entries(extra)) lines.push(`# ${k}=${formatField(v)}`);
   }
   return lines.join('\n');
 }

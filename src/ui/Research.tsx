@@ -11,7 +11,7 @@ import {
 import { PACKING_REFERENCES } from '../lib/references.js';
 import { pairCorrelation, type PairCorrelation } from '../lib/paircorr.js';
 import { Rng } from '../lib/rng.js';
-import { growOne, makeAssembly } from '../lib/assembly.js';
+import { growOne, makeAssembly, type GrowthStrategy } from '../lib/assembly.js';
 import { computeHull } from '../lib/hull.js';
 import { centroid } from '../lib/vec.js';
 import {
@@ -24,6 +24,7 @@ import {
 } from '../lib/scaling.js';
 
 type FitModel = 'power' | 'asymptote+power' | 'exp';
+type YMetric = 'etaC' | 'etaB';
 
 interface CombinedFit {
   power: LogLogFit | null;
@@ -41,6 +42,32 @@ function bestFitModel(f: CombinedFit): FitModel {
 }
 
 const DEFAULT_NS = [1, 2, 4, 6, 8, 12, 16, 20, 25, 30, 40, 50];
+
+// Defer heavy compute by one tick so the "Running…" UI commits before the
+// main thread blocks. Centralises the running/err/setTimeout pattern shared
+// by all three sweep controls.
+function useDeferredRun(work: () => void): {
+  running: boolean;
+  err: string | null;
+  run: () => void;
+} {
+  const [running, setRunning] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  function run() {
+    setRunning(true);
+    setErr(null);
+    setTimeout(() => {
+      try {
+        work();
+      } catch (e) {
+        setErr(e instanceof Error ? e.message : String(e));
+      } finally {
+        setRunning(false);
+      }
+    }, 0);
+  }
+  return { running, err, run };
+}
 
 export function Research() {
   const advanced = useStore((s) => s.advanced);
@@ -62,18 +89,20 @@ interface SavedRun {
 }
 
 function statsOf(trials: TrialResult[]) {
-  if (trials.length === 0) return null;
+  const n = trials.length;
+  if (n === 0) return null;
   const effs = trials.map((t) => t.efficiency);
-  const mean = effs.reduce((s, x) => s + x, 0) / effs.length;
-  const variance = effs.reduce((s, x) => s + (x - mean) ** 2, 0) / effs.length;
+  const mean = effs.reduce((s, x) => s + x, 0) / n;
+  // Sample variance (Bessel correction); SEM = s/√n is then unbiased.
+  const variance = n > 1 ? effs.reduce((s, x) => s + (x - mean) ** 2, 0) / (n - 1) : NaN;
   const std = Math.sqrt(variance);
   return {
     mean,
     std,
-    sem: std / Math.sqrt(effs.length),
+    sem: std / Math.sqrt(n),
     min: Math.min(...effs),
     max: Math.max(...effs),
-    n: effs.length,
+    n,
   };
 }
 
@@ -92,31 +121,18 @@ function Histogram() {
   const [trials, setTrials] = useState<TrialResult[]>([]);
   const [snapshot, setSnapshot] = useState<SavedRun | null>(null);
   const [count, setCount] = useState(100);
-  const [running, setRunning] = useState(false);
 
-  const [err, setErr] = useState<string | null>(null);
-
-  function run() {
-    setRunning(true);
-    setErr(null);
-    setTimeout(() => {
-      try {
-        const t = runStudy({
-          N: growth.N,
-          trials: count,
-          startSeed: growth.seed,
-          chiralityBias: growth.chiralityBias,
-          strategy: growth.strategy,
-          compactBeta: growth.compactBeta,
-        });
-        setTrials(t);
-      } catch (e) {
-        setErr(e instanceof Error ? e.message : String(e));
-      } finally {
-        setRunning(false);
-      }
-    }, 0);
-  }
+  const { running, err, run } = useDeferredRun(() => {
+    const t = runStudy({
+      N: growth.N,
+      trials: count,
+      startSeed: growth.seed,
+      chiralityBias: growth.chiralityBias,
+      strategy: growth.strategy,
+      compactBeta: growth.compactBeta,
+    });
+    setTrials(t);
+  });
 
   const stats = useMemo(() => statsOf(trials), [trials]);
   const snapStats = useMemo(() => (snapshot ? statsOf(snapshot.trials) : null), [snapshot]);
@@ -210,35 +226,23 @@ function Curve() {
   const growth = useStore((s) => s.growth);
   const [trialsPerN, setTrialsPerN] = useState(15);
   const [points, setPoints] = useState<CurvePoint[]>([]);
-  const [running, setRunning] = useState(false);
   const [logLog, setLogLog] = useState(false);
   const [showFit, setShowFit] = useState(true);
   const [showSpread, setShowSpread] = useState(false);
-  const [yMetric, setYMetric] = useState<'etaC' | 'etaB'>('etaC');
+  const [yMetric, setYMetric] = useState<YMetric>('etaC');
 
-  const [err, setErr] = useState<string | null>(null);
-
-  function run() {
-    setRunning(true);
-    setErr(null);
-    setTimeout(() => {
-      try {
-        const p = runCurve(
-          DEFAULT_NS,
-          trialsPerN,
-          growth.seed,
-          growth.chiralityBias,
-          growth.strategy,
-          growth.compactBeta
-        );
-        setPoints(p);
-      } catch (e) {
-        setErr(e instanceof Error ? e.message : String(e));
-      } finally {
-        setRunning(false);
-      }
-    }, 0);
-  }
+  const { running, err, run } = useDeferredRun(() => {
+    setPoints(
+      runCurve(
+        DEFAULT_NS,
+        trialsPerN,
+        growth.seed,
+        growth.chiralityBias,
+        growth.strategy,
+        growth.compactBeta
+      )
+    );
+  });
 
   // All three candidate models on (1 - η) vs N. AIC picks the best.
   const fits = useMemo<CombinedFit>(() => {
@@ -256,18 +260,17 @@ function Curve() {
   // Fractal dimension from R_g ~ N^(1/D_f).
   const rgFit = useMemo<LogLogFit | null>(() => {
     if (points.length < 3) return null;
-    const xs = points.map((p) => p.N);
-    const ys = points.map((p) => p.meanRg);
-    return fitLogLog(xs, ys);
+    return fitLogLog(
+      points.map((p) => p.N),
+      points.map((p) => p.meanRg)
+    );
   }, [points]);
   const fractalDim = rgFit && rgFit.alpha > 0 ? 1 / rgFit.alpha : null;
   const fractalDimErr =
     rgFit && rgFit.alpha > 0 ? rgFit.alphaErr / (rgFit.alpha * rgFit.alpha) : null;
 
   const bestModel = bestFitModel(fits);
-  const power = fits.power;
-  const asym = fits.asym;
-  const exp = fits.exp;
+  const { power, asym, exp } = fits;
 
   return (
     <div className="research-section">
@@ -293,7 +296,7 @@ function Curve() {
       <div className="research-row">
         <label title="η_C = V*/V_hull (compactness, NOT a real packing density) vs η_B = V*/V_bbox (literature-comparable).">
           y:&nbsp;
-          <select value={yMetric} onChange={(e) => setYMetric(e.target.value as 'etaC' | 'etaB')}>
+          <select value={yMetric} onChange={(e) => setYMetric(e.target.value as YMetric)}>
             <option value="etaC">η_C (hull)</option>
             <option value="etaB">η_B (bbox)</option>
           </select>
@@ -454,11 +457,10 @@ function HistogramBars({ histo }: { histo: OverlayHisto }) {
   const nBins = histo.binsB.length;
   const innerW = W - pad.l - pad.r;
   const innerH = H - pad.t - pad.b;
-  // Normalize per-series so distributions are comparable when trial counts differ.
+  // Per-series fractions, so distributions are comparable when trial counts
+  // differ. maxFrac is the max across both normalised series, not raw counts.
   const normB = histo.totalB > 0 ? 1 / histo.totalB : 0;
   const normA = histo.totalA > 0 ? 1 / histo.totalA : 0;
-  // maxFrac is the max of normalized fractions across BOTH series, not
-  // raw-count × max-norm (which was wrong when totalA and totalB differ).
   let maxFrac = 1e-9;
   for (const c of histo.binsB) if (c * normB > maxFrac) maxFrac = c * normB;
   if (histo.binsA) for (const c of histo.binsA) if (c * normA > maxFrac) maxFrac = c * normA;
@@ -512,6 +514,22 @@ function HistogramBars({ histo }: { histo: OverlayHisto }) {
   );
 }
 
+function curveMean(p: CurvePoint, m: YMetric): number {
+  return m === 'etaC' ? p.meanEff : p.meanBboxEff;
+}
+
+function curveSpread(p: CurvePoint, m: YMetric, showSpread: boolean): number {
+  let s: number;
+  if (m === 'etaC') s = showSpread ? p.stdEff : p.semEff;
+  else s = showSpread ? p.stdBboxEff : p.semBboxEff;
+  return Number.isFinite(s) ? s : 0;
+}
+
+function curveYAxisLabel(m: YMetric, logLog: boolean): string {
+  if (logLog) return '1 − η' + (m === 'etaC' ? '_C' : '_B');
+  return m === 'etaC' ? 'η_C = V*/V_hull' : 'η_B = V*/V_bbox';
+}
+
 function CurvePlot({
   points,
   logLog,
@@ -525,7 +543,7 @@ function CurvePlot({
   logLog: boolean;
   showFit: boolean;
   showSpread: boolean;
-  yMetric: 'etaC' | 'etaB';
+  yMetric: YMetric;
   fits: CombinedFit;
   bestModel: FitModel;
 }) {
@@ -533,24 +551,10 @@ function CurvePlot({
   const W = 380;
   const H = 220;
   const pad = { l: 42, r: 8, t: 12, b: 28 };
-  // η_B IS comparable to literature; show references for it. For η_C the
-  // references would be misleading (different denominator).
+  // η_B uses the same denominator as literature references; η_C does not.
   const refsApply = yMetric === 'etaB';
-  // Spread (σ) shows trial-to-trial variation; SEM shows uncertainty in the
-  // mean. SEM is the right band for "are these points consistent with the
-  // fit" - default. Show σ on request.
-  const meanFor = (p: CurvePoint) => (yMetric === 'etaC' ? p.meanEff : p.meanBboxEff);
-  const spreadFor = (p: CurvePoint) => {
-    const s =
-      yMetric === 'etaC'
-        ? showSpread
-          ? p.stdEff
-          : p.semEff
-        : showSpread
-          ? p.stdBboxEff
-          : p.semBboxEff;
-    return Number.isFinite(s) ? s : 0;
-  };
+  const meanFor = (p: CurvePoint) => curveMean(p, yMetric);
+  const spreadFor = (p: CurvePoint) => curveSpread(p, yMetric, showSpread);
   const filt = points.filter((p) => Number.isFinite(meanFor(p)));
   if (filt.length === 0) return null;
   const maxN = Math.max(...filt.map((p) => p.N));
@@ -565,7 +569,8 @@ function CurvePlot({
     : 0;
 
   // In log-log mode, plot (1 - η) on y vs N on x. In linear, plot η.
-  const yVal = (p: CurvePoint, k: 1 | -1 = 1) =>
+  // k ∈ {-1, 0, +1} selects the lower / center / upper band edge.
+  const yVal = (p: CurvePoint, k = 0) =>
     logLog ? Math.max(1e-9, 1 - meanFor(p) - k * spreadFor(p)) : meanFor(p) + k * spreadFor(p);
   const x = (n: number) =>
     logLog
@@ -586,47 +591,30 @@ function CurvePlot({
     pathBand.push(`L ${x(filt[i]!.N)} ${y(yVal(filt[i]!, 1))}`);
   }
   pathBand.push('Z');
-  const pathLine = filt
-    .map(
-      (p, i) =>
-        `${i === 0 ? 'M' : 'L'} ${x(p.N)} ${y(logLog ? Math.max(1e-9, 1 - meanFor(p)) : meanFor(p))}`
-    )
-    .join(' ');
+  const pathLine = filt.map((p, i) => `${i === 0 ? 'M' : 'L'} ${x(p.N)} ${y(yVal(p))}`).join(' ');
 
-  const yAxisLabel = logLog
-    ? '1 − η' + (yMetric === 'etaC' ? '_C' : '_B')
-    : yMetric === 'etaC'
-      ? 'η_C = V*/V_hull'
-      : 'η_B = V*/V_bbox';
+  const yAxisLabel = curveYAxisLabel(yMetric, logLog);
   const xAxisLabel = 'N';
   const yTicks = logLog
     ? [1, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01].filter((t) => t >= minY && t <= maxY)
     : [0, 0.25, 0.5, 0.75, 1].filter((t) => t <= maxY);
 
-  // Fit overlay: only the BEST model (by AIC) and only on log-log for η_C.
-  // Each model's predicted (1 - η_C) curve sampled at 60 x-points.
+  // Fit overlay: only the best-by-AIC model, only on log-log for η_C. Sample
+  // the chosen model on 60 x-points spanning [minN, maxN] in log space.
   let fitPath: string | null = null;
   if (showFit && logLog && yMetric === 'etaC') {
-    const xs: number[] = [];
-    const ys: number[] = [];
     const samples = 60;
-    for (let i = 0; i <= samples; i++) {
-      const n = Math.exp(Math.log(minN) + ((Math.log(maxN) - Math.log(minN)) * i) / samples);
-      let yv: number | null = null;
-      if (bestModel === 'power' && fits.power) {
-        yv = Math.exp(fits.power.intercept + fits.power.alpha * Math.log(n));
-      } else if (bestModel === 'asymptote+power' && fits.asym) {
-        yv = fits.asym.yInf + fits.asym.B * Math.pow(n, -fits.asym.beta);
-      } else if (bestModel === 'exp' && fits.exp) {
-        yv = fits.exp.yInf + fits.exp.B * Math.exp(-n / fits.exp.N0);
+    const predict = fitPredictor(bestModel, fits);
+    if (predict) {
+      const pts: { n: number; v: number }[] = [];
+      for (let i = 0; i <= samples; i++) {
+        const n = Math.exp(Math.log(minN) + ((Math.log(maxN) - Math.log(minN)) * i) / samples);
+        const v = predict(n);
+        if (Number.isFinite(v) && v > 0) pts.push({ n, v });
       }
-      if (yv !== null && Number.isFinite(yv) && yv > 0) {
-        xs.push(n);
-        ys.push(yv);
+      if (pts.length > 1) {
+        fitPath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${x(p.n)} ${y(p.v)}`).join(' ');
       }
-    }
-    if (xs.length > 1) {
-      fitPath = xs.map((n, i) => `${i === 0 ? 'M' : 'L'} ${x(n)} ${y(ys[i] as number)}`).join(' ');
     }
   }
 
@@ -679,13 +667,7 @@ function CurvePlot({
         <path d={fitPath} stroke="#e7a44a" strokeDasharray="4 3" fill="none" strokeWidth={1.5} />
       )}
       {filt.map((p) => (
-        <circle
-          key={p.N}
-          cx={x(p.N)}
-          cy={y(logLog ? Math.max(1e-9, 1 - meanFor(p)) : meanFor(p))}
-          r={3}
-          fill="#5fa8e3"
-        />
+        <circle key={p.N} cx={x(p.N)} cy={y(yVal(p))} r={3} fill="#5fa8e3" />
       ))}
       <text
         x={pad.l + (W - pad.l - pad.r) / 2}
@@ -712,80 +694,36 @@ function CurvePlot({
   );
 }
 
+function fitPredictor(model: FitModel, fits: CombinedFit): ((n: number) => number) | null {
+  switch (model) {
+    case 'power': {
+      const f = fits.power;
+      return f ? (n) => Math.exp(f.intercept + f.alpha * Math.log(n)) : null;
+    }
+    case 'asymptote+power': {
+      const f = fits.asym;
+      return f ? (n) => f.yInf + f.B * Math.pow(n, -f.beta) : null;
+    }
+    case 'exp': {
+      const f = fits.exp;
+      return f ? (n) => f.yInf + f.B * Math.exp(-n / f.N0) : null;
+    }
+  }
+}
+
 function PairCorrelationPlot() {
   const growth = useStore((s) => s.growth);
   const [pc, setPc] = useState<PairCorrelation | null>(null);
   const [nTrials, setNTrials] = useState(20);
-  const [running, setRunning] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
 
-  function run() {
-    setRunning(true);
-    setErr(null);
-    setTimeout(() => {
-      try {
-        // Average g(r) across nTrials independent assemblies at the current N.
-        const accum: number[] = [];
-        let rArr: number[] = [];
-        let countSum: number[] = [];
-        let totalRho = 0;
-        let used = 0;
-        for (let t = 0; t < nTrials; t++) {
-          const seed = growth.seed + t * 9973;
-          const a = makeAssembly({
-            L: 1,
-            rng: new Rng(seed),
-            chiralityBias: growth.chiralityBias,
-            strategy: growth.strategy,
-            compactBeta: growth.compactBeta,
-          });
-          while (a.tets.length < growth.N) {
-            if (growOne(a) !== 'grown') break;
-          }
-          if (a.tets.length < 2) continue;
-          const allV = a.tets.flatMap((tt) => [...tt.verts]);
-          const hull = computeHull(allV);
-          if (!hull) continue;
-          // Tet centroid = mean of 4 vertices.
-          const cents = a.tets.map((tt) =>
-            centroid(tt.verts[0], tt.verts[1], tt.verts[2], tt.verts[3])
-          );
-          // rMax: scale with cluster bounding radius so peaks are visible at every N.
-          const bsize = hull.bbox.size;
-          const rMax = 0.6 * Math.sqrt(bsize[0] ** 2 + bsize[1] ** 2 + bsize[2] ** 2);
-          const single = pairCorrelation(cents, hull.volume, rMax, 60);
-          if (single.r.length === 0) continue;
-          if (accum.length === 0) {
-            accum.push(...single.g);
-            countSum = [...single.counts];
-            rArr = [...single.r];
-          } else {
-            for (let k = 0; k < accum.length; k++) {
-              accum[k]! += single.g[k] ?? 0;
-              countSum[k]! += single.counts[k] ?? 0;
-            }
-          }
-          totalRho += single.rhoBulk;
-          used++;
-        }
-        if (used === 0) {
-          setErr('No assemblies produced ≥2 tets.');
-          setPc(null);
-        } else {
-          setPc({
-            r: rArr,
-            g: accum.map((v) => v / used),
-            counts: countSum,
-            rhoBulk: totalRho / used,
-          });
-        }
-      } catch (e) {
-        setErr(e instanceof Error ? e.message : String(e));
-      } finally {
-        setRunning(false);
-      }
-    }, 0);
-  }
+  const { running, err, run } = useDeferredRun(() => {
+    const result = computeAveragedPairCorrelation(growth, nTrials);
+    if (result === null) {
+      setPc(null);
+      throw new Error('No assemblies produced ≥2 tets.');
+    }
+    setPc(result);
+  });
 
   return (
     <div className="research-section">
@@ -817,6 +755,65 @@ function PairCorrelationPlot() {
       {pc && pc.r.length > 0 && <PairCorrPlot pc={pc} />}
     </div>
   );
+}
+
+function computeAveragedPairCorrelation(
+  growth: {
+    N: number;
+    seed: number;
+    chiralityBias: number;
+    strategy: GrowthStrategy;
+    compactBeta: number;
+  },
+  nTrials: number
+): PairCorrelation | null {
+  const accum: number[] = [];
+  let rArr: number[] = [];
+  let countSum: number[] = [];
+  let totalRho = 0;
+  let used = 0;
+  for (let t = 0; t < nTrials; t++) {
+    const seed = growth.seed + t * 9973;
+    const a = makeAssembly({
+      L: 1,
+      rng: new Rng(seed),
+      chiralityBias: growth.chiralityBias,
+      strategy: growth.strategy,
+      compactBeta: growth.compactBeta,
+    });
+    while (a.tets.length < growth.N) {
+      if (growOne(a) !== 'grown') break;
+    }
+    if (a.tets.length < 2) continue;
+    const allV = a.tets.flatMap((tt) => [...tt.verts]);
+    const hull = computeHull(allV);
+    if (!hull) continue;
+    const cents = a.tets.map((tt) => centroid(tt.verts[0], tt.verts[1], tt.verts[2], tt.verts[3]));
+    // rMax scales with cluster bounding radius so peaks are visible at every N.
+    const bsize = hull.bbox.size;
+    const rMax = 0.6 * Math.sqrt(bsize[0] ** 2 + bsize[1] ** 2 + bsize[2] ** 2);
+    const single = pairCorrelation(cents, hull.volume, rMax, 60);
+    if (single.r.length === 0) continue;
+    if (accum.length === 0) {
+      accum.push(...single.g);
+      countSum = [...single.counts];
+      rArr = [...single.r];
+    } else {
+      for (let k = 0; k < accum.length; k++) {
+        accum[k]! += single.g[k] ?? 0;
+        countSum[k]! += single.counts[k] ?? 0;
+      }
+    }
+    totalRho += single.rhoBulk;
+    used++;
+  }
+  if (used === 0) return null;
+  return {
+    r: rArr,
+    g: accum.map((v) => v / used),
+    counts: countSum,
+    rhoBulk: totalRho / used,
+  };
 }
 
 function PairCorrPlot({ pc }: { pc: PairCorrelation }) {

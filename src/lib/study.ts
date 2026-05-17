@@ -112,11 +112,14 @@ export interface CurvePoint {
 }
 
 function meanStd(xs: number[]): { mean: number; std: number; sem: number } {
-  if (xs.length === 0) return { mean: NaN, std: NaN, sem: NaN };
-  const m = xs.reduce((s, x) => s + x, 0) / xs.length;
-  const v = xs.reduce((s, x) => s + (x - m) ** 2, 0) / xs.length;
-  const std = Math.sqrt(v);
-  return { mean: m, std, sem: std / Math.sqrt(xs.length) };
+  const n = xs.length;
+  if (n === 0) return { mean: NaN, std: NaN, sem: NaN };
+  const m = xs.reduce((s, x) => s + x, 0) / n;
+  if (n === 1) return { mean: m, std: NaN, sem: NaN };
+  // Sample variance (Bessel-corrected), so SEM = s / √n is unbiased.
+  const variance = xs.reduce((s, x) => s + (x - m) ** 2, 0) / (n - 1);
+  const std = Math.sqrt(variance);
+  return { mean: m, std, sem: std / Math.sqrt(n) };
 }
 
 export function runCurve(
@@ -136,22 +139,7 @@ export function runCurve(
       strategy,
       ...(compactBeta !== undefined ? { compactBeta } : {}),
     });
-    if (trials.length === 0) {
-      return {
-        N,
-        meanEff: NaN,
-        stdEff: NaN,
-        semEff: NaN,
-        meanBboxEff: NaN,
-        stdBboxEff: NaN,
-        semBboxEff: NaN,
-        meanRg: NaN,
-        meanZ: NaN,
-        meanV: NaN,
-        meanVstar: NaN,
-        nReached: 0,
-      };
-    }
+    const n = trials.length;
     const eff = meanStd(trials.map((t) => t.efficiency));
     const beff = meanStd(trials.map((t) => t.bboxEfficiency).filter((x) => Number.isFinite(x)));
     const rg = meanStd(trials.map((t) => t.rg).filter((x) => Number.isFinite(x)));
@@ -166,8 +154,8 @@ export function runCurve(
       semBboxEff: beff.sem,
       meanRg: rg.mean,
       meanZ: z.mean,
-      meanV: trials.reduce((s, t) => s + t.V, 0) / trials.length,
-      meanVstar: trials.reduce((s, t) => s + t.Vstar, 0) / trials.length,
+      meanV: n === 0 ? NaN : trials.reduce((s, t) => s + t.V, 0) / n,
+      meanVstar: n === 0 ? NaN : trials.reduce((s, t) => s + t.Vstar, 0) / n,
       nReached: trials.filter((t) => t.N >= N).length,
     };
   });
