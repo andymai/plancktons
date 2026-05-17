@@ -13,6 +13,8 @@ export default defineConfig({
           if (id.includes('node_modules/three')) return 'three';
           if (id.includes('node_modules/@react-three')) return 'r3f';
           if (id.includes('node_modules/quickhull3d')) return 'hull';
+          if (id.includes('node_modules/brepjs-opencascade')) return 'opencascade';
+          if (id.includes('node_modules/brepjs')) return 'brepjs';
           return undefined;
         },
       },
