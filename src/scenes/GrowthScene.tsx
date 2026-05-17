@@ -95,20 +95,24 @@ export function GrowthScene({
   const stepTrigger = useStore((s) => s.stepTrigger);
   const color = useStore((s) => s.color);
 
-  const [currentN, setCurrentN] = useState(growth.N);
-
-  useEffect(() => {
-    setCurrentN(animationMode === 'instant' ? growth.N : 1);
-  }, [animationMode, growth.seed, growth.strategy, growth.chiralityBias, growth.compactBeta]);
-
-  useEffect(() => {
-    if (animationMode === 'instant') setCurrentN(growth.N);
-  }, [growth.N, animationMode]);
-
-  useEffect(() => {
-    if (animationMode !== 'step') return;
-    setCurrentN((n) => Math.min(growth.N, n + 1));
-  }, [stepTrigger, animationMode, growth.N]);
+  // Reset the rendered tet count whenever the simulation identity changes
+  // (mode, seed, strategy, …). Render-time setState is React's documented
+  // pattern for "derived state that resets on prop change" — see
+  // https://react.dev/reference/react/useState#storing-information-from-previous-renders
+  const simKey = `${animationMode}|${growth.seed}|${growth.strategy}|${growth.chiralityBias}|${growth.compactBeta}`;
+  const [prevSimKey, setPrevSimKey] = useState(simKey);
+  const [grown, setGrown] = useState(growth.N);
+  const [prevStep, setPrevStep] = useState(stepTrigger);
+  if (prevSimKey !== simKey) {
+    setPrevSimKey(simKey);
+    setGrown(animationMode === 'instant' ? growth.N : 1);
+    setPrevStep(stepTrigger);
+  } else if (animationMode === 'step' && prevStep !== stepTrigger) {
+    setPrevStep(stepTrigger);
+    setGrown((n) => Math.min(growth.N, n + 1));
+  }
+  // Instant mode tracks growth.N directly; other modes use the grown counter.
+  const currentN = animationMode === 'instant' ? growth.N : Math.min(growth.N, grown);
 
   const accumRef = useRef(0);
   useFrame((_, delta) => {
@@ -117,7 +121,7 @@ export function GrowthScene({
     const inc = Math.floor(accumRef.current);
     if (inc > 0) {
       accumRef.current -= inc;
-      setCurrentN((n) => Math.min(growth.N, n + inc));
+      setGrown((n) => Math.min(growth.N, n + inc));
     }
   });
 
