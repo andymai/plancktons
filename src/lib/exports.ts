@@ -37,13 +37,29 @@ export function exportSTL(pts: ReadonlyArray<Planckton>, filename = 'plancktons.
 
 // ------------------------------- JSON --------------------------------------
 
+/**
+ * Serialized assembly schema, v2:
+ *   {
+ *     version: 2,
+ *     L: number,                           // edge length used in the simulation
+ *     seed: number,                        // PRNG seed
+ *     chiralityBias: number,               // ∈ [0, 1], fraction right-handed
+ *     strategy: 'uniform' | 'compact',
+ *     compactBeta: number,                 // inverse-temperature (compact only)
+ *     N: number,                           // tets.length
+ *     tets: [{ chirality: 'R'|'L', verts: [Vec3,Vec3,Vec3,Vec3] }, …]
+ *   }
+ * v1 omitted compactBeta — readers should treat absence as 3 (the default).
+ */
 export function exportAssemblyJSON(a: Assembly, filename = 'plancktons.json'): void {
   const payload = {
-    version: 1,
+    version: 2,
     L: a.opts.L,
     seed: a.opts.rng.seed,
     chiralityBias: a.opts.chiralityBias,
     strategy: a.opts.strategy,
+    compactBeta: a.opts.compactBeta ?? 3,
+    N: a.tets.length,
     tets: a.tets.map((t) => ({ chirality: t.chirality, verts: t.verts })),
   };
   downloadBlob(

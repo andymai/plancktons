@@ -344,7 +344,15 @@ function ReferencesTable() {
                 {r.label}
               </td>
               <td>{r.density.toFixed(4)}</td>
-              <td title={r.note}>{r.citation}</td>
+              <td title={r.note}>
+                {r.url ? (
+                  <a href={r.url} target="_blank" rel="noopener noreferrer">
+                    {r.citation}
+                  </a>
+                ) : (
+                  r.citation
+                )}
+              </td>
             </tr>
           ))}
         </tbody>

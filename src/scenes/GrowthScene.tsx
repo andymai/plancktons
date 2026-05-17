@@ -207,8 +207,16 @@ export function GrowthScene({
 
   const colorMode = useStore((s) => s.color.colorMode);
   const colorByDepth = colorMode === 'depth';
-  const depthHue = (i: number) =>
-    `hsl(${Math.round((i * 360) / Math.max(1, assembly.tets.length))}, 65%, 55%)`;
+  const tetCount = Math.max(1, assembly.tets.length);
+  // At large N (>180), pure hue cycling makes neighbours indistinguishable
+  // (360°/N < 2°). Cap the hue cycle at 270° and modulate lightness so order
+  // remains visually readable.
+  const depthHue = (i: number) => {
+    const t = i / tetCount;
+    const hue = Math.round(t * 270);
+    const light = 35 + Math.round(t * 35);
+    return `hsl(${hue}, 70%, ${light}%)`;
+  };
 
   return (
     <group position={center}>

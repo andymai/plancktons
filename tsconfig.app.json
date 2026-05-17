@@ -22,5 +22,9 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src"],
-  "exclude": ["src/lib/__sanity__.ts", "src/lib/__overlap_test__.ts"]
+  "exclude": [
+    "src/lib/__sanity__.ts",
+    "src/lib/__overlap_test__.ts",
+    "src/lib/__reptile_check__.ts"
+  ]
 }

@@ -286,7 +286,7 @@ function StepButton() {
   return (
     <div className="slider-row">
       <span>Add tet</span>
-      <button onClick={bumpStep} style={{ flex: 1 }}>
+      <button onClick={bumpStep} style={{ flex: 1 }} title="Append one Planckton, clamped to the N target">
         +1 Planckton →
       </button>
     </div>

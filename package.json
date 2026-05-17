@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "study": "tsx scripts/study.ts",
     "sanity": "tsx src/lib/__sanity__.ts",
-    "test:overlap": "tsx src/lib/__overlap_test__.ts"
+    "test:overlap": "tsx src/lib/__overlap_test__.ts",
+    "test:reptile": "tsx src/lib/__reptile_check__.ts"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",

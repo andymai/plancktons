@@ -14,8 +14,10 @@ export interface PackingReference {
   color: string;
   /** One-line explanation. */
   note: string;
-  /** Bibliographic source. */
+  /** Bibliographic source (human-readable). */
   citation: string;
+  /** DOI or arXiv URL for the citation. */
+  url?: string;
 }
 
 export const PACKING_REFERENCES: ReadonlyArray<PackingReference> = [
@@ -24,14 +26,16 @@ export const PACKING_REFERENCES: ReadonlyArray<PackingReference> = [
     density: 1.0,
     color: '#5cd99b',
     note: 'Hill T tilings (6 in cube, 8-reptile) achieve zero void.',
-    citation: 'Hill (1896); Matoušek & Safernová (2010, arXiv:1006.1807)',
+    citation: 'Hill (1896); Matoušek & Safernová (2010)',
+    url: 'https://arxiv.org/abs/1006.1807',
   },
   {
     label: 'Sphere FCC',
     density: Math.PI / Math.sqrt(18), // 0.74048...
     color: '#e7a44a',
     note: 'Densest possible packing of congruent spheres in ℝ³.',
-    citation: 'Hales (2005), Ann. Math. 162, 1065. Kepler conjecture, proved.',
+    citation: 'Hales (2005), Ann. Math. 162, 1065. Kepler conjecture.',
+    url: 'https://doi.org/10.4007/annals.2005.162.1065',
   },
   {
     label: 'Regular tet (Welsh, displaced)',
@@ -39,6 +43,7 @@ export const PACKING_REFERENCES: ReadonlyArray<PackingReference> = [
     color: '#c46cd9',
     note: 'Best known packing density for regular tetrahedra (not tiling).',
     citation: 'Conway & Torquato (2006), PNAS 103, 10612.',
+    url: 'https://doi.org/10.1073/pnas.0601389103',
   },
   {
     label: 'Regular tet (Bravais lattice)',
@@ -46,6 +51,7 @@ export const PACKING_REFERENCES: ReadonlyArray<PackingReference> = [
     color: '#9d6ad9',
     note: 'Densest single-orientation lattice packing of regular tets.',
     citation: 'Hoylman (1970), Bull. Amer. Math. Soc. 76, 135.',
+    url: 'https://doi.org/10.1090/S0002-9904-1970-12400-4',
   },
   {
     label: 'Sphere random close packing',
@@ -53,6 +59,7 @@ export const PACKING_REFERENCES: ReadonlyArray<PackingReference> = [
     color: '#5fa8e3',
     note: 'Maximum density for random (jammed) sphere packings.',
     citation: 'Scott & Kilgour (1969), J. Phys. D 2, 863.',
+    url: 'https://doi.org/10.1088/0022-3727/2/6/311',
   },
   {
     label: 'Sphere random loose packing',
@@ -60,6 +67,7 @@ export const PACKING_REFERENCES: ReadonlyArray<PackingReference> = [
     color: '#3a83bf',
     note: 'Loosest mechanically stable random sphere packing.',
     citation: 'Onoda & Liniger (1990), Phys. Rev. Lett. 64, 2727.',
+    url: 'https://doi.org/10.1103/PhysRevLett.64.2727',
   },
 ];
 
