@@ -63,47 +63,92 @@ export type GrowResult = 'grown' | 'closed' | 'jammed';
  */
 export function growOne(a: Assembly): GrowResult {
   const { opts } = a;
-  const maxAttempts = opts.maxAttemptsPerStep ?? 80;
   if (a.freeFaces.length === 0) return 'closed';
 
+  // Phase 1: random sampling. Fast when most candidates work.
+  const maxAttempts = opts.maxAttemptsPerStep ?? 80;
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const ffIdx = pickFreeFace(a);
-    const ff = a.freeFaces[ffIdx];
-    if (!ff) continue;
-    const tgtSig = edgeSig(ff.tri);
-    const chir: Chirality = opts.rng.next() < opts.chiralityBias ? 'R' : 'L';
-    const tmpl = unitPlanckton(opts.L, chir);
-    const tF = faceTriangles(tmpl);
-    const compat: number[] = [];
-    for (let i = 0; i < 4; i++) {
-      if (sigEq(edgeSig(tF[i] as [Vec3, Vec3, Vec3]), tgtSig)) compat.push(i);
+    if (tryPlace(a, ffIdx, opts.rng.next() < opts.chiralityBias ? 'R' : 'L', opts.rng)) {
+      return 'grown';
     }
-    if (compat.length === 0) continue;
-    const tfIdx = compat[opts.rng.int(compat.length)] as number;
-    const perms = matchPerms(ff.tri, tF[tfIdx] as [Vec3, Vec3, Vec3]);
-    if (perms.length === 0) continue;
-    const perm = perms[opts.rng.int(perms.length)] as [number, number, number];
-    const newTet = matePlanckton(tmpl, tfIdx, ff.tri, perm);
+  }
 
-    let overlap = false;
-    for (let ti = 0; ti < a.tets.length; ti++) {
-      if (ti === ff.tetIdx) continue;
-      if (tetsOverlap(newTet.verts, (a.tets[ti] as Planckton).verts, opts.L)) {
-        overlap = true;
-        break;
-      }
+  // Phase 2: deterministic exhaustive search over every
+  //   (free face × chirality × template face × perm)
+  // combination before declaring jammed. Catches dense-packing cases where
+  // random sampling kept picking the same overlapping candidates by chance.
+  for (let ffIdx = 0; ffIdx < a.freeFaces.length; ffIdx++) {
+    for (const chir of ['R', 'L'] as const) {
+      if (tryPlaceExhaustive(a, ffIdx, chir)) return 'grown';
     }
-    if (overlap) continue;
-
-    a.tets.push(newTet);
-    a.freeFaces.splice(ffIdx, 1);
-    const newIdx = a.tets.length - 1;
-    faceTriangles(newTet).forEach((tri, fi) => {
-      if (fi !== tfIdx) a.freeFaces.push({ tri, tetIdx: newIdx, faceIdx: fi });
-    });
-    return 'grown';
   }
   return 'jammed';
+}
+
+/** Try a single random placement on free face `ffIdx` with chirality `chir`. */
+function tryPlace(a: Assembly, ffIdx: number, chir: Chirality, rng: Rng): boolean {
+  const ff = a.freeFaces[ffIdx];
+  if (!ff) return false;
+  const tgtSig = edgeSig(ff.tri);
+  const tmpl = unitPlanckton(a.opts.L, chir);
+  const tF = faceTriangles(tmpl);
+  const compat: number[] = [];
+  for (let i = 0; i < 4; i++) {
+    if (sigEq(edgeSig(tF[i] as [Vec3, Vec3, Vec3]), tgtSig)) compat.push(i);
+  }
+  if (compat.length === 0) return false;
+  const tfIdx = compat[rng.int(compat.length)] as number;
+  const perms = matchPerms(ff.tri, tF[tfIdx] as [Vec3, Vec3, Vec3]);
+  if (perms.length === 0) return false;
+  const perm = perms[rng.int(perms.length)] as [number, number, number];
+  return commitIfClear(a, ff, ffIdx, tmpl, tfIdx, perm);
+}
+
+/**
+ * Deterministically iterate every compatible template face × perm for the
+ * given free face + chirality. Used as the exhaustive fallback in growOne.
+ */
+function tryPlaceExhaustive(a: Assembly, ffIdx: number, chir: Chirality): boolean {
+  const ff = a.freeFaces[ffIdx];
+  if (!ff) return false;
+  const tgtSig = edgeSig(ff.tri);
+  const tmpl = unitPlanckton(a.opts.L, chir);
+  const tF = faceTriangles(tmpl);
+  for (let tfIdx = 0; tfIdx < 4; tfIdx++) {
+    if (!sigEq(edgeSig(tF[tfIdx] as [Vec3, Vec3, Vec3]), tgtSig)) continue;
+    const perms = matchPerms(ff.tri, tF[tfIdx] as [Vec3, Vec3, Vec3]);
+    for (const perm of perms) {
+      if (commitIfClear(a, ff, ffIdx, tmpl, tfIdx, perm)) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Mate the template, run the SAT overlap test against every non-parent tet,
+ * and append on success. Returns true iff the placement was committed.
+ */
+function commitIfClear(
+  a: Assembly,
+  ff: FreeFace,
+  ffIdx: number,
+  tmpl: Planckton,
+  tfIdx: number,
+  perm: readonly [number, number, number]
+): boolean {
+  const newTet = matePlanckton(tmpl, tfIdx, ff.tri, perm);
+  for (let ti = 0; ti < a.tets.length; ti++) {
+    if (ti === ff.tetIdx) continue;
+    if (tetsOverlap(newTet.verts, (a.tets[ti] as Planckton).verts, a.opts.L)) return false;
+  }
+  a.tets.push(newTet);
+  a.freeFaces.splice(ffIdx, 1);
+  const newIdx = a.tets.length - 1;
+  faceTriangles(newTet).forEach((tri, fi) => {
+    if (fi !== tfIdx) a.freeFaces.push({ tri, tetIdx: newIdx, faceIdx: fi });
+  });
+  return true;
 }
 
 function pickFreeFace(a: Assembly): number {

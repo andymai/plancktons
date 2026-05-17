@@ -51,9 +51,10 @@ export interface GrowthMetrics {
 }
 
 /**
- * The base assembly is rebuilt only when the simulation parameters change;
- * advancing currentN within that family extends the same assembly in place.
- * Returns a fresh wrapper object each time so React notices the change.
+ * Build an assembly to `targetN`. Extends an existing assembly when targetN
+ * grows, and rebuilds from scratch when targetN shrinks below the current
+ * size (since `growOne` cannot un-place a tet). Cached via a ref so the
+ * common "grow" case stays O(ΔN).
  */
 function useGrownAssembly(
   seed: number,
@@ -62,27 +63,38 @@ function useGrownAssembly(
   compactBeta: number,
   targetN: number
 ): { assembly: Assembly; stalled: boolean } {
-  const baseAssembly = useMemo(
-    () =>
-      makeAssembly({
+  const cacheRef = useRef<{
+    key: string;
+    assembly: Assembly;
+  } | null>(null);
+  const simKey = `${seed}|${strategy}|${chiralityBias}|${compactBeta}`;
+
+  // Ref-as-instance-variable cache: read/write outside React's normal flow
+  // because we need to retain state across renders even when useMemo is
+  // discarded. The eslint rule against ref access in render is too strict for
+  // this idiomatic memoization pattern.
+  /* eslint-disable react-hooks/refs */
+  const cached = cacheRef.current;
+  const needRebuild = !cached || cached.key !== simKey || cached.assembly.tets.length > targetN;
+  const assembly = needRebuild
+    ? makeAssembly({
         L: GROWTH_L,
         rng: new Rng(seed),
         chiralityBias,
         strategy,
         compactBeta,
-      }),
-    [seed, strategy, chiralityBias, compactBeta]
-  );
-  return useMemo(() => {
-    let stalled = false;
-    while (baseAssembly.tets.length < targetN) {
-      if (growOne(baseAssembly) !== 'grown') {
-        stalled = true;
-        break;
-      }
+      })
+    : cached.assembly;
+  let stalled = false;
+  while (assembly.tets.length < targetN) {
+    if (growOne(assembly) !== 'grown') {
+      stalled = true;
+      break;
     }
-    return { assembly: baseAssembly, stalled };
-  }, [baseAssembly, targetN]);
+  }
+  cacheRef.current = { key: simKey, assembly };
+  return { assembly, stalled };
+  /* eslint-enable react-hooks/refs */
 }
 
 export function GrowthScene({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => void }) {

@@ -83,25 +83,34 @@ const DEFAULT_COLOR: ColorOpts = {
 };
 
 export const useStore = create<State>((set) => ({
-  scene: 'single',
+  // Default landing on the random-growth scene — it's the centerpiece of the
+  // research tool and (with animated playback) the most visually engaging
+  // first impression.
+  scene: 'growth',
   setScene: (scene) => set({ scene }),
 
   singleChirality: 'R',
   setSingleChirality: (singleChirality) => set({ singleChirality }),
 
-  reptileExplode: 0.1,
+  // Modest explode by default so canonical scenes don't look like a single
+  // blob on first view.
+  reptileExplode: 0.15,
   setReptileExplode: (reptileExplode) => set({ reptileExplode }),
   reptileDepth: 1,
   setReptileDepth: (reptileDepth) => set({ reptileDepth }),
 
-  cubeExplode: 0,
+  cubeExplode: 0.15,
   setCubeExplode: (cubeExplode) => set({ cubeExplode }),
 
-  growth: { N: 20, seed: 1, chiralityBias: 0.5, strategy: 'uniform', compactBeta: 3 },
+  // N=40 is dense enough to be visually striking but quick to generate.
+  // Compact strategy with β=3 yields visibly rounder, denser piles than
+  // uniform — better first impression of the actual physics being studied.
+  growth: { N: 40, seed: 7, chiralityBias: 0.5, strategy: 'compact', compactBeta: 3 },
   setGrowth: (p) => set((s) => ({ growth: { ...s.growth, ...p } })),
-  animationMode: 'instant',
+  // Animated playback auto-plays growth from N=1 → 40 over ~3 s on landing.
+  animationMode: 'animated',
   setAnimationMode: (animationMode) => set({ animationMode }),
-  animSpeed: 4,
+  animSpeed: 12,
   setAnimSpeed: (animSpeed) => set({ animSpeed }),
   stepTrigger: 0,
   bumpStep: () => set((s) => ({ stepTrigger: s.stepTrigger + 1 })),

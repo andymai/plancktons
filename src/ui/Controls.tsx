@@ -1,4 +1,5 @@
 import { useStore } from '../lib/store.js';
+import { DraftSlider } from './DraftSlider.js';
 
 const SCENES = [
   { id: 'single' as const, label: 'Single Planckton' },
@@ -205,13 +206,12 @@ function GrowthControls() {
         title="Target Planckton count. Random face-to-face growth typically jams between N≈100 and N≈500 depending on strategy."
       >
         <span>Plancktons (N)</span>
-        <input
-          type="range"
+        <DraftSlider
           min={1}
           max={500}
           step={1}
           value={Math.min(500, growth.N)}
-          onChange={(e) => setGrowth({ N: parseInt(e.target.value, 10) })}
+          onCommit={(v) => setGrowth({ N: v })}
         />
         <input
           type="number"
@@ -269,13 +269,12 @@ function GrowthControls() {
           title="Inverse temperature in p(face) ∝ exp(β·n̂·ĉ). β=0 recovers uniform; β≳15 saturates to greedy 'always fill the deepest pocket'."
         >
           <span>β (compactness)</span>
-          <input
-            type="range"
+          <DraftSlider
             min={0}
             max={20}
             step={0.2}
             value={growth.compactBeta}
-            onChange={(e) => setGrowth({ compactBeta: parseFloat(e.target.value) })}
+            onCommit={(v) => setGrowth({ compactBeta: v })}
           />
           <span className="slider-value">{growth.compactBeta.toFixed(1)}</span>
         </label>
@@ -285,13 +284,12 @@ function GrowthControls() {
         title="Probability the next Planckton drawn is right-handed. 0 = all-L, 1 = all-R, 0.5 = balanced."
       >
         <span>Chirality (R : L)</span>
-        <input
-          type="range"
+        <DraftSlider
           min={0}
           max={1}
           step={0.01}
           value={growth.chiralityBias}
-          onChange={(e) => setGrowth({ chiralityBias: parseFloat(e.target.value) })}
+          onCommit={(v) => setGrowth({ chiralityBias: v })}
         />
         <span className="slider-value">
           {(growth.chiralityBias * 100).toFixed(0)} :{' '}
@@ -391,14 +389,14 @@ function AdvancedControls() {
 
       <label
         className="checkbox-row"
-        title="Convex hull of all Planckton vertices - the 'vacuum-bag' upper bound on V"
+        title="Tightest convex envelope of all Planckton vertices. Its volume V is the upper bound used in η = V*/V. Size is derived from the assembly geometry, not adjustable."
       >
         <input
           type="checkbox"
           checked={color.showHull}
           onChange={(e) => setColor({ showHull: e.target.checked })}
         />
-        Convex hull (vacuum bag)
+        Convex hull
       </label>
       <label
         className="checkbox-row"
