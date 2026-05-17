@@ -38,12 +38,12 @@ export const PACKING_REFERENCES: ReadonlyArray<PackingReference> = [
     url: 'https://doi.org/10.4007/annals.2005.162.1065',
   },
   {
-    label: 'Regular tet (Welsh, displaced)',
-    density: 0.717455,
+    label: 'Regular tet (CEG dimer crystal)',
+    density: 4000 / 4671, // ≈ 0.85634
     color: '#c46cd9',
-    note: 'Best known packing density for regular tetrahedra (not tiling).',
-    citation: 'Conway & Torquato (2006), PNAS 103, 10612.',
-    url: 'https://doi.org/10.1073/pnas.0601389103',
+    note: 'Densest known packing of regular tetrahedra (not a tiling). Dimer-based crystal that supersedes Conway-Torquato (2006, Δ≈0.7175) and the Haji-Akbari quasicrystal (Nature 462, 773; 2009, Δ≈0.8503).',
+    citation: 'Chen, Engel & Glotzer (2010), Discrete Comput. Geom. 44, 253.',
+    url: 'https://doi.org/10.1007/s00454-010-9273-0',
   },
   {
     label: 'Regular tet (Bravais lattice)',

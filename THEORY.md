@@ -56,6 +56,25 @@ structure.) Their integer combinations satisfy `2·(π/2) + 2·(π/3) + 2·(π/4
 … = π` modulo redistributions - this is exactly Bricard's condition for
 rectifiability.
 
+### 1.1 Hill T₁ among tetrahedral space-fillers
+
+Hill (1896) gave the first explicit family of space-filling tetrahedra.
+Sommerville (1923) initiated the classification of tetrahedra that tile ℝ³ by
+congruent copies; his list was later completed and extended by Goldberg
+(1974), who exhibited three infinite families of tetrahedral space-fillers.
+The Hill orthoschemes T₁, T₂, T₃ — distinguished by which axis the three
+perpendicular edges chain along — are part of this larger family; the
+playground uses T₁ exclusively. Senechal (1981) is the standard modern survey
+of which tetrahedra tile space, with a Dehn-invariant perspective. The
+k-reptile result of Matoušek-Safernová 2010 (§3) is the most recent rigidity
+statement about Hill orthoschemes specifically.
+
+**References:**
+
+- D.M.Y. Sommerville, _Space-filling tetrahedra in Euclidean space_, _Proc. Edinburgh Math. Soc._ 41:49 (1923), [doi:10.1017/S001309150007783X](https://doi.org/10.1017/S001309150007783X).
+- M. Goldberg, _Three infinite families of tetrahedral space-fillers_, _J. Combin. Theory_ A 16:348 (1974), [doi:10.1016/0097-3165(74)90058-2](<https://doi.org/10.1016/0097-3165(74)90058-2>).
+- M. Senechal, _Which tetrahedra fill space?_, _Math. Mag._ 54:227 (1981), [doi:10.1080/0025570X.1981.11976933](https://doi.org/10.1080/0025570X.1981.11976933).
+
 ---
 
 ## 2. Scissors-congruence and Hilbert's Third Problem
@@ -83,7 +102,8 @@ giving a nonzero Dehn invariant - so regular tets cannot tile space.
 
 - M.J.M. Hill, _Proc. Lond. Math. Soc._ 2:39 (1896).
 - M. Dehn, _Math. Ann._ 55:465 (1901).
-- J.-P. Sydler, _Comment. Math. Helv._ 40:43 (1965).
+- J.-P. Sydler, _Conditions nécessaires et suffisantes pour l'équivalence des polyèdres de l'espace euclidien à trois dimensions_, _Comment. Math. Helv._ 40:43 (1965), [doi:10.1007/BF02564364](https://doi.org/10.1007/BF02564364).
+- R. Bricard, _Sur une question de géométrie relative aux polyèdres_, _Nouv. Ann. Math._ (3) 15:331 (1896), [numdam.org/item/NAM_1896_3_15\_\_331_1](https://www.numdam.org/item/NAM_1896_3_15__331_1/).
 - I. Pak, _Lectures on Discrete and Polyhedral Geometry_ (2009), §16.
 
 ---
@@ -131,13 +151,24 @@ face-graph of an evolving polyhedral aggregate):
         # If no placement exists at all → JAMMED.
 ```
 
-This is **not** standard RSA (which places objects at random _positions_ in a
-continuous medium, accepting if non-overlapping). It is also **not** DLA
-(which uses Brownian trajectories). The closest published analogue is the
-Eden growth model adapted to a face-mating constraint. The two-phase
-structure ensures that "jammed" is a true statement about the geometry, not
-an artifact of finite random sampling - Phase 2 finds any placement that
-exists.
+This is **not** standard RSA (random sequential adsorption: place objects at
+random _positions_ in a continuous medium, accept if non-overlapping; see
+Evans 1993 for a review). It is also **not** DLA (diffusion-limited
+aggregation: particles arrive along Brownian trajectories and stick on
+contact; Witten & Sander 1981). The closest published analogue is the
+**Eden growth model** (Eden 1961), adapted from a flat lattice to a
+face-mating polyhedral substrate. Reaction-limited cluster aggregation (RLCA;
+Meakin 1983) shares the "place adjacent to existing structure" flavour but
+with different rejection statistics. The two-phase structure here ensures
+that "jammed" is a true statement about the geometry, not an artifact of
+finite random sampling — Phase 2 finds any placement that exists.
+
+**References for §4 framing:**
+
+- M. Eden, _A two-dimensional growth process_, in _Proc. 4th Berkeley Symp. Math. Statistics and Probability_, Vol. IV, 223–239 (1961).
+- T.A. Witten & L.M. Sander, _Diffusion-limited aggregation, a kinetic critical phenomenon_, _Phys. Rev. Lett._ 47, 1400 (1981), [doi:10.1103/PhysRevLett.47.1400](https://doi.org/10.1103/PhysRevLett.47.1400).
+- P. Meakin, _Formation of fractal clusters and networks by irreversible diffusion-limited aggregation_, _Phys. Rev. Lett._ 51, 1119 (1983), [doi:10.1103/PhysRevLett.51.1119](https://doi.org/10.1103/PhysRevLett.51.1119).
+- J.W. Evans, _Random and cooperative sequential adsorption_, _Rev. Mod. Phys._ 65, 1281 (1993), [doi:10.1103/RevModPhys.65.1281](https://doi.org/10.1103/RevModPhys.65.1281).
 
 The **jamming limit** is reached when every free face has _no_ allowed
 (chirality, template, perm) triple that produces a non-overlapping placement
@@ -251,21 +282,28 @@ isolation is misleading. Always inspect which model wins AIC.
 
 ### 4.5 Open questions
 
-1. **Is there a chirality-bias optimum?** Is η_C maximized at `c_R = 0.5`
-   (balanced) or at the extremes? Run the histogram sweep at fixed `N = 50`
-   for `c_R ∈ {0, 0.25, 0.5, 0.75, 1.0}`.
-2. **Does η_∞(β) saturate, and at what value?** Sweep β; expect a plateau
-   as `β → ∞` but **also** a jamming threshold beyond which placements
-   become so constrained that growth stalls at small N.
-3. **What is the fractal dimension `D_f`?** The tool computes
-   `D_f = 1/slope` of `ln(R_g)` vs `ln(N)`. Compact compact-strategy
-   aggregates should converge to `D_f ≈ 3`; uniform RSA should give a
-   smaller value reflecting fractal / branchy growth.
-4. **g(r) signature.** Look for the first peak position in g(r); for face-
-   shared Plancktons it should be at the centroid-to-centroid distance of a
-   mated tet pair (~L·√(3/8) ≈ 0.61 L for one face type).
-5. **Coordination of the m³-reptile recursion**: at depth `n`, are interior
-   vertex coordinations bounded, or do they grow?
+The 1-η_C(N) tail behaviour, β-saturation, chirality-bias optimum, fractal
+dimension, and g(r) first-peak location are all quantitative sweeps the tool
+can run today; see `scripts/study.ts` (§6). They are bookkeeping rather than
+open questions. The questions that remain genuinely open in our view:
+
+1. **Is the random Hill-T₁ asymptote `η_∞` in the literature?** To the
+   author's knowledge, the random face-to-face packing density of an
+   Hill-orthoscheme aggregate (analog of sphere RCP/RLP) is not directly
+   addressed in the polytope-packing literature: Conway-Torquato, Hales,
+   Hoylman, Chen-Engel-Glotzer all study _crystalline_ or _lattice_ packings
+   of regular tetrahedra; Scott-Kilgour, Onoda-Liniger study _random sphere_
+   packing. Plancktons sit in the intersection of "Hill orthoscheme" × "random
+   aggregate" that does not appear to be characterized. The §4.6 numbers
+   below are the first values we are aware of.
+2. **Coordination of the m³-reptile recursion.** At depth `n`, are interior
+   vertex coordinations bounded, or do they grow with `n`? The 6-cube tiling
+   has coordination 6 at the two diagonal endpoints; the 8-reptile descends
+   the recursion once; no closed-form answer is currently known.
+3. **MC-refined η_∞ vs. one-shot growth.** How much of the 1 − η ≈ 0.83
+   "vacuum" at N = 200 is true jamming versus local-minimum stickiness?
+   Mc refinement (§7 and `mcRefine.ts`) gives partial answers; a systematic
+   sweep is open.
 
 ---
 
@@ -274,14 +312,14 @@ isolation is misleading. Always inspect which model wins AIC.
 Hill T's are special because they _can_ tile space - most polytopes (including
 the regular tetrahedron) cannot. For comparison:
 
-| System                         | Δ (density)    | Source                        |
-| ------------------------------ | -------------- | ----------------------------- |
-| Hill T₁ tiling (cube, reptile) | **1.000**      | Hill 1896; Matoušek 2010      |
-| Sphere FCC                     | π/√18 ≈ 0.7405 | Hales 2005, Kepler conjecture |
-| Regular tet (Welsh displaced)  | ≈ 0.71746      | Conway & Torquato 2006        |
-| Regular tet (Bravais lattice)  | 18/49 ≈ 0.367  | Hoylman 1970                  |
-| Sphere random close packing    | ≈ 0.637        | Scott & Kilgour 1969          |
-| Sphere random loose packing    | ≈ 0.555        | Onoda & Liniger 1990          |
+| System                         | Δ (density)        | Source                        |
+| ------------------------------ | ------------------ | ----------------------------- |
+| Hill T₁ tiling (cube, reptile) | **1.000**          | Hill 1896; Matoušek 2010      |
+| Sphere FCC                     | π/√18 ≈ 0.7405     | Hales 2005, Kepler conjecture |
+| Regular tet (CEG dimer)        | 4000/4671 ≈ 0.8563 | Chen-Engel-Glotzer 2010       |
+| Regular tet (Bravais lattice)  | 18/49 ≈ 0.367      | Hoylman 1970                  |
+| Sphere random close packing    | ≈ 0.637            | Scott & Kilgour 1969          |
+| Sphere random loose packing    | ≈ 0.555            | Onoda & Liniger 1990          |
 
 **Important:** these literature values are measured against _fixed_ containers
 (periodic boxes, gravity-settled beds). They are directly comparable to
@@ -296,12 +334,12 @@ is the natural Hill-T₁ analog of "random close packing" for spheres.
 
 **References on packing densities:**
 
-- T.C. Hales, _Ann. Math._ 162, 1065 (2005) - Kepler conjecture (spheres).
-- J.H. Conway, S. Torquato, _PNAS_ 103, 10612 (2006) - regular tetrahedra.
-- D.J. Hoylman, _Bull. Amer. Math. Soc._ 76, 135 (1970) - tet lattice density.
-- G.D. Scott, D.M. Kilgour, _J. Phys. D_ 2, 863 (1969) - sphere RCP.
-- G.Y. Onoda, E.G. Liniger, _Phys. Rev. Lett._ 64, 2727 (1990) - sphere RLP.
-- S. Torquato, F.H. Stillinger, _Rev. Mod. Phys._ 82, 2633 (2010) - survey.
+- T.C. Hales, _A proof of the Kepler conjecture_, _Ann. Math._ 162, 1065 (2005).
+- E.R. Chen, M. Engel, S.C. Glotzer, _Dense crystalline dimer packings of regular tetrahedra_, _Discrete Comput. Geom._ 44, 253 (2010), [doi:10.1007/s00454-010-9273-0](https://doi.org/10.1007/s00454-010-9273-0). Supersedes the Conway-Torquato (2006) result and the Haji-Akbari et al. quasicrystal (_Nature_ 462, 773; 2009, Δ ≈ 0.8503).
+- D.J. Hoylman, _Bull. Amer. Math. Soc._ 76, 135 (1970) — densest single-orientation lattice packing of regular tetrahedra.
+- G.D. Scott, D.M. Kilgour, _J. Phys. D_ 2, 863 (1969) — sphere RCP.
+- G.Y. Onoda, E.G. Liniger, _Phys. Rev. Lett._ 64, 2727 (1990) — sphere RLP.
+- S. Torquato, F.H. Stillinger, _Rev. Mod. Phys._ 82, 2633 (2010) — survey.
 
 ---
 
