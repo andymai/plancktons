@@ -2,13 +2,81 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Plancktons — Hill tetrahedra study</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#15181c" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#15181c" media="(prefers-color-scheme: dark)" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <title>Plancktons — Hill T₁ orthoscheme study</title>
     <meta
       name="description"
-      content="Interactive 3D study of Hill tetrahedra (Plancktons), the only known space-filling tetrahedra. Random face-to-face assembly volume vs vacuum-bag shrink-wrap upper bound."
+      content="Interactive 3D study of Hill T₁ orthoschemes: random face-to-face aggregation, η_C / η_B / η_M packing fractions, gyration descriptors, and m³-reptile dissection. Browser playground + headless CLI."
     />
+    <meta name="author" content="Andy Aragon" />
+    <link rel="canonical" href="https://andymai.github.io/plancktons/" />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Plancktons" />
+    <meta name="application-name" content="Plancktons" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Plancktons" />
+    <meta property="og:title" content="Plancktons — Hill T₁ orthoscheme study" />
+    <meta
+      property="og:description"
+      content="Interactive 3D study of Hill T₁ orthoschemes: random face-to-face aggregation, packing fractions, gyration descriptors, and m³-reptile dissection."
+    />
+    <meta property="og:url" content="https://andymai.github.io/plancktons/" />
+    <meta property="og:image" content="https://andymai.github.io/plancktons/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Plancktons wordmark beside a stylized Hill T₁ orthoscheme tetrahedron on a dark background."
+    />
+    <meta property="og:locale" content="en_US" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Plancktons — Hill T₁ orthoscheme study" />
+    <meta
+      name="twitter:description"
+      content="Interactive 3D study of Hill T₁ orthoschemes: random face-to-face aggregation, packing fractions, gyration descriptors, and m³-reptile dissection."
+    />
+    <meta name="twitter:image" content="https://andymai.github.io/plancktons/og-image.png" />
+    <meta
+      name="twitter:image:alt"
+      content="Plancktons wordmark beside a stylized Hill T₁ orthoscheme tetrahedron on a dark background."
+    />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Plancktons",
+        "alternateName": "Hill T₁ orthoscheme study",
+        "url": "https://andymai.github.io/plancktons/",
+        "image": "https://andymai.github.io/plancktons/og-image.png",
+        "description": "Interactive 3D study of Hill T₁ orthoschemes: random face-to-face aggregation, packing fractions, gyration descriptors, and m³-reptile dissection.",
+        "applicationCategory": "EducationalApplication",
+        "applicationSubCategory": "ResearchApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires WebGL2 and a modern evergreen browser.",
+        "isAccessibleForFree": true,
+        "license": "https://opensource.org/licenses/MIT",
+        "author": { "@type": "Person", "name": "Andy Aragon" },
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

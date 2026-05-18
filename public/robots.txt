@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://andymai.github.io/plancktons/sitemap.xml

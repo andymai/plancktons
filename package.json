@@ -16,6 +16,7 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc -b",
     "validate": "npm run typecheck && npm run lint && npm run format:check && npm run test",
+    "gen:icons": "node scripts/generate-icons.mjs",
     "prepare": "husky"
   },
   "lint-staged": {
@@ -56,6 +57,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.0.5",
     "prettier": "^3.8.3",
+    "sharp": "^0.34.5",
     "tsx": "^4.22.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
