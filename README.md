@@ -1,18 +1,25 @@
+<div align="center">
+
 # Plancktons
 
-Interactive 3D study of **Hill T₁ orthoschemes** ("Plancktons") and their
-random face-to-face assemblies. Browser playground plus a headless CLI for
-batch runs.
+[![CI](https://github.com/andymai/plancktons/actions/workflows/ci.yml/badge.svg)](https://github.com/andymai/plancktons/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/github/license/andymai/plancktons)](./LICENSE)
 
-**Live:** <https://andymai.github.io/plancktons/>
+Interactive 3D study of Hill T₁ orthoschemes and their random face-to-face assemblies.
 
-**Deep dive:** [THEORY.md](./THEORY.md) - Schläfli orthoschemes, Hilbert's
+[Live](https://andymai.github.io/plancktons/) · [Theory](./THEORY.md) · [Proof](./docs/PROOF.md)
+
+</div>
+
+Browser playground plus a headless CLI for batch runs.
+
+**Deep dive:** [THEORY.md](./THEORY.md) — Schläfli orthoschemes, Hilbert's
 third problem, Matoušek-Safernová's m³-reptile theorem, jamming, gyration-
 tensor descriptors, fractal dimension, pair correlation, and where Plancktons
 sit relative to sphere FCC, regular-tet packing, and random close packing in
 the literature.
 
-**Proof of zero overlap:** [docs/PROOF.md](./docs/PROOF.md) - separating-
+**Proof of zero overlap:** [docs/PROOF.md](./docs/PROOF.md) — separating-
 axis test correctness + numerical margin analysis.
 
 ## What's a Planckton?
@@ -182,6 +189,16 @@ and `seed_t = startSeed + t·9973` is fully reproducible.
 - **PNG** - canvas screenshot.
 - **STL** - watertight STL of the current assembly.
 - **JSON** - full state dump with provenance.
+
+## Scope
+
+To set expectations, this project deliberately does not:
+
+- **Simulate general tetrahedral shapes** — only the Hill T₁ orthoscheme (and its chiral mirror) is modeled; no other tetrahedra, polyhedra, or particle types are supported.
+- **Produce tetrahedral meshes for FEA or CAD** — the geometry kernel exists to drive the interactive study, not as a mesh-generation library for engineering workflows.
+- **Model physical forces or dynamics** — growth is combinatorial (face-to-face adjacency + SAT overlap rejection); there is no energy minimization, molecular dynamics, or fluid simulation.
+- **Optimize packing density** — the tool studies random face-to-face assemblies; it does not search for maximum-density configurations or compete with dedicated sphere/polyhedron packing solvers.
+- **Run large-scale statistical campaigns in the browser** — the browser UI is capped by Web Worker throughput; the headless CLI (`scripts/study.ts`) is the intended path for fit-grade ensemble runs.
 
 ## Local development
 
