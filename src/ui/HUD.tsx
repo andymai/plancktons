@@ -1,20 +1,124 @@
 import { memo } from 'react';
 import type { GrowthMetrics } from '../scenes/GrowthScene.js';
+import type { VacuumHudMetrics } from '../scenes/VacuumScene.js';
 import { useStore, isAtLeast } from '../lib/store.js';
 import { Term } from './Term.js';
 
 const fmt = (n: number, d = 4) => (Number.isFinite(n) ? n.toFixed(d) : '-');
 const pct = (n: number) => (Number.isFinite(n) ? `${(n * 100).toFixed(1)}%` : '-');
 
-export function HUD({ metrics }: { metrics: GrowthMetrics | null }) {
+export function HUD({
+  metrics,
+  vacuum,
+}: {
+  metrics: GrowthMetrics | null;
+  vacuum?: VacuumHudMetrics | null;
+}) {
   const scene = useStore((s) => s.scene);
   const mode = useStore((s) => s.mode);
   if (scene === 'single') return <SingleHUD />;
   if (scene === 'cube') return <CubeHUD />;
   if (scene === 'reptile') return <ReptileHUD />;
+  if (scene === 'vacuum') return <VacuumHUD metrics={vacuum ?? null} />;
   if (!metrics) return null;
   return <GrowthHUD metrics={metrics} showAdvanced={isAtLeast(mode, 'explore')} />;
 }
+
+const VacuumHUD = memo(function VacuumHUD({ metrics }: { metrics: VacuumHudMetrics | null }) {
+  if (!metrics) return null;
+  if (metrics.running && !metrics.sealed && Number.isNaN(metrics.etaB)) {
+    return (
+      <div className="hud">
+        <div className="hud-section">Vacuum bag</div>
+        <div className="hud-row" role="status" aria-live="polite">
+          <span className="hud-label">packing…</span>
+          <span className="hud-value">
+            {metrics.progress != null ? pct(metrics.progress) : '…'}
+          </span>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="hud">
+      <div
+        className="hud-section"
+        title="N tetrahedra settled into a jammed packing under a contracting bag."
+      >
+        Vacuum bag
+      </div>
+      <div className="hud-row">
+        <span className="hud-label">N</span>
+        <span className="hud-value">{metrics.N}</span>
+      </div>
+      <div className="hud-row hud-prominent" title="Fraction of air removed from the bag.">
+        <span className="hud-label">air removed</span>
+        <span className="hud-value">{pct(metrics.airRemoved)}</span>
+      </div>
+      {!metrics.sealed && (
+        <div className="hud-row" role="status">
+          <span className="hud-label" />
+          <span className="hud-value" style={{ opacity: 0.6 }}>
+            η measured once sealed
+          </span>
+        </div>
+      )}
+      <div className="hud-divider" />
+      <div className="hud-section">Packing fractions (sealed)</div>
+      <div
+        className="hud-row hud-prominent"
+        title="η_B = V*/V_bbox — comparable to RCP/RLP literature."
+      >
+        <span className="hud-label">
+          <Term name="etaB">η_B</Term> = V*/V_bbox
+        </span>
+        <span className="hud-value">{metrics.sealed ? pct(metrics.etaB) : '-'}</span>
+      </div>
+      <div
+        className="hud-row"
+        title="η_C = V*/V_hull — convex compactness (not literature-comparable)."
+      >
+        <span className="hud-label">
+          <Term name="etaC">η_C</Term> = V*/V_hull
+        </span>
+        <span className="hud-value">{metrics.sealed ? pct(metrics.etaC) : '-'}</span>
+      </div>
+      <div
+        className="hud-row"
+        title="η_M = V*/V_morph — morphological hull (the wrinkled skin volume)."
+      >
+        <span className="hud-label">η_M = V*/V_morph</span>
+        <span className="hud-value">{metrics.sealed ? pct(metrics.etaM) : '-'}</span>
+      </div>
+      <div className="hud-row" title="η_V = (L³/6)/⟨V_voronoi⟩ over interior cells.">
+        <span className="hud-label">η_V (Voronoi)</span>
+        <span className="hud-value">
+          {metrics.sealed && metrics.etaV != null ? pct(metrics.etaV) : '-'}
+        </span>
+      </div>
+      <div className="hud-divider" />
+      <div className="hud-section">Shape / contacts</div>
+      <div className="hud-row" title="Radius of gyration of the jammed packing.">
+        <span className="hud-label">R_g</span>
+        <span className="hud-value">{metrics.sealed ? fmt(metrics.rg, 3) : '-'}</span>
+      </div>
+      <div
+        className="hud-row"
+        title="Mean number of touching neighbours per tet — the loose-packing analogue of face coordination."
+      >
+        <span className="hud-label">⟨contacts⟩ / max</span>
+        <span className="hud-value">
+          {metrics.sealed
+            ? `${fmt(metrics.meanContactCoordination, 2)} / ${metrics.maxContactCoordination}`
+            : '-'}
+        </span>
+      </div>
+      {metrics.sealed && !metrics.hullOk && (
+        <div className="hud-warn">⚠ Hull computation failed (degenerate?)</div>
+      )}
+    </div>
+  );
+});
 
 const GrowthHUD = memo(function GrowthHUD({
   metrics,
@@ -62,6 +166,15 @@ const GrowthHUD = memo(function GrowthHUD({
           <Term name="etaB">η_B</Term> = V*/V_bbox
         </span>
         <span className="hud-value">{pct(metrics.bboxEfficiency)}</span>
+      </div>
+      <div
+        className="hud-row"
+        title="η_M = V*/V_morph — morphological-hull packing fraction (pockets ≤ 2α filled). Skipped (shown as -) above N=250 to keep playback snappy; the Research panel computes it for any N."
+      >
+        <span className="hud-label">
+          <Term name="etaM">η_M</Term> = V*/V_morph
+        </span>
+        <span className="hud-value">{pct(metrics.morphEfficiency)}</span>
       </div>
       <div
         className="hud-row"

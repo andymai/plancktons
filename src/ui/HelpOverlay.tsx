@@ -25,6 +25,10 @@ const SCENE_PRIMER: Record<SceneId, { title: string; body: string }> = {
     title: 'Random face-to-face growth',
     body: 'Each step picks a free face at random and glues a fresh Planckton onto a congruent face. A separating-axis test guarantees no overlap. Compact strategy biases toward concave pockets — tighter packings, earlier jamming. Metrics: η_C (hull) tells you how compact the cluster looks; η_B (bbox) is the literature-comparable density.',
   },
+  vacuum: {
+    title: 'Vacuum-bag compaction',
+    body: 'N loose tetrahedra are dropped into a bag and squeezed into a jammed random packing as a contracting wall "sucks the air out" — a deterministic, frictionless 6-DOF rigid-body settle (same seed → same packing). Unlike face-to-face growth, tets here are free-floating and only touch where the physics pushes them together. Press "Pack it" to run the settle, then scrub the timeline to replay the air being drawn out. The wrinkled skin is the morphological hull (η_M) of the sealed pack; η_B is the literature-comparable density.',
+  },
 };
 
 const CONCEPTS = [

@@ -222,6 +222,11 @@ input[type='range'] {
   min-width: 70px;
   text-align: center;
 }
+.transport-scrub {
+  flex: 1;
+  min-width: 120px;
+  accent-color: var(--accent);
+}
 
 .actions {
   display: flex;

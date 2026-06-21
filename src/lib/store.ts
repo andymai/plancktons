@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { GrowthStrategy } from './assembly.js';
 
-export type SceneId = 'single' | 'cube' | 'reptile' | 'growth';
+export type SceneId = 'single' | 'cube' | 'reptile' | 'growth' | 'vacuum';
 export type AnimationMode = 'instant' | 'animated' | 'step';
 
 export type Mode = 'learn' | 'explore' | 'research';
@@ -36,6 +36,17 @@ export interface GrowthParams {
   compactBeta: number;
 }
 
+/** User-facing vacuum-bag controls; mapped to the full physics VacuumParams. */
+export interface VacuumUiParams {
+  N: number;
+  seed: number;
+  chiralityBias: number;
+  /** Bag wall shrink rate. */
+  contractionRate: number;
+  /** Contact restitution (0 = fully damped settle). */
+  restitution: number;
+}
+
 interface State {
   scene: SceneId;
   setScene: (s: SceneId) => void;
@@ -59,6 +70,16 @@ interface State {
   setCubeAutoplay: (b: boolean) => void;
   reptileAutoplay: boolean;
   setReptileAutoplay: (b: boolean) => void;
+
+  // Vacuum bag
+  vacuum: VacuumUiParams;
+  setVacuum: (p: Partial<VacuumUiParams>) => void;
+  /** Scrub position 0..1 ("% air removed"). */
+  vacuumScrub: number;
+  setVacuumScrub: (v: number) => void;
+  /** Bumped by the "Pack it" button to (re)launch the precompute. */
+  vacuumRunTrigger: number;
+  bumpVacuumRun: () => void;
 
   // Growth
   growth: GrowthParams;
@@ -138,6 +159,13 @@ export const useStore = create<State>((set) => ({
   // uniform — better first impression of the actual physics being studied.
   growth: { N: 40, seed: 7, chiralityBias: 0.5, strategy: 'compact', compactBeta: 3 },
   setGrowth: (p) => set((s) => ({ growth: { ...s.growth, ...p } })),
+
+  vacuum: { N: 40, seed: 7, chiralityBias: 0.5, contractionRate: 1.5, restitution: 0 },
+  setVacuum: (p) => set((s) => ({ vacuum: { ...s.vacuum, ...p } })),
+  vacuumScrub: 1,
+  setVacuumScrub: (vacuumScrub) => set({ vacuumScrub }),
+  vacuumRunTrigger: 0,
+  bumpVacuumRun: () => set((s) => ({ vacuumRunTrigger: s.vacuumRunTrigger + 1 })),
   // Animated playback auto-plays growth from N=1 → 40 over ~3 s on landing.
   animationMode: 'animated',
   setAnimationMode: (animationMode) => set({ animationMode }),

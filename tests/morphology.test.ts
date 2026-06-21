@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { morphologicalHull } from '../src/lib/morphology.js';
+import { morphologicalField, morphologicalHull } from '../src/lib/morphology.js';
 import { unitPlanckton } from '../src/lib/planckton.js';
 import type { Planckton } from '../src/lib/planckton.js';
 import type { Vec3 } from '../src/lib/vec.js';
@@ -85,5 +85,23 @@ describe('morphologicalHull', () => {
     // padVoxels = ceil(0.5/0.1)+2 = 7. So dims ≈ 10 + 2·7 = 24.
     expect(result.dims[0]).toBeGreaterThanOrEqual(20);
     expect(result.dims[0]).toBeLessThan(30);
+  });
+});
+
+describe('morphologicalField', () => {
+  it('returns null for empty input', () => {
+    expect(morphologicalField([], 1)).toBeNull();
+  });
+
+  it('is negative inside the aggregate and positive in the padding', () => {
+    const f = morphologicalField([unitPlanckton(1, 'R')], 1, { voxelSize: 0.1 })!;
+    const [nx, ny, nz] = f.dims;
+    // A corner voxel (in the padding) is outside ⇒ positive distance.
+    expect(f.field[0]!).toBeGreaterThan(0);
+    // Some node is strictly inside ⇒ negative distance exists.
+    let anyInside = false;
+    for (let i = 0; i < f.field.length; i++) if (f.field[i]! < 0) anyInside = true;
+    expect(anyInside).toBe(true);
+    expect(f.field.length).toBe(nx * ny * nz);
   });
 });

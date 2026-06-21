@@ -59,6 +59,7 @@ const SAMPLE_STATE = {
   reptileExplode: 0.5,
   reptileDepth: 2,
   growth: { N: 42, seed: 9999, chiralityBias: 0.7, strategy: 'compact', compactBeta: 7.5 },
+  vacuum: { N: 64, seed: 321, chiralityBias: 0.4, contractionRate: 2.2, restitution: 0.15 },
   mode: 'research' as const,
 };
 
@@ -82,7 +83,17 @@ describe('URL hash round-trip', () => {
     expect(decoded?.growth?.seed).toBe(SAMPLE_STATE.growth.seed);
     expect(decoded?.growth?.chiralityBias).toBeCloseTo(SAMPLE_STATE.growth.chiralityBias);
     expect(decoded?.growth?.compactBeta).toBeCloseTo(SAMPLE_STATE.growth.compactBeta);
+    expect(decoded?.vacuum?.N).toBe(SAMPLE_STATE.vacuum.N);
+    expect(decoded?.vacuum?.seed).toBe(SAMPLE_STATE.vacuum.seed);
+    expect(decoded?.vacuum?.chiralityBias).toBeCloseTo(SAMPLE_STATE.vacuum.chiralityBias);
+    expect(decoded?.vacuum?.contractionRate).toBeCloseTo(SAMPLE_STATE.vacuum.contractionRate);
+    expect(decoded?.vacuum?.restitution).toBeCloseTo(SAMPLE_STATE.vacuum.restitution);
     expect(decoded?.mode).toBe(SAMPLE_STATE.mode);
+  });
+
+  it('decodes the vacuum scene as a valid share scene', () => {
+    window.history.replaceState(null, '', encodeStateToHash({ ...SAMPLE_STATE, scene: 'vacuum' }));
+    expect(decodeStateFromHash()?.scene).toBe('vacuum');
   });
 
   it('decodes legacy `a` field to mode (a:true → research, a:false → learn)', () => {

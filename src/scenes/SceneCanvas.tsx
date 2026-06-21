@@ -5,8 +5,15 @@ import { SingleScene } from './SingleScene.js';
 import { CubeScene } from './CubeScene.js';
 import { ReptileScene } from './ReptileScene.js';
 import { GrowthScene, type GrowthMetrics } from './GrowthScene.js';
+import { VacuumScene, type VacuumHudMetrics } from './VacuumScene.js';
 
-export function SceneCanvas({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => void }) {
+export function SceneCanvas({
+  onMetrics,
+  onVacuumMetrics,
+}: {
+  onMetrics?: (m: GrowthMetrics) => void;
+  onVacuumMetrics?: (m: VacuumHudMetrics | null) => void;
+}) {
   const scene = useStore((s) => s.scene);
   return (
     <Canvas
@@ -29,6 +36,7 @@ export function SceneCanvas({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => v
       {scene === 'cube' && <CubeScene />}
       {scene === 'reptile' && <ReptileScene />}
       {scene === 'growth' && <GrowthScene onMetrics={onMetrics} />}
+      {scene === 'vacuum' && <VacuumScene onMetrics={onVacuumMetrics} />}
       <OrbitControls makeDefault enableDamping dampingFactor={0.08} />
     </Canvas>
   );
