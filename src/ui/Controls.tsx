@@ -5,6 +5,7 @@ import { SingleControls } from './controls/SingleControls.js';
 import { CubeControls } from './controls/CubeControls.js';
 import { ReptileControls } from './controls/ReptileControls.js';
 import { GrowthControls } from './controls/GrowthControls.js';
+import { VacuumControls } from './controls/VacuumControls.js';
 import { DisplayControls } from './controls/DisplayControls.js';
 import { AnalysesControls } from './controls/AnalysesControls.js';
 
@@ -28,6 +29,11 @@ const SCENES = [
     id: 'growth' as const,
     label: 'Random face-to-face growth',
     tip: 'Face-restricted cluster aggregation (Eden-like growth on the face graph) with SAT overlap rejection. Not standard RSA (no spatial randomness) and not DLA (no diffusion). Aggregate density study this app is built around.',
+  },
+  {
+    id: 'vacuum' as const,
+    label: 'Vacuum-bag compaction',
+    tip: 'Loose tetrahedra are squeezed into a jammed random packing by a contracting bag — a deterministic, frictionless rigid-body settle. Press "Pack it" to run, then scrub the air-removal timeline.',
   },
 ];
 
@@ -84,6 +90,7 @@ function SceneControls() {
   if (scene === 'cube') return <CubeControls />;
   if (scene === 'reptile') return <ReptileControls />;
   if (scene === 'growth') return <GrowthControls />;
+  if (scene === 'vacuum') return <VacuumControls />;
   return null;
 }
 
@@ -94,7 +101,7 @@ function ShortcutsHint() {
       <table className="shortcuts-table">
         <tbody>
           <tr>
-            <td>1 – 4</td>
+            <td>1 – 5</td>
             <td>jump to scene</td>
           </tr>
           <tr>

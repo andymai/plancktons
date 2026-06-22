@@ -1,9 +1,16 @@
 import type { GrowthMetrics } from '../scenes/GrowthScene.js';
+import type { VacuumHudMetrics } from '../scenes/VacuumScene.js';
 import { HUD } from './HUD.js';
 import { ResizablePane } from './ResizablePane.js';
 import { useUiStore } from './uiStore.js';
 
-export function MetricsPanel({ metrics }: { metrics: GrowthMetrics | null }) {
+export function MetricsPanel({
+  metrics,
+  vacuum,
+}: {
+  metrics: GrowthMetrics | null;
+  vacuum: VacuumHudMetrics | null;
+}) {
   const hidden = useUiStore((s) => s.metricsHidden);
   const toggle = useUiStore((s) => s.toggleMetricsHidden);
 
@@ -46,7 +53,7 @@ export function MetricsPanel({ metrics }: { metrics: GrowthMetrics | null }) {
           «
         </button>
       </div>
-      <HUD metrics={metrics} />
+      <HUD metrics={metrics} vacuum={vacuum} />
     </ResizablePane>
   );
 }

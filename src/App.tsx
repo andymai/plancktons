@@ -13,6 +13,7 @@ import { ResizableSidebar } from './ui/ResizableSidebar.js';
 import { useKeyboardShortcuts } from './ui/useKeyboard.js';
 import { useUiStore } from './ui/uiStore.js';
 import type { GrowthMetrics } from './scenes/GrowthScene.js';
+import type { VacuumHudMetrics } from './scenes/VacuumScene.js';
 import { decodeStateFromHash } from './lib/exports.js';
 import { useStore } from './lib/store.js';
 import './App.css';
@@ -39,12 +40,22 @@ function applyHashStateOnce(): boolean {
       compactBeta: s.growth.compactBeta,
     });
   }
+  if (s.vacuum) {
+    store.setVacuum({
+      N: s.vacuum.N,
+      seed: s.vacuum.seed,
+      chiralityBias: s.vacuum.chiralityBias,
+      contractionRate: s.vacuum.contractionRate,
+      restitution: s.vacuum.restitution,
+    });
+  }
   if (s.mode) store.setMode(s.mode);
   return hadHash;
 }
 
 export default function App() {
   const [metrics, setMetrics] = useState<GrowthMetrics | null>(null);
+  const [vacMetrics, setVacMetrics] = useState<VacuumHudMetrics | null>(null);
   useKeyboardShortcuts();
   useEffect(() => {
     applyHashStateOnce();
@@ -79,11 +90,11 @@ export default function App() {
         </ResizableSidebar>
         <main className="canvas-wrap">
           <ErrorBoundary>
-            <SceneCanvas onMetrics={setMetrics} />
+            <SceneCanvas onMetrics={setMetrics} onVacuumMetrics={setVacMetrics} />
           </ErrorBoundary>
-          <Transport metrics={metrics} />
+          <Transport metrics={metrics} vacuum={vacMetrics} />
         </main>
-        <MetricsPanel metrics={metrics} />
+        <MetricsPanel metrics={metrics} vacuum={vacMetrics} />
       </div>
       <HelpOverlay />
       <FirstVisitToast />

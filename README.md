@@ -59,6 +59,16 @@ left-handed in the default color scheme).
    (Eden-like growth on the face graph) with SAT overlap rejection. Live
    readout of two distinct η values, gyration descriptors, free-face shape
    counts, vertex / tet coordination, bbox.
+5. **Vacuum-bag compaction** - N loose, freely-oriented Plancktons squeezed
+   into a jammed random packing by a contracting "bag" (a deterministic,
+   frictionless 6-DOF rigid-body settle seeded by the same LCG, so the same
+   seed reproduces the same packing). Press **Pack it** to run the settle off
+   the main thread, then scrub the "% air removed" timeline to replay the air
+   being drawn out. The wrinkled vacuum-seal skin is the morphological hull of
+   the sealed pack; η (η*C/η_B/η_M/η_V), R_g, and a contact-coordination
+   number are computed on the final jammed frame. Unlike growth, tets here are
+   \_not* face-mated — they only touch where the physics pushes them together,
+   so this is a genuinely different (looser, frictionless) kind of packing.
 
 ## The two η values
 
@@ -196,7 +206,7 @@ To set expectations, this project deliberately does not:
 
 - **Simulate general tetrahedral shapes** — only the Hill T₁ orthoscheme (and its chiral mirror) is modeled; no other tetrahedra, polyhedra, or particle types are supported.
 - **Produce tetrahedral meshes for FEA or CAD** — the geometry kernel exists to drive the interactive study, not as a mesh-generation library for engineering workflows.
-- **Model physical forces or dynamics** — growth is combinatorial (face-to-face adjacency + SAT overlap rejection); there is no energy minimization, molecular dynamics, or fluid simulation.
+- **Model physical forces or dynamics in the growth study** — the face-to-face growth kernel is combinatorial (adjacency + SAT overlap rejection); there is no energy minimization or fluid simulation there. (The separate **vacuum-bag scene** _is_ a frictionless rigid-body settle, but it's a browser-only visualization, not part of the CSV/CLI study pipeline.)
 - **Optimize packing density** — the tool studies random face-to-face assemblies; it does not search for maximum-density configurations or compete with dedicated sphere/polyhedron packing solvers.
 - **Run large-scale statistical campaigns in the browser** — the browser UI is capped by Web Worker throughput; the headless CLI (`scripts/study.ts`) is the intended path for fit-grade ensemble runs.
 

@@ -37,6 +37,7 @@ const BASE_STATE = {
   reptileExplode: 0.3,
   reptileDepth: 1,
   growth: { N: 20, seed: 1, chiralityBias: 0.5, strategy: 'uniform', compactBeta: 3 },
+  vacuum: { N: 40, seed: 7, chiralityBias: 0.5, contractionRate: 1.5, restitution: 0 },
 };
 
 describe('share-link mode round-trip', () => {

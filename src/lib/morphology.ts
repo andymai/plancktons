@@ -87,6 +87,69 @@ export function morphologicalHull(
   };
 }
 
+export interface MorphologyField {
+  /** Signed distance in world units: negative inside the closed hull, positive
+   * outside. Sampled at grid nodes, index i = x + nx·(y + ny·z). */
+  field: Float32Array;
+  dims: [number, number, number];
+  origin: Vec3;
+  voxelSize: number;
+}
+
+/**
+ * Signed-distance field of the morphological-closed aggregate, suitable for
+ * iso-surface extraction (the vacuum bag's wrinkled skin). Same grid + closing
+ * as {@link morphologicalHull}; the field is the closed indicator's signed
+ * Chamfer distance (negative inside). Returns null for an empty aggregate.
+ */
+export function morphologicalField(
+  tets: ReadonlyArray<Planckton>,
+  L: number,
+  opts: MorphologyOptions = {}
+): MorphologyField | null {
+  if (tets.length === 0) return null;
+  const voxelSize = opts.voxelSize ?? L / 12;
+  const alpha = opts.alpha ?? L;
+  const padVoxels = Math.max(opts.padVoxels ?? Math.ceil(alpha / voxelSize) + 2, 2);
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let minZ = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  let maxZ = -Infinity;
+  for (const t of tets) {
+    for (const v of t.verts) {
+      if (v[0] < minX) minX = v[0];
+      if (v[0] > maxX) maxX = v[0];
+      if (v[1] < minY) minY = v[1];
+      if (v[1] > maxY) maxY = v[1];
+      if (v[2] < minZ) minZ = v[2];
+      if (v[2] > maxZ) maxZ = v[2];
+    }
+  }
+  const origin: Vec3 = [
+    minX - padVoxels * voxelSize,
+    minY - padVoxels * voxelSize,
+    minZ - padVoxels * voxelSize,
+  ];
+  const dims: [number, number, number] = [
+    Math.ceil((maxX - minX) / voxelSize) + 2 * padVoxels,
+    Math.ceil((maxY - minY) / voxelSize) + 2 * padVoxels,
+    Math.ceil((maxZ - minZ) / voxelSize) + 2 * padVoxels,
+  ];
+
+  const occupied = voxelizeTets(tets, origin, dims, voxelSize);
+  const closed = morphologicalClose(occupied, dims, alpha / voxelSize);
+  const distOut = chamferDT3D(closed, dims, 1); // distance to nearest inside voxel
+  const distIn = chamferDT3D(closed, dims, 0); // distance to nearest outside voxel
+  const field = new Float32Array(closed.length);
+  for (let i = 0; i < closed.length; i++) {
+    field[i] = (closed[i] ? -distIn[i]! : distOut[i]!) * voxelSize;
+  }
+  return { field, dims, origin, voxelSize };
+}
+
 /**
  * Sign-of-determinant point-in-tetrahedron test: p lies inside iff each of the
  * four sub-determinants (replacing one vertex with p) has the same sign as the

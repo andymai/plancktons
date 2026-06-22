@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useStore, MODE_ORDER } from '../lib/store.js';
 import type { AnimationMode } from '../lib/store.js';
 
-const SCENES = ['single', 'cube', 'reptile', 'growth'] as const;
+const SCENES = ['single', 'cube', 'reptile', 'growth', 'vacuum'] as const;
 const ANIMATION_CYCLE: readonly AnimationMode[] = ['instant', 'animated', 'step'] as const;
 
 function nextAnimationMode(m: AnimationMode): AnimationMode {
@@ -13,6 +13,7 @@ function nextAnimationMode(m: AnimationMode): AnimationMode {
 export function useKeyboardShortcuts() {
   const setScene = useStore((s) => s.setScene);
   const setGrowth = useStore((s) => s.setGrowth);
+  const setVacuum = useStore((s) => s.setVacuum);
   const togglePlay = useStore((s) => s.togglePlay);
   const setAnimationMode = useStore((s) => s.setAnimationMode);
   const bumpStep = useStore((s) => s.bumpStep);
@@ -31,6 +32,11 @@ export function useKeyboardShortcuts() {
       const st = useStore.getState();
       switch (e.key) {
         case ' ':
+          if (st.scene === 'vacuum') {
+            togglePlay();
+            e.preventDefault();
+            break;
+          }
           if (st.scene !== 'growth') return;
           if (st.animationMode === 'animated') togglePlay();
           else if (st.animationMode === 'step') bumpStep();
@@ -39,10 +45,12 @@ export function useKeyboardShortcuts() {
         case 'r':
         case 'R':
           if (st.scene === 'growth') setGrowth({ seed: Math.floor(Math.random() * 1e6) });
+          else if (st.scene === 'vacuum') setVacuum({ seed: Math.floor(Math.random() * 1e6) });
           break;
         case 'n':
         case 'N':
           if (st.scene === 'growth') setGrowth({ seed: st.growth.seed + 1 });
+          else if (st.scene === 'vacuum') setVacuum({ seed: st.vacuum.seed + 1 });
           break;
         case 'ArrowRight': {
           const i = SCENES.indexOf(st.scene);
@@ -58,6 +66,7 @@ export function useKeyboardShortcuts() {
         case '2':
         case '3':
         case '4':
+        case '5':
           setScene(SCENES[parseInt(e.key, 10) - 1]!);
           break;
         case '?': {
@@ -73,5 +82,5 @@ export function useKeyboardShortcuts() {
     }
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [setScene, setGrowth, togglePlay, setAnimationMode, bumpStep, setMode]);
+  }, [setScene, setGrowth, setVacuum, togglePlay, setAnimationMode, bumpStep, setMode]);
 }

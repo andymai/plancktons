@@ -16,6 +16,7 @@ import {
   vertexCoordination,
 } from '../lib/assembly.js';
 import { computeHull } from '../lib/hull.js';
+import { morphologicalHull } from '../lib/morphology.js';
 import { gyrationDescriptors, type ShapeDescriptors } from '../lib/shape.js';
 import { steinhardtQl } from '../lib/steinhardt.js';
 import { findEmbeddedCubes } from '../lib/embeddedCubes.js';
@@ -26,6 +27,11 @@ import { CameraFit } from './CameraFit.js';
 
 export const GROWTH_L = 1;
 
+/** Above this N the per-render morphological-hull (η_M) voxelization is skipped
+ * to keep growth playback snappy; the HUD shows "-" and Research computes it
+ * on demand. */
+const MORPH_HUD_MAX_N = 250;
+
 export interface GrowthMetrics {
   N: number;
   targetN: number;
@@ -35,6 +41,8 @@ export interface GrowthMetrics {
   efficiency: number;
   /** η_B = Vstar / V_bbox. Bbox packing fraction; comparable to literature RCP/RLP/FCC since the bbox is a fixed-orientation container. */
   bboxEfficiency: number;
+  /** η_M = Vstar / V_morph. Morphological-hull packing fraction; NaN when skipped at large N for perf. */
+  morphEfficiency: number;
   surfaceArea: number;
   freeIso: number;
   freeScalene: number;
@@ -182,10 +190,16 @@ export function GrowthScene({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => v
     const N = assembly.tets.length;
     const stalledNow = stalled && N < growth.N;
     const surfaceArea = freeSurfaceArea(assembly);
+    // η_M voxelizes the aggregate — heavier than the convex hull. Skip past
+    // MORPH_HUD_MAX_N so the growth scene stays snappy at large N (the HUD shows
+    // "-"); the Research panel computes it on demand for any N via the worker.
+    const morph = N <= MORPH_HUD_MAX_N ? morphologicalHull(assembly.tets, GROWTH_L) : null;
+    const morphEfficiency = morph && morph.volume > 0 ? Vstar / morph.volume : NaN;
     const baseMetrics = {
       N,
       targetN: growth.N,
       Vstar,
+      morphEfficiency,
       surfaceArea,
       freeIso: fs.isoceles,
       freeScalene: fs.scalene,

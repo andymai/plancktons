@@ -23,6 +23,7 @@ import { runMcRefine, type McRefineResult } from '../lib/mcRefine.js';
 import { growTrajectory, type KineticsResult } from '../lib/kinetics.js';
 import { autocorrelationS2, type AutocorrResult } from '../lib/autocorr.js';
 import { steinhardtQl, type SteinhardtResult } from '../lib/steinhardt.js';
+import { runVacuumSettle, type VacuumParams, type VacuumTrajectory } from '../lib/vacuum.js';
 import { Rng } from '../lib/rng.js';
 import { growOne, makeAssembly, type GrowthStrategy } from '../lib/assembly.js';
 import { SEED_STRIDE } from '../lib/constants.js';
@@ -100,7 +101,8 @@ export type StudyJob =
       nTrials: number;
       /** Histogram bins for ⟨Q_l⟩ across trials. Default 20. */
       nBins?: number;
-    };
+    }
+  | { kind: 'vacuum'; jobId: number; params: VacuumParams };
 
 /**
  * Common growth parameter block. Every analysis job carries this so the
@@ -144,7 +146,8 @@ export type StudyResult =
       q6PerTet: number[];
       /** Trials that produced ≥1 valid contributing tet. */
       contributingTrials: number;
-    };
+    }
+  | { kind: 'vacuum'; trajectory: VacuumTrajectory };
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
 
@@ -272,6 +275,10 @@ const handlers: JobHandlers = {
     }
     return { kind: 'steinhardt', q4PerTrial, q6PerTrial, q6PerTet, contributingTrials };
   },
+  vacuum: (job, progress) => ({
+    kind: 'vacuum',
+    trajectory: runVacuumSettle(job.params, { onProgress: progress }),
+  }),
 };
 
 /** Grow an assembly to the target N inside the worker. Moves all the

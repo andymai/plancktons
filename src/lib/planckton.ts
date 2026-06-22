@@ -280,3 +280,96 @@ export function tetsOverlap(
   // No separating axis found → overlap.
   return true;
 }
+
+export interface Contact {
+  /** Unit minimum-translation axis, oriented to push B out of A (A→B). */
+  normal: Vec3;
+  /** Penetration depth along `normal` (≥ 0). */
+  depth: number;
+  /** Approximate contact point in world coordinates. */
+  point: Vec3;
+}
+
+/**
+ * Like {@link tetsOverlap}, but when the tets overlap returns the
+ * minimum-translation vector (MTV): the separating-axis candidate of least
+ * overlap, its penetration depth, and an approximate contact point. Returns
+ * `null` exactly when `tetsOverlap` would return `false`.
+ *
+ * Used by the vacuum-bag settle to resolve frictionless normal-impulse
+ * contacts. The 44 candidate axes are identical to `tetsOverlap`'s.
+ */
+export function tetContact(
+  A: readonly [Vec3, Vec3, Vec3, Vec3],
+  B: readonly [Vec3, Vec3, Vec3, Vec3],
+  edgeLen: number
+): Contact | null {
+  const margin = edgeLen * SAT_MARGIN_FRAC;
+  let bestDepth = Infinity;
+  let bestAxis: Vec3 | null = null;
+
+  const consider = (axis: Vec3): boolean => {
+    const [aMin, aMax] = projectTet(A, axis);
+    const [bMin, bMax] = projectTet(B, axis);
+    if (aMax < bMin + margin || bMax < aMin + margin) return false; // separated
+    const pen1 = aMax - bMin; // push B toward +axis
+    const pen2 = bMax - aMin; // push B toward −axis
+    if (pen1 <= pen2) {
+      if (pen1 < bestDepth) {
+        bestDepth = pen1;
+        bestAxis = axis;
+      }
+    } else if (pen2 < bestDepth) {
+      bestDepth = pen2;
+      bestAxis = [-axis[0], -axis[1], -axis[2]];
+    }
+    return true;
+  };
+
+  for (const t of [A, B]) {
+    for (const [i, j, k] of TET_FACES) {
+      const n = cross(sub(t[j] as Vec3, t[i] as Vec3), sub(t[k] as Vec3, t[i] as Vec3));
+      const len = Math.sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+      if (len < 1e-15) continue;
+      if (!consider([n[0] / len, n[1] / len, n[2] / len])) return null;
+    }
+  }
+  for (const [ai, aj] of TET_EDGES) {
+    const ea = sub(A[aj] as Vec3, A[ai] as Vec3);
+    for (const [bi, bj] of TET_EDGES) {
+      const eb = sub(B[bj] as Vec3, B[bi] as Vec3);
+      const n = cross(ea, eb);
+      const len = Math.sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+      if (len < 1e-12) continue;
+      if (!consider([n[0] / len, n[1] / len, n[2] / len])) return null;
+    }
+  }
+  if (bestAxis === null) return null;
+  const normal = bestAxis as Vec3;
+
+  // Contact point ≈ midpoint of the deepest interpenetrating vertices: A's
+  // vertex furthest along +normal and B's vertex furthest along −normal.
+  let pA = A[0];
+  let pAd = -Infinity;
+  for (const v of A) {
+    const d = dot(v, normal);
+    if (d > pAd) {
+      pAd = d;
+      pA = v;
+    }
+  }
+  let pB = B[0];
+  let pBd = Infinity;
+  for (const v of B) {
+    const d = dot(v, normal);
+    if (d < pBd) {
+      pBd = d;
+      pB = v;
+    }
+  }
+  return {
+    normal,
+    depth: Math.max(0, bestDepth),
+    point: [(pA[0] + pB[0]) / 2, (pA[1] + pB[1]) / 2, (pA[2] + pB[2]) / 2],
+  };
+}

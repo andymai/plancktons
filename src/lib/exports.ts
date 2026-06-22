@@ -102,10 +102,16 @@ function downloadBlob(blob: Blob, filename: string): void {
 // --------------------------- URL hash state --------------------------------
 
 export type ShareMode = 'learn' | 'explore' | 'research';
-export type ShareScene = 'single' | 'cube' | 'reptile' | 'growth';
+export type ShareScene = 'single' | 'cube' | 'reptile' | 'growth' | 'vacuum';
 export type ShareStrategy = 'uniform' | 'compact';
 const SHARE_MODES: ReadonlySet<ShareMode> = new Set(['learn', 'explore', 'research']);
-const SHARE_SCENES: ReadonlySet<ShareScene> = new Set(['single', 'cube', 'reptile', 'growth']);
+const SHARE_SCENES: ReadonlySet<ShareScene> = new Set([
+  'single',
+  'cube',
+  'reptile',
+  'growth',
+  'vacuum',
+]);
 const SHARE_STRATEGIES: ReadonlySet<ShareStrategy> = new Set(['uniform', 'compact']);
 
 function numIn(v: unknown, min: number, max: number, fallback: number): number {
@@ -122,6 +128,13 @@ interface SnapshotState {
   reptileExplode: number;
   reptileDepth: number;
   growth: { N: number; seed: number; chiralityBias: number; strategy: string; compactBeta: number };
+  vacuum: {
+    N: number;
+    seed: number;
+    chiralityBias: number;
+    contractionRate: number;
+    restitution: number;
+  };
   mode: ShareMode;
 }
 
@@ -138,6 +151,13 @@ export function encodeStateToHash(state: SnapshotState): string {
       cb: state.growth.chiralityBias,
       st: state.growth.strategy,
       b: state.growth.compactBeta,
+    },
+    v: {
+      N: state.vacuum.N,
+      sd: state.vacuum.seed,
+      cb: state.vacuum.chiralityBias,
+      cr: state.vacuum.contractionRate,
+      rs: state.vacuum.restitution,
     },
     m: state.mode,
   };
@@ -159,6 +179,7 @@ export function decodeStateFromHash(): Partial<SnapshotState> | null {
       re?: number;
       rd?: number;
       g?: { N?: number; sd?: number; cb?: number; st?: string; b?: number };
+      v?: { N?: number; sd?: number; cb?: number; cr?: number; rs?: number };
       m?: string;
       a?: boolean;
     };
@@ -184,6 +205,15 @@ export function decodeStateFromHash(): Partial<SnapshotState> | null {
         chiralityBias: numIn(p.g.cb, 0, 1, 0.5),
         strategy,
         compactBeta: numIn(p.g.b, 0, 20, 3),
+      };
+    }
+    if (p.v) {
+      result.vacuum = {
+        N: intIn(p.v.N, 2, 150, 40),
+        seed: intIn(p.v.sd, 0, Number.MAX_SAFE_INTEGER, 1),
+        chiralityBias: numIn(p.v.cb, 0, 1, 0.5),
+        contractionRate: numIn(p.v.cr, 0.2, 4, 1.5),
+        restitution: numIn(p.v.rs, 0, 0.6, 0),
       };
     }
     if (p.m && SHARE_MODES.has(p.m as ShareMode)) {
