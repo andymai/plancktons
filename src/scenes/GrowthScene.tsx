@@ -250,6 +250,7 @@ export function GrowthScene({ onMetrics }: { onMetrics?: (m: GrowthMetrics) => v
     // Include currentN: assembly is mutated in place during growth (same ref,
     // extended .tets array), so React's Object.is dep check on `assembly` alone
     // misses content updates and freezes hull/ellipsoid at the first N's state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- currentN is an intentional change-trigger for the in-place-mutated assembly
   }, [assembly, currentN, growth.N, stalled]);
 
   const lastReportedRef = useRef<GrowthMetrics | null>(null);
