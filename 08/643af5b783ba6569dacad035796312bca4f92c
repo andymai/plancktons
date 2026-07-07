@@ -1,0 +1,19 @@
+src/worker/study.worker.ts
+  s_80223233167846::t_f72daafb18a0dc 309
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "08643af5b783ba6569dacad035796312bca4f92c",
+  "prompts": {},
+  "sessions": {
+    "s_80223233167846": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d5e79952-7793-4267-b673-c58f816fcc9e",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Andy Aragon <hi@andymai.com>"
+    }
+  }
+}
