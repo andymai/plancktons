@@ -306,8 +306,7 @@ ctx.addEventListener('message', (event: MessageEvent<StudyJob>) => {
     // (mid-deploy cache miss): without it the promise in useWorkerRun would
     // hang forever in `running=true`.
     const handler = handlers[job.kind] as
-      | ((j: StudyJob, p: (done: number, total: number) => void) => StudyResult)
-      | undefined;
+      ((j: StudyJob, p: (done: number, total: number) => void) => StudyResult) | undefined;
     if (!handler) {
       throw new Error(`unknown job kind: ${(job as { kind: string }).kind}`);
     }
