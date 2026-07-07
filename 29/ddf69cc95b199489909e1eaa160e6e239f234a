@@ -1,0 +1,19 @@
+src/scenes/GrowthScene.tsx
+  s_80223233167846::t_252bac09ebaa6a 253
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "29ddf69cc95b199489909e1eaa160e6e239f234a",
+  "prompts": {},
+  "sessions": {
+    "s_80223233167846": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d5e79952-7793-4267-b673-c58f816fcc9e",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Andy Aragon <hi@andymai.com>"
+    }
+  }
+}
