@@ -1,0 +1,21 @@
+package.json
+  s_b2917b17f77c4d::t_ce8662126861ec 67-69
+package-lock.json
+  s_b2917b17f77c4d::t_0f174b7a6eb798 49-51,55,64-66,74-76,80-88,105-107,111-112,135-137,141-142,209-211,233-235,239-240,247-249,253-255,338-340,348-350,358-360,383-385,389-390,397-399,403,1542-1544,1548-1550,1557-1559,1563-1568,1576-1578,1582-1583
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.12",
+  "base_commit_sha": "5257f4356f3e98bbdb2de63682aeb126f66fb0a1",
+  "prompts": {},
+  "sessions": {
+    "s_b2917b17f77c4d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "643ef937-5daf-40fd-a369-c4b614c135a7",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Andy Aragon <hi@andymai.com>"
+    }
+  }
+}
