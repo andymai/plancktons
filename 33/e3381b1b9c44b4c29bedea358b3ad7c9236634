@@ -1,0 +1,19 @@
+.github/dependabot.yml
+  s_6bce5540073f3d::t_3a7ffbdf272cf2 10-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "33e3381b1b9c44b4c29bedea358b3ad7c9236634",
+  "prompts": {},
+  "sessions": {
+    "s_6bce5540073f3d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3002b613-6ed5-49a0-9040-63b177b973c1",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Andy Aragon <hi@andymai.com>"
+    }
+  }
+}
