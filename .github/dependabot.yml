@@ -10,6 +10,9 @@ updates:
     groups:
       npm:
         patterns: ['*']
+        update-types:
+          - minor
+          - patch
     open-pull-requests-limit: 3
 
   - package-ecosystem: github-actions
@@ -21,4 +24,7 @@ updates:
     groups:
       actions:
         patterns: ['*']
+        update-types:
+          - minor
+          - patch
     open-pull-requests-limit: 3
