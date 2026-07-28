@@ -7,6 +7,13 @@ updates:
     cooldown:
       default-days: 7
       semver-major-days: 14
+    ignore:
+      # TypeScript 7 cannot resolve: typescript-eslint (through 8.65.0) declares a peer
+      # range of >=4.8.4 <6.1.0, so `npm install` fails with ERESOLVE before any job
+      # runs. This took main red once already (#42 → #45). Re-allow once typescript-eslint
+      # widens its peer range to accept 7.x.
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
     groups:
       npm:
         patterns: ['*']
