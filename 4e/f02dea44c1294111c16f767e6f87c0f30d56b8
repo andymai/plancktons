@@ -1,0 +1,23 @@
+package.json
+  s_5b914a3f91644a::t_d1342262138959 35-36,45-46
+.github/dependabot.yml
+  s_5b914a3f91644a::t_1f1db7cd50ea53 17-28
+package-lock.json
+  s_5b914a3f91644a::t_21c7bdc0e4f6fc 14-15,24-25,4277-4279,4286-4288,4292,8667-8669,8676-8678,8681,8684
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "4ef02dea44c1294111c16f767e6f87c0f30d56b8",
+  "prompts": {},
+  "sessions": {
+    "s_5b914a3f91644a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7a5d801d-38f0-4124-9ae6-0120f4e2506e",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Andy Aragon <hi@andymai.com>"
+    }
+  }
+}
