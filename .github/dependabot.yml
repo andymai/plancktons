@@ -14,6 +14,18 @@ updates:
       # widens its peer range to accept 7.x.
       - dependency-name: typescript
         update-types: ['version-update:semver-major']
+      # React 19.3 cannot resolve: @react-three/fiber (through 9.7.0) declares a peer
+      # range of >=19 <19.3, and the cap is real (pmndrs/react-three-fiber#3915: 19.3
+      # breaks useTransition inside the R3F tree). Re-allow once fiber ships
+      # pmndrs/react-three-fiber#3916 with a peer range that accepts 19.3.
+      - dependency-name: react
+        update-types: ['version-update:semver-minor']
+      - dependency-name: react-dom
+        update-types: ['version-update:semver-minor']
+      - dependency-name: '@types/react'
+        update-types: ['version-update:semver-minor']
+      - dependency-name: '@types/react-dom'
+        update-types: ['version-update:semver-minor']
     groups:
       npm:
         patterns: ['*']
