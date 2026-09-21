@@ -46,7 +46,7 @@
     "@types/react-dom": "^19.2.7",
     "@types/three": "^0.186.0",
     "@vitejs/plugin-react": "^6.1.1",
-    "@vitest/coverage-v8": "^4.1.11",
+    "@vitest/coverage-v8": "^5.0.0",
     "brepjs": "^19.0.3",
     "brepjs-opencascade": "^0.15.6",
     "eslint": "^10.10.0",
