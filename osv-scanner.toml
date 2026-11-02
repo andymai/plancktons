@@ -1,0 +1,39 @@
+# OSV-Scanner suppressions, auto-discovered next to package-lock.json. Each
+# entry carries a reason and a review date. Everything below is dev or build
+# tooling; workbox-build 7.4.1 (latest) arrives through vite-plugin-pwa 2.0.0
+# and runs only at build time to precache dist/.
+
+# minimatch 10.2.5 (via eslint, @eslint/config-array, typescript-estree, and
+# glob under workbox-build) and 5.1.9 (via workbox-build ->
+# rollup-plugin-off-main-thread -> ejs -> jake -> filelist). The fix exists
+# only in 11.0.1 and no parent accepts it. glob 11 compiles patterns with
+# optimizationLevel 2, the amplifying path, but workbox-build hands it only the
+# globPatterns in vite.config.ts. The other parents use the default level 1.
+# minimatch 5.1.9 predates the vulnerable preprocessing code entirely.
+#
+# Delete when those parents accept minimatch >= 11.0.1.
+[[IgnoredVulns]]
+id = "GHSA-g3hv-75wg-m249"
+ignoreUntil = 2026-12-01
+reason = "build-time only; the level-2 path via glob only sees globPatterns from vite.config.ts, other parents use level 1"
+
+# glob 11.1.0 via workbox-build, which pins ^11.0.1; the fix is 14.0.2. The bug
+# lets an aborted async walk keep reading directories. workbox-build calls
+# globSync without an AbortSignal, so the abort path never runs.
+#
+# Delete when workbox-build accepts glob >= 14.0.2.
+[[IgnoredVulns]]
+id = "GHSA-3g3m-2fjr-6pw4"
+ignoreUntil = 2026-12-01
+reason = "workbox-build calls globSync with no AbortSignal, so the abort bypass is unreachable"
+
+# deepmerge 4.3.1 is the latest release and still affected; no fix exists. It
+# arrives through @rollup/plugin-node-resolve 16.0.3, whose only call is
+# deepMerge({}, defaults) on its own constant defaults, so no untrusted object
+# is ever merged.
+#
+# Delete when a deepmerge release fixes GHSA-gcqx-w48m-w2h4.
+[[IgnoredVulns]]
+id = "GHSA-gcqx-w48m-w2h4"
+ignoreUntil = 2027-01-15
+reason = "no fixed deepmerge release; the only caller merges the plugin's own constant defaults"
