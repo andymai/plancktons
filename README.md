@@ -78,7 +78,7 @@ V★ = N · L³/6 is the exact sum of the part volumes, because face-to-face mat
 ## Two growth strategies
 
 - **Uniform:** each free face has equal probability.
-- **Compact:** the Boltzmann weight `p(face) ∝ exp(β · n̂ · ĉ)` biases the choice toward concave pockets (n̂ = outward face normal, ĉ = direction to the assembly centroid). A slider sets β. β = 0 gives the uniform strategy, the default is β = 3, and β → ∞ is greedy: it always fills the deepest pocket.
+- **Compact:** the Boltzmann weight `p(face) ∝ exp(β · n̂ · ĉ)` biases the choice toward concave pockets (n̂ = outward face normal, ĉ = direction to the assembly centroid). A slider sets β. β = 0 gives the uniform strategy, the default is β = 3, and β → ∞ is greedy. A larger β gives more weight to the faces that point toward the centroid. This weight applies only to Phase 1 (see below).
 
 The chirality bias slider `c_R ∈ [0, 1]` sets the probability that each attempt draws a right-handed template. The R:L ratio of the assembly also depends on which handedness fits the geometry, not only on the bias.
 
