@@ -229,8 +229,9 @@ Other observables:
     distinguishes prolate `+` from oblate `−`).
   - The tool renders the **gyration ellipsoid** (semi-axes `√(5λᵢ)` along
     eigenvectors) as an overlay. NB: this is **not** the inertia ellipsoid
-    of `I_ij = ⟨r²⟩δ_ij − ⟨rᵢrⱼ⟩`, which has different (orthogonal)
-    principal directions.
+    of `I_ij = ⟨r²⟩δ_ij − ⟨rᵢrⱼ⟩`. That tensor equals `tr(Σ)·1 − Σ`, so it
+    has the same principal directions, with eigenvalues `tr Σ − λᵢ` in the
+    reverse order: the longest gyration axis has the smallest moment.
 
 - **Tet-tet coordination ⟨z⟩.** Mean number of face-shared neighbors per
   tet. `z = (4N − F_free) / N`. For a perfect tiling `⟨z⟩ = 4`; for any
