@@ -120,7 +120,7 @@ Press the `?` key to cycle through the modes. The share link stores the mode as 
 | Topology / chirality | R / L counts, free-face fraction, ⟨z⟩ tet-tet coordination, ⟨coord⟩ / max vertex coordination, free iso / scalene |
 | Bounding box         | V_bbox, dims                                                                                                      |
 
-Turn on the **gyration ellipsoid** overlay to see the principal axes of the gyration tensor. The gyration tensor is a 3 × 3 matrix whose eigenvalues describe the shape of the assembly. Note: this ellipsoid is **not** the inertia ellipsoid. The inertia tensor `I_ij = ⟨r²⟩δ_ij − ⟨rᵢrⱼ⟩` has different (orthogonal) principal directions.
+Turn on the **gyration ellipsoid** overlay to see the principal axes of the gyration tensor. The gyration tensor is a 3 × 3 matrix whose eigenvalues describe the shape of the assembly. Note: this ellipsoid is **not** the inertia ellipsoid. The inertia tensor `I_ij = ⟨r²⟩δ_ij − ⟨rᵢrⱼ⟩` equals `tr(Σ)·1 − Σ`, so it has the same principal directions with eigenvalues `tr Σ − λᵢ`. The longest axis of the gyration ellipsoid is the axis with the smallest moment of inertia.
 
 ## CLI: `scripts/study.ts`
 
@@ -214,10 +214,13 @@ src/
     Statistics:         study, studyClient, workerPool, scaling, shape,
                         paircorr, autocorr, kinetics, steinhardt,
                         embeddedCubes, mcRefine, morphology, voronoi
+    Vacuum bag:         vacuum, rigidTet, inertia, mat3, quat, contactGraph,
+                        vacuumMetrics, marchingCubes
     I/O:                exports, svgExport, provenance, references, store
   scenes/               R3F components (read lib, never imported by lib)
     SceneCanvas, SingleScene, CubeScene, ReptileScene, GrowthScene,
-    PlancktonMesh, HullMesh, GyrationEllipsoid, DihedralLabels, CameraFit
+    VacuumScene, PlancktonMesh, HullMesh, VacuumBagMesh, GyrationEllipsoid,
+    DihedralLabels, CameraFit
   ui/                   React UI (reads lib + scenes, never imported by lib)
     Chrome:             Controls, HUD, Actions, ModeSwitch, MetricsPanel,
                         ProgressBar, Transport, HelpOverlay, Term, glossary,
@@ -226,7 +229,7 @@ src/
     State & hooks:      uiStore, useDraftValue, useKeyboard, useRadioGroup,
                         useWorkerRun, DraftSlider
     controls/           Per-scene control panels (Single, Cube, Reptile,
-                        Growth, Display, Analyses)
+                        Growth, Vacuum, Display, Analyses)
     research/           Research-mode panels (Histogram, Curve, Kinetics,
                         Autocorr, PairCorrelation, Steinhardt, References)
   worker/
