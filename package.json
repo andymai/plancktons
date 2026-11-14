@@ -35,7 +35,7 @@
     "react": "^19.2.9",
     "react-dom": "^19.2.9",
     "three": "^0.187.0",
-    "zustand": "^5.0.16"
+    "zustand": "^5.1.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.4",
@@ -45,14 +45,14 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@types/three": "^0.187.0",
-    "@vitejs/plugin-react": "^6.1.2",
-    "@vitest/coverage-v8": "^5.0.5",
-    "brepjs": "^20.14.0",
+    "@vitejs/plugin-react": "^6.2.1",
+    "@vitest/coverage-v8": "^5.1.0",
+    "brepjs": "^20.18.0",
     "brepjs-opencascade": "^0.15.6",
     "eslint": "^10.14.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
-    "globals": "^17.13.0",
+    "globals": "^17.14.0",
     "happy-dom": "^21.0.4",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
@@ -61,7 +61,7 @@
     "tsx": "^4.23.15",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.72.1",
-    "vite": "^8.3.5",
+    "vite": "^8.3.6",
     "vite-plugin-pwa": "^2.0.0",
     "vitest": "^5.0.0"
   },
